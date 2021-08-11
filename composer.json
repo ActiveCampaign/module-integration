@@ -1,0 +1,42 @@
+{
+    "name": "activecampaign/integration",
+    "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
+    "type": "magento2-component",
+    "license": "OSL-3.0",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repo.magento.com/"
+        }
+    ],
+    "require": {
+        "php": "~7.3.0||~7.4.0",
+        "magento/framework": ">=103.0.0",
+        "magento/magento-composer-installer": "*"
+    },
+    "replace": {
+        "activecampaign/core": "self.version",
+        "activecampaign/customer": "self.version",
+        "activecampaign/abandoned-cart": "self.version",
+        "activecampaign/order": "self.version",
+        "activecampaign/sync-log": "self.version"
+    },
+    "autoload": {
+        "files": [
+            "Core/registration.php",
+            "Customer/registration.php",
+            "AbandonedCart/registration.php",
+            "Order/registration.php",
+            "SyncLog/registration.php"
+        ],
+        "psr-4": {
+            "ActiveCampaign\\Core\\": "Core",
+            "ActiveCampaign\\Customer\\": "Customer",
+            "ActiveCampaign\\AbandonedCart\\": "AbandonedCart",
+            "ActiveCampaign\\Order\\": "Order",
+            "ActiveCampaign\\SyncLog\\": "SyncLog"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
