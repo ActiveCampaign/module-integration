@@ -1,0 +1,49 @@
+<?php
+use ActiveCampaign\Order\Block\Adminhtml\System\Config\OrderSyncStatus;
+
+/**
+ * @var OrderSyncStatus $block
+ */
+?>
+<table cellspacing="0" class="form-list">
+    <tbody>
+    <tr>
+        <td class="label"></td>
+        <td class="value">
+            <div class="messages">
+                <div class="message message-notice" >
+                    <div>
+                        <?= $block->escapeHtml(__("Total Orders :")) ?>
+                        <strong><?= $block->escapeHtml(__($block->getTotalOrder())) ?></strong>
+                    </div>
+                </div>
+            </div>
+            <div class="messages">
+                <div class="message message-notice" >
+                    <div>
+                        <?= $block->escapeHtml(__("Synced Orders :")) ?>
+                        <strong><?= $block->escapeHtml(__($block->getSyncOrder())) ?></strong>
+                    </div>
+                </div>
+            </div>
+            <div class="messages">
+                <div class="message message-notice" >
+                    <div>
+                        <?= $block->escapeHtml(__("Not Synced Orders :")) ?>
+                        <strong><?= $block->escapeHtml(__($block->getNotSyncOrder())) ?></strong>
+                    </div>
+                </div>
+            </div>
+            <div class="messages">
+                <div class="message message-notice" >
+                    <div>
+                        <?= $block->escapeHtml(__("Fail Synced Orders :")) ?>
+                        <strong><?= $block->escapeHtml(__($block->getFailedSync())) ?></strong>
+                    </div>
+                </div>
+            </div>
+        </td>
+        <td class></td>
+    </tr>
+    </tbody>
+</table>

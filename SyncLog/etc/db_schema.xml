@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="sync_log" resource="default" engine="innodb"
+           comment="Customer Order Abandanded Sync Log">
+        <column xsi:type="int" name="id" padding="11" unsigned="true" nullable="false" identity="true" comment="ID"/>
+        <column xsi:type="text" name="type" nullable="false" comment="Type"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+        <column xsi:type="text" name="method" nullable="false" comment="Method"/>
+        <column xsi:type="text" name="status" nullable="false" comment="Status"/>
+        <column xsi:type="varchar" name="endpoint" nullable="false" length="255" comment="Endpoint"/>
+        <column xsi:type="mediumtext" name="request" nullable="true" comment="Request"/>
+        <column xsi:type="mediumtext" name="response" nullable="true" comment="Response"/>
+        <column xsi:type="mediumtext" name="errors" nullable="true" comment="Errors"/>
+        <column xsi:type="timestamp" name="creation_date" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="created at"/>
+        <column xsi:type="timestamp" name="finish_date" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Finished at"/>
+    </table>
+</schema>

@@ -1,0 +1,21 @@
+{
+    "name": "activecampaign/customer",
+    "description": "ActiveCampaign Customer",
+    "require": {
+        "php": "^7.1.0",
+        "amasty/base": ">=1.0.0"
+    },
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": [
+        "Commercial"
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "ActiveCampaign\\Customer\\": ""
+        }
+    }
+}

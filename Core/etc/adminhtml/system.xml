@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="active_campaign" translate="label" sortOrder="1">
+            <label>ActiveCampaign</label>
+        </tab>
+        <section id="active_campaign" translate="label" type="text" sortOrder="100" showInDefault="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Configuration</label>
+            <tab>active_campaign</tab>
+            <resource>ActiveCampaign_Core::config_active_campaign</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInStore="1">
+                <label>General</label>
+                <field id="status" translate="label" type="select" sortOrder="10" showInDefault="1" showInStore="1">
+                    <label>Status</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="api_url" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInStore="1">
+                    <label>API URL</label>
+                    <validate>required-entry validate-url validate-no-html-tags</validate>
+                    <comment>Example: https://youraccountname.api-us1.com</comment>
+                </field>
+                <field id="api_key" translate="label" type="text" sortOrder="30" showInDefault="1" showInStore="1">
+                    <label>API Key</label>
+                    <validate>required-entry</validate>
+                </field>
+                <field id="connect_active_campaign" translate="button_label" sortOrder="40" showInDefault="1" showInStore="1">
+                    <label/>
+                    <button_label>Connect</button_label>
+                    <frontend_model>ActiveCampaign\Core\Block\Adminhtml\System\Config\ConnectActiveCampaign</frontend_model>
+                    <depends>
+                        <field id="status">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

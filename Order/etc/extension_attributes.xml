@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Api/etc/extension_attributes.xsd">
+    <extension_attributes for="Magento\Sales\Api\Data\OrderInterface">
+        <attribute code="ac_temp_customer_id" type="int" />
+        <attribute code="ac_order_sync_id" type="int" />
+        <attribute code="ac_order_sync_status" type="int" />
+    </extension_attributes>
+</config>
