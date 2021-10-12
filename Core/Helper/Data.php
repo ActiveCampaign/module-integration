@@ -134,7 +134,7 @@ class Data extends AbstractHelper
      */
     public function priceToCents($price = 0.0)
     {
-        return (int) round($price, 2) * 100;
+        return (int) (round($price, 2) * 100);
     }
 
     /**
