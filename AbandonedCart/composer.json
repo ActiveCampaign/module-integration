@@ -1,6 +1,6 @@
 {
-    "name": "magento/active-campaign-abandoned-cart",
-    "description": "N/A",
+    "name": "activecampaign/abandonedcart",
+    "description": "ActiveCampaign Abandoned Cart",
     "type": "magento2-module",
     "license": [
         "OSL-3.0",
@@ -9,16 +9,17 @@
     "config": {
         "sort-packages": true
     },
-    "version": "104.0.2",
+    "version": "2.0.0",
     "require": {
-        "php": "~7.3.0||~7.4.0"
+        "php": "~7.3.0||~7.4.0",
+        "activecampaign/core": "2.0.*"
     },
     "autoload": {
         "files": [
             "registration.php"
         ],
         "psr-4": {
-            "Magento\\Catalog\\": ""
+            "ActiveCampaign\\AbandonedCart\\": ""
         }
     }
 }

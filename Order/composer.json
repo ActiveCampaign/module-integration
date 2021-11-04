@@ -1,6 +1,6 @@
 {
-    "name": "activecampaign/customer",
-    "description": "ActiveCampaign Customer",
+    "name": "activecampaign/order",
+    "description": "ActiveCampaign Order",
     "type": "magento2-module",
     "license": [
         "OSL-3.0",
@@ -19,7 +19,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "ActiveCampaign\\Customer\\": ""
+            "ActiveCampaign\\Order\\": ""
         }
     }
 }
