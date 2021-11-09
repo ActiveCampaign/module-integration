@@ -1,5 +1,5 @@
 {
-    "name": "activecampaign/core",
+    "name": "activecampaign/active-campaign-core",
     "description": "ActiveCampaign Core",
     "type": "magento2-module",
     "license": [
@@ -9,7 +9,7 @@
     "config": {
         "sort-packages": true
     },
-    "version": "2.0.0",
+    "version": "2.0.2",
     "require": {
         "php": "~7.3.0||~7.4.0"
     },
@@ -20,5 +20,8 @@
         "psr-4": {
             "ActiveCampaign\\Core\\": ""
         }
+    },
+    "extra": {
+        "magesku": "activecampaign/active-campaign-core"
     }
 }

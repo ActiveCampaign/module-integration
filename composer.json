@@ -3,6 +3,7 @@
     "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
     "type": "magento2-component",
     "license": "OSL-3.0",
+    "version": "2.0.1",
     "repositories": [
         {
             "type": "composer",
@@ -38,5 +39,9 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "extra": {
+        "magesku": "activecampaign/module-integration",
+        "magetype": "metapackage"
+    }
 }
