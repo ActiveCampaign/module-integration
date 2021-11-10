@@ -192,7 +192,7 @@ class Connect extends Action
 
         return [
             "connection" => [
-                "service" => $store->getName(),
+                "service" => "magento2",
                 "externalid" => $store->getCode(),
                 "name" => $store->getName(),
                 "logoUrl" => $this->activeCampaignHelper->getStoreLogo($storeId),
