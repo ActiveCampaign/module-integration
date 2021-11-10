@@ -20,8 +20,5 @@
         "psr-4": {
             "ActiveCampaign\\Core\\": ""
         }
-    },
-    "extra": {
-        "magesku": "activecampaign/active-campaign-core"
     }
 }

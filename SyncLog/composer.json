@@ -21,8 +21,5 @@
         "psr-4": {
             "ActiveCampaign\\SyncLog\\": ""
         }
-    },
-    "extra": {
-        "magesku": "activecampaign/active-campaign-sync-log"
     }
 }

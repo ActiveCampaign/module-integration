@@ -21,9 +21,6 @@
         "psr-4": {
             "ActiveCampaign\\AbandonedCart\\": ""
         }
-    },
-    "extra": {
-        "magesku": "activecampaign/active-campaign-abandoned-cart"
     }
 }
 

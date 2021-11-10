@@ -21,8 +21,5 @@
         "psr-4": {
             "ActiveCampaign\\Customer\\": ""
         }
-    },
-    "extra": {
-        "magesku": "activecampaign/active-campaign-customer"
     }
 }

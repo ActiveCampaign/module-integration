@@ -39,9 +39,5 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true,
-    "extra": {
-        "magesku": "activecampaign/module-integration",
-        "magetype": "metapackage"
-    }
+    "prefer-stable": true
 }
