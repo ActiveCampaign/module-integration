@@ -1,5 +1,5 @@
 {
-    "name": "activecampaign/active-campaign-core",
+    "name": "activecampaign/core",
     "description": "ActiveCampaign Core",
     "type": "magento2-module",
     "license": [
