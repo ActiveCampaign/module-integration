@@ -12,7 +12,7 @@ class Status implements OptionSourceInterface
      */
     public function getOptionArray()
     {
-        $options = ['1' => __('Success'),'0' => __('Unsuccess')];
+        $options = ['1' => __('Success'),'0' => __('Failed')];
         return $options;
     }
 
