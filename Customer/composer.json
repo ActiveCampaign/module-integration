@@ -1,15 +1,19 @@
 {
     "name": "activecampaign/customer",
     "description": "ActiveCampaign Customer",
-    "require": {
-        "php": "^7.1.0",
-        "amasty/base": ">=1.0.0"
-    },
     "type": "magento2-module",
-    "version": "1.0.0",
     "license": [
-        "Commercial"
+        "OSL-3.0",
+        "AFL-3.0"
     ],
+    "config": {
+        "sort-packages": true
+    },
+    "version": "2.0.0",
+    "require": {
+        "php": "~7.3.0||~7.4.0",
+        "activecampaign/core": "2.0.*"
+    },
     "autoload": {
         "files": [
             "registration.php"
