@@ -54,15 +54,20 @@ class Sync extends \Magento\Backend\App\Action
                 $model = $this->quoteModel;
                 $model->load($id);
                 $quoteId[] = $model->getEntityId();
-                $this->abandonedCartSendData->sendAbandonedCartData($quoteId);
-                $this->messageManager->addSuccess(__('The data has been synced.'));
+                $result = $this->abandonedCartSendData->sendAbandonedCartData($quoteId);
+                if(isset($result['error'])){
+                    $this->messageManager->addErrorMessage($result['error']);
+                }else{
+                    $this->messageManager->addSuccessMessage(__('The data has been synced.'));
+                }
+
                 return $resultRedirect->setPath('*/*/');
             } catch (\Exception $e) {
-                $this->messageManager->addError($e->getMessage());
+                $this->messageManager->addErrorMessage($e->getMessage());
                 return $resultRedirect->setPath('*/*/');
             }
         }
-        $this->messageManager->addError(__('We can\'t find a data to sync.'));
+        $this->messageManager->addErrorMessage(__('We can\'t find a data to sync.'));
         return $resultRedirect->setPath('*/*/');
     }
 }

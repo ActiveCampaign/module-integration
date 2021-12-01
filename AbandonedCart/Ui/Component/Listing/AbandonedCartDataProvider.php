@@ -17,7 +17,7 @@ class AbandonedCartDataProvider extends SearchResult
 			->join(
 				['quote_address'],
 				'main_table.entity_id = quote_address.quote_id',
-				['*']
+                ['quote_address.quote_id','quote_address.email'],
 			)
 			->where("main_table.is_active = 1 AND quote_address.address_type = 'billing'");
         return $this;

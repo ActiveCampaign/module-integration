@@ -42,17 +42,18 @@ require([
 });
 </script>
 <?= $block->getButtonHtml() ?>
+<br><br>
 <span class="collect-indicator" id="collect_span_field">
-    <img class="processing-icon" hidden 
-        alt="Processing" 
+    <img class="processing-icon" hidden
+        alt="Processing"
         src="<?= $block->escapeUrl($block->getViewFileUrl('images/process_spinner.gif')) ?>"
     />
-    <img class="success-icon" hidden 
-        alt="Success" 
+    <img class="success-icon" hidden
+        alt="Success"
         src="<?= $block->escapeUrl($block->getViewFileUrl('images/rule_component_apply.gif')) ?>"
     />
-    <img class="error-icon" hidden 
-        alt="Error" 
+    <img class="error-icon" hidden
+        alt="Error"
         src="<?= $block->escapeUrl($block->getViewFileUrl('images/rule_component_remove.gif')) ?>"
     />
     <span id="ajax_message_field_span"></span>
