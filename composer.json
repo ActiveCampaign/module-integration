@@ -3,7 +3,7 @@
     "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
     "type": "magento2-component",
     "license": "OSL-3.0",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "repositories": [
         {
             "type": "composer",
