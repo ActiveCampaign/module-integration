@@ -214,7 +214,7 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
             } else {
                 $customerEmail = $quote->getBillingAddress()->getEmail();
                 if (!$customerEmail) {
-                    $result['error'] = true;
+                    $result['error'] = __('Customer Email does not exist.');
                     return $result;
                 }
                 $websiteId  = $this->storeManager->getWebsite()->getWebsiteId();
@@ -293,7 +293,7 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
                     "currency" => $abandonedCart->getGlobalCurrencyCode(),
                     "orderNumber" => $abandonedCart->getEntityId(),
                     "connectionid" => $connectionId,
-                    "customerid" => $customerAcId
+                    "customerid" => ($customerAcId === null) ? 0 : $customerAcId,
                 ]
             ];
 
@@ -318,11 +318,15 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
                     $syncStatus = CronConfig::FAIL_SYNCED;
                 }
 
-                $acOrderId = $abandonedCartResult['data']['ecomOrder']['id'];
-                $this->saveResult($abandonedCart->getEntityId(), $acOrderId, $syncStatus);
+                if(isset($abandonedCartResult['data']['ecomOrder']['id'])) {
+                    $acOrderId = $abandonedCartResult['data']['ecomOrder']['id'];
+                    $this->saveResult($abandonedCart->getEntityId(), $acOrderId, $syncStatus);
+                }
 
-                if (isset($abandonedCartResult['success'])) {
+                if (isset($abandonedCartResult['success']) && $abandonedCartResult['success'] == 1) {
                     $result['success'] = __("Abandoned cart data successfully synced!!");
+                }elseif (isset($abandonedCartResult['message'])) {
+                    $result['error'] = $abandonedCartResult['message'];
                 }
             } catch (\Exception $e) {
                 $result['error'] = __($e->getMessage());

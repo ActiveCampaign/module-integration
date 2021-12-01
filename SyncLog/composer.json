@@ -1,6 +1,6 @@
 {
-    "name": "activecampaign/abandonedcart",
-    "description": "ActiveCampaign Abandoned Cart",
+    "name": "activecampaign/synclog",
+    "description": "ActiveCampaign SyncLog",
     "type": "magento2-module",
     "license": [
         "OSL-3.0",
@@ -19,8 +19,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "ActiveCampaign\\AbandonedCart\\": ""
+            "ActiveCampaign\\SyncLog\\": ""
         }
     }
 }
-

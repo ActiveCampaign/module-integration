@@ -1,6 +1,6 @@
 {
-    "name": "activecampaign/abandonedcart",
-    "description": "ActiveCampaign Abandoned Cart",
+    "name": "activecampaign/order",
+    "description": "ActiveCampaign Order",
     "type": "magento2-module",
     "license": [
         "OSL-3.0",
@@ -9,7 +9,7 @@
     "config": {
         "sort-packages": true
     },
-    "version": "2.0.2",
+    "version": "2.0.1",
     "require": {
         "php": "~7.3.0||~7.4.0",
         "activecampaign/core": "2.0.*"
@@ -19,8 +19,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "ActiveCampaign\\AbandonedCart\\": ""
+            "ActiveCampaign\\Order\\": ""
         }
     }
 }
-

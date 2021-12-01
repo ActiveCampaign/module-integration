@@ -2,6 +2,10 @@
 /** @var $block ActiveCampaign\Core\Block\Adminhtml\System\Config\ConnectActiveCampaign */
 $connectedStores = $block->getConnectedStores();
 ?>
+<p class="note">
+    <span><?= $block->escapeHtmlAttr(__('Before clicking on this button Please click on Save Config button. ')) ?>
+    </span>
+</p>
 <button class="scalable" type="button" id="<?= $block->getHtmlId() ?>" data-mage-init='{"Connection":{
     "connection": "<?= $block->escapeUrl($block->getConnection()) ?>",
     "url": "<?= $block->escapeUrl($block->getAjaxUrl()) ?>",
