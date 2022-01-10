@@ -12,6 +12,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\PageCache\Model\Cache\Type;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 class Disconnect extends Action
 {
@@ -57,12 +58,18 @@ class Disconnect extends Action
     private $curl;
 
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+
+    /**
      * Connection constructor.
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param TypeListInterface $cacheTypeList
      * @param ConfigInterface $configInterface
      * @param StoreRepositoryInterface $storeRepository
+     * @param StoreManagerInterface $storeManager
      * @param ActiveCampaignHelper $activeCampaignHelper
      * @param Curl $curl
      */
@@ -72,6 +79,7 @@ class Disconnect extends Action
         TypeListInterface $cacheTypeList,
         ConfigInterface $configInterface,
         StoreRepositoryInterface $storeRepository,
+        StoreManagerInterface $storeManager,
         ActiveCampaignHelper $activeCampaignHelper,
         Curl $curl
     ) {
@@ -80,6 +88,7 @@ class Disconnect extends Action
         $this->cacheTypeList = $cacheTypeList;
         $this->configInterface = $configInterface;
         $this->storeRepository = $storeRepository;
+        $this->storeManager = $storeManager;
         $this->activeCampaignHelper = $activeCampaignHelper;
         $this->curl = $curl;
     }
@@ -92,6 +101,10 @@ class Disconnect extends Action
     public function execute()
     {
         $request = $this->getRequest()->getParams();
+
+        // Set store to default if Single store mode
+        $request['store'] = $request['store'] ?? $this->storeManager->getDefaultStoreView()->getId();
+
         $return = [];
         $return['success'] = false;
 
