@@ -102,7 +102,7 @@ class Curl extends AbstractHelper
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
         $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
         return $result;
@@ -119,7 +119,7 @@ class Curl extends AbstractHelper
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
         $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
         return $result;
@@ -163,7 +163,7 @@ class Curl extends AbstractHelper
         $apiKey = $this->activeCampaignHelper->getApiKey();
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
 
         $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
@@ -308,7 +308,7 @@ class Curl extends AbstractHelper
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
 
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
 
         $headers = $this->getHeaders($apiKey);
         $type = 'ecomAbandonedCarts';
