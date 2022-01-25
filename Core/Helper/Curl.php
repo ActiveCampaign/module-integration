@@ -83,7 +83,7 @@ class Curl extends AbstractHelper
         $apiKey = empty($apiKey) ? $request['api_key'] : $apiKey;
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
 
         $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
