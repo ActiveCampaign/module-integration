@@ -1,5 +1,5 @@
 {
-    "name": "activecampaign/customer",
+    "name": "activecampaign/active-campaign-customer",
     "description": "ActiveCampaign Customer",
     "type": "magento2-module",
     "license": [

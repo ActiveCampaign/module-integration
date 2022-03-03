@@ -1,5 +1,5 @@
 {
-    "name": "activecampaign/synclog",
+    "name": "activecampaign/active-campaign-sync-log",
     "description": "ActiveCampaign SyncLog",
     "type": "magento2-module",
     "license": [

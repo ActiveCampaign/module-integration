@@ -1,5 +1,5 @@
 {
-    "name": "activecampaign/order",
+    "name": "activecampaign/active-campaign-order",
     "description": "ActiveCampaign Order",
     "type": "magento2-module",
     "license": [

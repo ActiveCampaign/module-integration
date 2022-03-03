@@ -3,7 +3,7 @@
     "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
     "type": "magento2-component",
     "license": "OSL-3.0",
-    "version": "2.0.4",
+    "version": "2.0.5",
     "repositories": [
         {
             "type": "composer",
@@ -17,10 +17,15 @@
     },
     "replace": {
         "activecampaign/core": "self.version",
+        "activecampaign/active-campaign-core": "self.version",
         "activecampaign/customer": "self.version",
+        "activecampaign/active-campaign-customer": "self.version",
         "activecampaign/abandoned-cart": "self.version",
+        "activecampaign/active-campaign-abandoned-cart": "self.version",
         "activecampaign/order": "self.version",
-        "activecampaign/sync-log": "self.version"
+        "activecampaign/active-campaign-order": "self.version",
+        "activecampaign/sync-log": "self.version",
+        "activecampaign/active-campaign-sync-log": "self.version"
     },
     "autoload": {
         "files": [
@@ -37,6 +42,10 @@
             "ActiveCampaign\\Order\\": "Order",
             "ActiveCampaign\\SyncLog\\": "SyncLog"
         }
+    },
+    "extra": {
+        "type-deployment": "metapackage",
+        "type-localdev": "magento2-component"
     },
     "minimum-stability": "dev",
     "prefer-stable": true
