@@ -94,9 +94,16 @@ define([
                 headers: self.options.headers || {}
 
             }).done(function (response) {
-                if (response[fieldToCheck]) {
-                    element.removeClass('fail').addClass('success');
-                    result = self.options.successText;
+                if (response.success){
+                    if (self.options.connection) {
+                        alert({
+                            content : $.mage.__('Connected Successfully.'),
+                        });
+                    }else{
+                        alert({
+                            content : $.mage.__('Disconnected Successfully.'),
+                        });
+                    }
                 } else {
                     msg = response.errorMessage;
                     if (msg) {
@@ -104,6 +111,10 @@ define([
                             content: msg
                         });
                     }
+                }
+                if (response[fieldToCheck]) {
+                    element.removeClass('fail').addClass('success');
+                    result = self.options.successText;
                 }
             }).always(function () {
                 $('#' + self.options.elementId + '_result').text(result);

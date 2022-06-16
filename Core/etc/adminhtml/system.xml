@@ -19,10 +19,12 @@
                     <label>API URL</label>
                     <validate>required-entry validate-url validate-no-html-tags</validate>
                     <comment>Example: https://youraccountname.api-us1.com</comment>
+                    <frontend_model>ActiveCampaign\Core\Block\Adminhtml\System\Config\FieldDisable</frontend_model>
                 </field>
                 <field id="api_key" translate="label" type="text" sortOrder="30" showInDefault="1" showInStore="1">
                     <label>API Key</label>
                     <validate>required-entry</validate>
+                    <frontend_model>ActiveCampaign\Core\Block\Adminhtml\System\Config\FieldDisable</frontend_model>
                 </field>
                 <field id="connect_active_campaign" translate="button_label" sortOrder="40" showInDefault="1" showInStore="1">
                     <label/>
