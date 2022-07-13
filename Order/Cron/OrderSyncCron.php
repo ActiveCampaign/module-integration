@@ -2,12 +2,15 @@
 
 namespace ActiveCampaign\Order\Cron;
 
+use ActiveCampaign\Core\Helper\Curl;
 use ActiveCampaign\Order\Helper\Data as ActiveCampaignOrderHelper;
 use ActiveCampaign\Order\Model\OrderData\OrderDataSend;
-use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use GuzzleHttp\Exception\GuzzleException;
 use Magento\Framework\App\State;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
-use ActiveCampaign\Core\Helper\Curl;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Psr\Log\LoggerInterface;
 
 class OrderSyncCron
 {
@@ -43,6 +46,10 @@ class OrderSyncCron
      * @var Curl
      */
     protected $curl;
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     /**
      * OrderSyncCron constructor.
@@ -58,7 +65,8 @@ class OrderSyncCron
         ActiveCampaignOrderHelper $activeCampaignHelper,
         State $state,
         Curl $curl,
-        CartRepositoryInterface $quoteRepository
+        CartRepositoryInterface $quoteRepository,
+        LoggerInterface $logger
     ) {
         $this->orderdataSend = $orderdataSend;
         $this->_orderCollectionFactory = $orderCollectionFactory;
@@ -66,35 +74,36 @@ class OrderSyncCron
         $this->state = $state;
         $this->curl = $curl;
         $this->quoteRepository = $quoteRepository;
+        $this->logger = $logger;
     }
 
     /**
-     * @return $this
+     * @throws NoSuchEntityException|GuzzleException
      */
-    public function execute()
+    public function execute(): void
     {
-        $isEnabled = $this->activeCampaignHelper->isOrderSyncEnabled();
-        if ($isEnabled) {
-            $OrderSyncNum = $this->activeCampaignHelper->getOrderSyncNum();
-            $orderCollection = $collection = $this->_orderCollectionFactory->create()
-                ->addAttributeToSelect('*')
-                ->addAttributeToSelect('*')
-                ->addFilter(
-                    'ac_order_sync_status',
-                    '0',
-                    'eq'
-                )
-                ->setPageSize($OrderSyncNum);
-            foreach ($orderCollection as $order) {
-                $this->orderdataSend->orderDataSend($order);
-                $quote = $this->quoteRepository->get($order->getQuoteId());
-                if ($quote->getAcOrderSyncId() != 0)  {
-                    $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
+        try {
+            $isEnabled = $this->activeCampaignHelper->isOrderSyncEnabled();
+            if ($isEnabled) {
+                $OrderSyncNum = $this->activeCampaignHelper->getOrderSyncNum();
+                $orderCollection = $this->_orderCollectionFactory->create()
+                    ->addAttributeToSelect('*')
+                    ->addFieldToFilter(
+                        'ac_order_sync_status',
+                        ['eq' => 0]
+                    )
+                    ->setPageSize($OrderSyncNum);
+
+                foreach ($orderCollection as $order) {
+                    $this->orderdataSend->orderDataSend($order);
+                    $quote = $this->quoteRepository->get($order->getQuoteId());
+                    if ($quote->getAcOrderSyncId() !== 0) {
+                        $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
+                    }
                 }
             }
-            return $this;
-        } else {
-            return $this;
+        } catch (\Exception $e) {
+            $this->logger->error('MODULE Order: ' . $e->getMessage());
         }
     }
 }

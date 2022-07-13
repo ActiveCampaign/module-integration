@@ -3,8 +3,8 @@
 namespace ActiveCampaign\Customer\Cron;
 
 use ActiveCampaign\Core\Helper\Curl;
-use ActiveCampaign\Customer\Helper\Data as CustomerHelper;
 use ActiveCampaign\Core\Helper\Data as CoreHelper;
+use ActiveCampaign\Customer\Helper\Data as CustomerHelper;
 use ActiveCampaign\Customer\Model\Config\CronConfig;
 use Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
@@ -127,7 +127,6 @@ class CustomerSync
                 ->setPageSize($numberOfCustomers);
 
             foreach ($customers as $customer) {
-
                 $contactId = 0;
                 $ecomCustomerId = 0;
                 $syncStatus = CronConfig::NOT_SYNCED;
@@ -162,7 +161,7 @@ class CustomerSync
 
                     $this->saveResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
                 } catch (\Exception $e) {
-                    $this->logger->critical($e);
+                    $this->logger->critical("MODULE: Customer " . $e);
                 }
             }
         }

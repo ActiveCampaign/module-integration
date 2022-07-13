@@ -427,7 +427,7 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
                 $this->saveCustomerResultQuote($quote, $ecomCustomerId);
             }
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->critical("MODULE Order " . $e);
         }
     }
 

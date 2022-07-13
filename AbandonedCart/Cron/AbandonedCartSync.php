@@ -4,6 +4,8 @@ namespace ActiveCampaign\AbandonedCart\Cron;
 
 use ActiveCampaign\AbandonedCart\Helper\Data as AbandonedCartHelper;
 use ActiveCampaign\AbandonedCart\Model\AbandonedCartSendData;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 class AbandonedCartSync
 {
@@ -30,7 +32,11 @@ class AbandonedCartSync
         $this->abandonedCartSendData = $abandonedCartSendData;
     }
 
-    public function execute()
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
+    public function execute(): void
     {
         if ($this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
             $this->abandonedCartSendData->sendAbandonedCartData();

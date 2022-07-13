@@ -103,7 +103,7 @@ class MassSync extends AbstractMassAction implements HttpPostActionInterface
 
                     $this->customer->saveResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
                 } catch (\Exception $exception) {
-                    $this->logger->critical($exception);
+                    $this->logger->critical("MODULE: Customer " . $exception);
                 }
             }
             $customersSynced++;

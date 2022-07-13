@@ -8,7 +8,7 @@ and CRM tools you need to create incredible customer experiences.
 <!-- Write description here -->
 
 ## System Requirements
-* PHP 7.4
+* PHP 7.4/8
 * Magento 2.3/2.4
 * Elastic Search 7
 * RabbitMQ
