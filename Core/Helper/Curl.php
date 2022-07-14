@@ -1,21 +1,24 @@
 <?php
+
 namespace ActiveCampaign\Core\Helper;
 
 use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
 use ActiveCampaign\Core\Logger\Logger;
+use ActiveCampaign\SyncLog\Model\SyncLog;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Json\Helper\Data as JsonHelper;
-use ActiveCampaign\SyncLog\Model\SyncLog;
+use Magento\Framework\Phrase;
 
 class Curl extends AbstractHelper
 {
-    const API_VERSION = "/api/3/";
-    const HTTP_VERSION = "1.1";
-    const CONTENT_TYPE = "application/json";
+    public const API_VERSION = "/api/3/";
+    public const HTTP_VERSION = "1.1";
+    public const CONTENT_TYPE = "application/json";
 
     /**
      * @var Client|ClientInterface
@@ -52,13 +55,14 @@ class Curl extends AbstractHelper
      * @param SyncLog $syncLog
      */
     public function __construct(
-        Context $context,
-        ClientInterface $client = null,
-        JsonHelper $jsonHelper,
-        Logger $logger,
+        Context              $context,
+        ClientInterface      $client = null,
+        JsonHelper           $jsonHelper,
+        Logger               $logger,
         ActiveCampaignHelper $activeCampaignHelper,
-        SyncLog $syncLog
-    ) {
+        SyncLog              $syncLog
+    )
+    {
         $this->client = $client ?: new Client();
         $this->jsonHelper = $jsonHelper;
         $this->logger = $logger;
@@ -94,18 +98,17 @@ class Curl extends AbstractHelper
      * @param $method
      * @param $urlEndpoint
      * @param array $data
-     * @param $request
      * @return array
+     * @throws GuzzleException
      */
-    public function orderDataSend($method, $urlEndpoint, $data = [])
+    public function orderDataSend($method, $urlEndpoint, array $data = []): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
-        $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
-        return $result;
+        return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
 
     /**
@@ -113,16 +116,16 @@ class Curl extends AbstractHelper
      * @param $urlEndpoint
      * @param array $data
      * @return array
+     * @throws GuzzleException
      */
-    public function orderDataUpdate($method, $urlEndpoint, $data = [])
+    public function orderDataUpdate($method, $urlEndpoint, array $data = []): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
-        $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
-        return $result;
+        return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
 
     /**
@@ -130,34 +133,36 @@ class Curl extends AbstractHelper
      * @param $urlEndpoint
      * @param $orderId
      * @return array
+     * @throws GuzzleException
      */
-    public function orderDataDelete($method, $urlEndpoint, $orderId)
+    public function orderDataDelete($method, $urlEndpoint, $orderId): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint . $orderId;
         $headers = $this->getHeaders($apiKey);
-        $result = $this->sendRequest($urlEndpoint, $method, $url, $headers);
-        return $result;
+        return $this->sendRequest($urlEndpoint, $method, $url, $headers);
     }
 
     /**
      * @param $method
      * @param $urlEndpoint
      * @return array
+     * @throws GuzzleException
      */
-    public function deleteConnection($method, $urlEndpoint)
+    public function deleteConnection($method, $urlEndpoint): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $headers = $this->getHeaders($apiKey);
-
-        $result = $this->sendRequest($urlEndpoint, $method, $url, $headers);
-        return $result;
+        return $this->sendRequest($urlEndpoint, $method, $url, $headers);
     }
 
-    public function createContacts($method, $urlEndpoint, $data = [])
+    /**
+     * @throws GuzzleException
+     */
+    public function createContacts($method, $urlEndpoint, $data = []): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
@@ -166,11 +171,13 @@ class Curl extends AbstractHelper
         $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
 
-        $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
-        return $result;
+        return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
 
-    public function getAllConnections($method, $urlEndpoint)
+    /**
+     * @throws GuzzleException
+     */
+    public function getAllConnections($method, $urlEndpoint): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
@@ -178,15 +185,14 @@ class Curl extends AbstractHelper
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $headers = $this->getHeaders($apiKey);
 
-        $result = $this->sendRequest($urlEndpoint, $method, $url, $headers);
-        return $result;
+        return $this->sendRequest($urlEndpoint, $method, $url, $headers);
     }
 
     /**
      * @param $apiKey
      * @return array
      */
-    private function getHeaders($apiKey)
+    private function getHeaders($apiKey): array
     {
         $headers = [];
         $headers['Content-Type'] = self::CONTENT_TYPE;
@@ -195,23 +201,25 @@ class Curl extends AbstractHelper
     }
 
     /**
+     * @param $urlEndpoint
      * @param $method
      * @param $url
      * @param $headers
-     * @param $bodyData
+     * @param string $bodyData
      * @return array
+     * @throws GuzzleException
      */
-    private function sendRequest($urlEndpoint, $method, $url, $headers, $bodyData = '')
+    private function sendRequest($urlEndpoint, $method, $url, $headers, string $bodyData = ''): array
     {
         $result = [];
         $synclog = $this->syncLog;
         try {
             $request = [
-                "METHOD"=>$method,
-                "URL"=>$url,
+                "METHOD" => $method,
+                "URL" => $url,
                 "HTTP VERSION" => self::HTTP_VERSION,
-                "HEADERS"=>$headers,
-                "BODY DATA"=>$bodyData
+                "HEADERS" => $headers,
+                "BODY DATA" => $bodyData
             ];
             $synclog->setType($urlEndpoint);
             $synclog->setEndpoint($urlEndpoint);
@@ -252,7 +260,7 @@ class Curl extends AbstractHelper
         } catch (\Exception $e) {
             $synclog->setStatus(0);
             $synclog->setErrors($e->getMessage());
-            $this->logger->critical($e);
+            $this->logger->critical("MODULE Core" . $e);
             $result['success'] = false;
             $result['message'] = $e->getMessage();
         }
@@ -264,7 +272,7 @@ class Curl extends AbstractHelper
     /**
      * @return string[]
      */
-    private function successCodes()
+    private function successCodes(): array
     {
         return [
             200 => "OK",
@@ -275,7 +283,7 @@ class Curl extends AbstractHelper
     /**
      * @return string[]
      */
-    private function failureCodes()
+    private function failureCodes(): array
     {
         return [
             400 => "Bad Request",
@@ -286,9 +294,9 @@ class Curl extends AbstractHelper
 
     /**
      * @param $response
-     * @return \Magento\Framework\Phrase
+     * @return Phrase
      */
-    private function getMessage($response)
+    private function getMessage($response): Phrase
     {
         if (isset($response['message'])) {
             return $response['message'];
@@ -301,7 +309,10 @@ class Curl extends AbstractHelper
         return __("Something was wrong Please try again later");
     }
 
-    public function sendRequestAbandonedCart($method, $urlEndpoint, $data = [])
+    /**
+     * @throws GuzzleException
+     */
+    public function sendRequestAbandonedCart($method, $urlEndpoint, $data = []): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
@@ -312,11 +323,13 @@ class Curl extends AbstractHelper
 
         $headers = $this->getHeaders($apiKey);
         $type = 'ecomAbandonedCarts';
-        $result = $this->sendRequest($type, $method, $url, $headers, $bodyData);
-        return $result;
+        return $this->sendRequest($type, $method, $url, $headers, $bodyData);
     }
 
-    public function listAllCustomers($method, $urlEndpoint, $customerEmail)
+    /**
+     * @throws GuzzleException
+     */
+    public function listAllCustomers($method, $urlEndpoint, $customerEmail): array
     {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
@@ -325,7 +338,6 @@ class Curl extends AbstractHelper
 
         $headers = $this->getHeaders($apiKey);
         $type = 'ecomCustomers';
-        $result = $this->sendRequest($type, $method, $url, $headers);
-        return $result;
+        return $this->sendRequest($type, $method, $url, $headers);
     }
 }

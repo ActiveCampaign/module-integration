@@ -2,10 +2,13 @@
 
 namespace ActiveCampaign\AbandonedCart\Model;
 
-use ActiveCampaign\Core\Helper\Curl;
 use ActiveCampaign\AbandonedCart\Helper\Data as AbandonedCartHelper;
-use ActiveCampaign\Core\Helper\Data as CoreHelper;
 use ActiveCampaign\AbandonedCart\Model\Config\CronConfig;
+use ActiveCampaign\Core\Helper\Curl;
+use ActiveCampaign\Core\Helper\Data as CoreHelper;
+use GuzzleHttp\Exception\GuzzleException;
+use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
+use Magento\Catalog\Helper\ImageFactory;
 use Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Customer as CustomerModel;
@@ -13,19 +16,22 @@ use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerResourceCollectionFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute;
-use Psr\Log\LoggerInterface;
-use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteResourceCollectionFactory;
+use Magento\Framework\App\Area;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Stdlib\DateTime;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteResourceCollectionFactory;
+use Magento\Quote\Model\ResourceModel\Quote\Item\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\Item\CollectionFactory as QuoteItemCollectionFactory;
-use Magento\Quote\Model\QuoteFactory as QuoteFactory;
-use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
-use Magento\Catalog\Helper\ImageFactory;
 use Magento\Store\Model\App\Emulation as AppEmulation;
-use Zend\Log\Writer\Stream;
-use Zend\Log\Logger;
-use Magento\Store\Model\StoreManagerInterface as StoreManagerInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Psr\Log\LoggerInterface;
 
-class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
+class AbandonedCartSendData extends AbstractModel
 {
     public const AC_SYNC_STATUS = "ac_sync_status";
 
@@ -82,12 +88,12 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
     protected $logger;
 
     /**
-     * @var \Magento\Catalog\Helper\ImageFactory
+     * @var ImageFactory
      */
     protected $imageHelperFactory;
 
     /**
-     * @var \Magento\Catalog\Api\ProductRepositoryInterfaceFactory
+     * @var ProductRepositoryInterfaceFactory
      */
     protected $_productRepositoryFactory;
 
@@ -105,6 +111,16 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
      * @var StoreManagerInterface
      */
     protected $storeManager;
+    /**
+     * @var DateTime
+     */
+    private $dateTime;
+    /**
+     * @var CartRepositoryInterface
+     */
+    private $quoteRepository;
+
+    private $customerId;
 
     /**
      * CustomerSync constructor.
@@ -121,12 +137,14 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
      * @param CartRepositoryInterface $cartRepositoryInterface
      * @param CoreHelper $coreHelper
      * @param QuoteItemCollectionFactory $quoteItemCollectionFactory
-     * @param \Magento\Catalog\Api\ProductRepositoryInterfaceFactory $productRepositoryFactory
-     * @param \Magento\Catalog\Helper\ImageFactory $imageHelperFactory
+     * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
+     * @param ImageFactory $imageHelperFactory
      * @param QuoteFactory $quoteFactory
      * @param AppEmulation $appEmulation
      * @param StoreManagerInterface $storeManager
      * @param CustomerModel $customerModel
+     * @param DateTime $dateTime
+     * @param CartRepositoryInterface $quoteRepository
      */
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
@@ -147,7 +165,9 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
         QuoteFactory $quoteFactory,
         AppEmulation $appEmulation,
         StoreManagerInterface $storeManager,
-        CustomerModel $customerModel
+        CustomerModel $customerModel,
+        DateTime $dateTime,
+        CartRepositoryInterface $quoteRepository
     ) {
         $this->customerRepository = $customerRepository;
         $this->addressRepository = $addressRepository;
@@ -168,110 +188,105 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
         $this->appEmulation = $appEmulation;
         $this->storeManager = $storeManager;
         $this->customerModel = $customerModel;
+        $this->dateTime = $dateTime;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
      * @param $quoteId
      * @return array
+     * @throws NoSuchEntityException|LocalizedException
+     * @throws GuzzleException|GuzzleException
      */
-    public function sendAbandonedCartData($quoteId = null)
+    public function sendAbandonedCartData($quoteId = null): array
     {
-        $quoteItemsData = [];
-        $contact = [];
         $result = [];
-        $numberOfAbandonedCart = (int)$this->abandonedCartHelper->getNumberOfAbandonedCart();
+        $numberOfAbandonedCart = (int) $this->abandonedCartHelper->getNumberOfAbandonedCart();
         $abandonedCarts = $this->quoteResourceCollectionFactory->create()
             ->addFieldToSelect('*')
-            ->addFieldToFilter('main_table.' . self::AC_SYNC_STATUS, [
-                ['neq' => CronConfig::SYNCED]
+            ->addFieldToFilter('ac_synced_date', [
+                ['gt'=>'updated_at'],
+                ['null' => true]
             ])
             ->addFieldToFilter(
-                'main_table.is_active',
+                'is_active',
                 '1'
             );
-        if ($quoteId) {
-            $abandonedCarts->addFieldToFilter(
-                'main_table.entity_id',
-                ['in' => $quoteId]
-            );
-        }
 
+        if ($quoteId) {
+            $abandonedCarts->addFieldToFilter('entity_id', ['eq' => $quoteId]);
+        }
         $abandonedCarts->setPageSize($numberOfAbandonedCart);
+
         foreach ($abandonedCarts as $abandonedCart) {
             $connectionId = $this->coreHelper->getConnectionId($abandonedCart->getStoreId());
+
             $customerId = $abandonedCart->getCustomerId();
 
-            $customerAcId = 0;
-            $quote = $this->quoteFactory->create()->load($abandonedCart->getEntityId());
-            if ($customerId) {
+            $quote = $this->quoteRepository->get($abandonedCart->getEntityId());
+
+            if ($quote->getCustomerIsGuest()) {
+                $customerEmail = $quote->getBillingAddress()->getEmail();
+
+                if (!$customerEmail) {
+                    $result['error'] = __('Customer Email does not exist.');
+                    continue;
+                }
+
+                if (!$quote->getCustomerIsGuest()) {
+                    $websiteId = $this->storeManager->getStore($abandonedCart->getStoreId())->getWebsiteId();
+                    $customerModel = $this->customerModel;
+                    $customerModel->setWebsiteId($websiteId);
+                    $customerModel->loadByEmail($customerEmail);
+                    if ($customerModel->getId()) {
+                        $this->customerId = $customerModel->getId();
+                    } else {
+                        $this->customerId = $customerEmail;
+                    }
+                } else {
+                    $this->customerId = $customerEmail;
+                }
+
+                $this->createEcomCustomer($this->customerId, $quote);
+
+                if (!$quote->getCustomerIsGuest()) {
+                    $customerModel = $this->customerFactory->create();
+                    $this->customerResource->load($customerModel, $this->customerId);
+
+                    if ($customerModel->getAcCustomerId()) {
+                        $this->customerId = $customerModel->getAcCustomerId();
+                    } else {
+                        if ($quote->getAcTempCustomerId()) {
+                            $this->customerId = $quote->getAcTempCustomerId();
+                        } else {
+                            $AcCustomer = $this->curl->listAllCustomers(
+                                self::GET_METHOD,
+                                self::ECOM_CUSTOMER_ENDPOINT,
+                                $customerEmail
+                            );
+                            foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
+                                if ($Ac['connectionid'] === $connectionId) {
+                                    $this->customerId = $Ac['id'];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ($quote->getCustomerIsGuest()) {
+                    $this->customerId = $quote->getAcTempCustomerId();
+                }
+            } else {
                 $this->createEcomCustomer($abandonedCart->getCustomerId(), $quote);
                 $customerEmail = $abandonedCart->getCustomerEmail();
                 $customerModel = $this->customerFactory->create();
                 $this->customerResource->load($customerModel, $customerId);
                 if ($customerModel->getAcCustomerId()) {
-                    $customerAcId = $customerModel->getAcCustomerId();
-                }
-            } else {
-                $customerEmail = $quote->getBillingAddress()->getEmail();
-                if (!$customerEmail) {
-                    $result['error'] = __('Customer Email does not exist.');
-                    return $result;
-                }
-                $websiteId  = $this->storeManager->getWebsite()->getWebsiteId();
-                $customerModel = $this->customerModel;
-                $customerModel->setWebsiteId($websiteId);
-                $customerModel->loadByEmail($customerEmail);
-                if ($customerModel->getId()) {
-                    $customerId = $customerModel->getId();
-                } else {
-                    $customerId = 0;
-                }
-                $this->createEcomCustomer($customerId, $quote);
-                $customerModel = $this->customerFactory->create();
-                $this->customerResource->load($customerModel, $customerId);
-                if ($customerModel->getAcCustomerId()) {
-                    $customerAcId = $customerModel->getAcCustomerId();
-                } else {
-                    if ($quote->getAcTempCustomerId()) {
-                        $customerAcId = $quote->getAcTempCustomerId();
-                    } else {
-                        $AcCustomer = $this->curl->listAllCustomers(
-                            self::GET_METHOD,
-                            self::ECOM_CUSTOMER_ENDPOINT,
-                            $customerEmail
-                        );
-                        foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
-                            if ($Ac['connectionid'] == $connectionId) {
-                                $customerAcId = $Ac['id'];
-                            }
-                        }
-                    }
+                    $this->customerId  = $customerModel->getAcCustomerId();
                 }
             }
 
-            $quoteItems = $this->getQuoteItems($abandonedCart->getEntityId());
-            foreach ($quoteItems as $quoteItem) {
-                $this->appEmulation->startEnvironmentEmulation(
-                    $abandonedCart->getStoreId(),
-                    \Magento\Framework\App\Area::AREA_FRONTEND,
-                    true
-                );
-                $product = $this->_productRepositoryFactory->create()
-                            ->get($quoteItem->getSku());
-                $imageUrl = $this->imageHelperFactory->create()
-                            ->init($product, 'product_thumbnail_image')->getUrl();
-                $this->appEmulation->stopEnvironmentEmulation();
-                $quoteItemsData[] = [
-                    "externalid" => $quoteItem->getItemId(),
-                    "name" => $quoteItem->getName(),
-                    "price" => $this->coreHelper->priceToCents($quoteItem->getPrice()),
-                    "quantity" => $quoteItem->getQty(),
-                    "sku" => $quoteItem->getSku(),
-                    "description" => $quoteItem->getDescription(),
-                    "imageUrl" => $imageUrl,
-                    "productUrl" => $product->getProductUrl()
-                ];
-            }
+            $quoteItemsData = $this->getQuoteItemsData($abandonedCart->getEntityId(), $abandonedCart->getStoreId());
 
             $abandonedCartData = [
                 "ecomOrder" => [
@@ -293,74 +308,106 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
                     "currency" => $abandonedCart->getGlobalCurrencyCode(),
                     "orderNumber" => $abandonedCart->getEntityId(),
                     "connectionid" => $connectionId,
-                    "customerid" => ($customerAcId === null) ? 0 : $customerAcId,
+                    "customerid" => $this->customerId,
                 ]
             ];
 
             try {
-                if (!empty($abandonedCart->getAcOrderSyncId())) {
-                    $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
-                        self::UPDATE_METHOD,
-                        self::ABANDONED_CART_URL_ENDPOINT . "/" . (int)$abandonedCart->getAcOrderSyncId(),
-                        $abandonedCartData
-                    );
-                } else {
+                if (is_null($abandonedCart->getAcSyncedDate())) {
                     $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
                         self::METHOD,
                         self::ABANDONED_CART_URL_ENDPOINT,
                         $abandonedCartData
                     );
+                } else {
+                    $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
+                        self::UPDATE_METHOD,
+                        self::ABANDONED_CART_URL_ENDPOINT . "/" . (int) $abandonedCart->getAcOrderSyncId(),
+                        $abandonedCartData
+                    );
                 }
 
-                if ($abandonedCartResult['success'] == 1) {
+                if ($abandonedCartResult['success']) {
                     $syncStatus = CronConfig::SYNCED;
                 } else {
                     $syncStatus = CronConfig::FAIL_SYNCED;
                 }
 
-                if(isset($abandonedCartResult['data']['ecomOrder']['id'])) {
+                if (isset($abandonedCartResult['data']['ecomOrder']['id'])) {
                     $acOrderId = $abandonedCartResult['data']['ecomOrder']['id'];
                     $this->saveResult($abandonedCart->getEntityId(), $acOrderId, $syncStatus);
                 }
 
-                if (isset($abandonedCartResult['success']) && $abandonedCartResult['success'] == 1) {
+                if (isset($abandonedCartResult['success']) && $abandonedCartResult['success']) {
                     $result['success'] = __("Abandoned cart data successfully synced!!");
-                }elseif (isset($abandonedCartResult['message'])) {
+                } elseif (isset($abandonedCartResult['message'])) {
                     $result['error'] = $abandonedCartResult['message'];
                 }
             } catch (\Exception $e) {
                 $result['error'] = __($e->getMessage());
-                $this->logger->critical($e);
+                $this->logger->critical("MODULE AbandonedCart: " . $e->getMessage());
+            } catch (GuzzleException $e) {
+                $this->logger->critical("MODULE AbandonedCart GuzzleException: " . $e->getMessage());
             }
         }
         return $result;
     }
 
     /**
-     * @param $quoteId
-     * @return array
+     * @throws NoSuchEntityException
      */
-    private function getQuoteItems($quoteId)
+    private function getQuoteItemsData($entityId, $storeId): array
+    {
+        $quoteItemsData = [];
+        $quoteItems = $this->getQuoteItems($entityId);
+        foreach ($quoteItems as $quoteItem) {
+            $this->appEmulation->startEnvironmentEmulation($storeId, Area::AREA_FRONTEND, true);
+
+            $product = $this->_productRepositoryFactory->create()
+                ->getById($quoteItem->getProductId());
+
+            $imageUrl = $this->imageHelperFactory->create()
+                ->init($product, 'product_thumbnail_image')->getUrl();
+            $this->appEmulation->stopEnvironmentEmulation();
+            $quoteItemsData[] = [
+                "externalid" => $quoteItem->getItemId(),
+                "name" => $quoteItem->getName(),
+                "price" => $this->coreHelper->priceToCents($quoteItem->getPrice()),
+                "quantity" => $quoteItem->getQty(),
+                "sku" => $quoteItem->getSku(),
+                "description" => $quoteItem->getDescription(),
+                "imageUrl" => $imageUrl,
+                "productUrl" => $product->getProductUrl()
+            ];
+        }
+        return $quoteItemsData;
+    }
+
+    /**
+     * @param $quoteId
+     * @return Collection
+     */
+    private function getQuoteItems($quoteId): Collection
     {
         $quoteItemCollection = $this->quoteItemCollectionFactory->create();
-        $quoteItem           = $quoteItemCollection
+        return $quoteItemCollection
             ->addFieldToSelect('*')
             ->addFieldToFilter('quote_id', [$quoteId]);
-        return $quoteItem;
     }
 
     /**
      * @param $quoteId
      * @param $acOrderId
      * @param $syncStatus
-     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws AlreadyExistsException|NoSuchEntityException
      */
-    private function saveResult($quoteId, $acOrderId, $syncStatus)
+    private function saveResult($quoteId, $acOrderId, $syncStatus): void
     {
         $quoteModel = $this->cartRepositoryInterface->get($quoteId);
         if ($quoteModel->getEntityId()) {
             $quoteModel->setAcOrderSyncId($acOrderId);
             $quoteModel->setAcSyncStatus($syncStatus);
+            $quoteModel->setAcSyncedDate($this->dateTime->formatDate(time()));
         }
         $quoteModel->save();
     }
@@ -368,13 +415,12 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
     /**
      * @param null $billingId
      * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    private function getTelephone($billingId = null)
+    private function getTelephone($billingId = null): ?string
     {
         if ($billingId) {
-            $address = $this->addressRepository->getById($billingId);
-            return $address->getTelephone();
+            return $this->addressRepository->getById($billingId)->getTelephone();
         }
         return null;
     }
@@ -382,10 +428,10 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
     /**
      * @param $customerId
      * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    private function getFieldValues($customerId)
+    private function getFieldValues($customerId): array
     {
         $fieldValues = [];
         $customAttributes = $this->customerRepository->getById($customerId)->getCustomAttributes();
@@ -402,94 +448,105 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
 
     /**
      * @param $customerId
-     * @return array
+     * @return void
      */
-    private function getCustomer($customerId)
+    private function createEcomCustomer($customerId, $quote): void
     {
-        $customerModel = $this->customerFactory->create();
-        $this->customerResource->load($customerModel, $customerId);
-        return $customerModel;
-    }
-
-    /**
-     * @param $customerId
-     * @return array
-     */
-    private function createEcomCustomer($customerId, $quote)
-    {
-
-        $ecomCustomerArray = [];
         $ecomCustomerId = 0;
-        $syncStatus = CronConfig::NOT_SYNCED;
-        $customer = $this->getCustomer($customerId);
+        $contact = [];
         if ($customerId) {
-            $customerId = $customer->getId();
-            $contact['email'] = $customer->getEmail();
-            $customerEmail = $customer->getEmail();
-            $contact['firstName'] = $customer->getFirstname();
-            $contact['lastName'] = $customer->getLastname();
-            $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
-            $contact['fieldValues'] = $this->getFieldValues($customerId);
-        } else {
-            $customerId = 0;
-            $contact['email'] = $quote->getBillingAddress()->getEmail();
-            $customerEmail = $quote->getBillingAddress()->getEmail();
-            $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
-            $contact['lastName'] = $quote->getBillingAddress()->getLastname();
-            $contact['phone'] = $quote->getBillingAddress()->getTelephone();
-            $contact['fieldValues'] = [];
+            if (!$quote->getCustomerIsGuest()) {
+                $customer = $this->getCustomer($customerId);
+                $customerId = $customer->getId();
+                $contact['email'] = $customer->getEmail();
+                $customerEmail = $customer->getEmail();
+                $contact['firstName'] = $customer->getFirstname();
+                $contact['lastName'] = $customer->getLastname();
+                $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
+                $contact['fieldValues'] = $this->getFieldValues($customerId);
+            } else {
+                $customerId = $quote->getBillingAddress()->getEmail();
+                $contact['email'] = $quote->getBillingAddress()->getEmail();
+                $customerEmail = $quote->getBillingAddress()->getEmail();
+                $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
+                $contact['lastName'] = $quote->getBillingAddress()->getLastname();
+                $contact['phone'] = $quote->getBillingAddress()->getTelephone();
+                $contact['fieldValues'] = [];
+            }
         }
+
         $contactData['contact'] = $contact;
 
         try {
             $contactResult = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
-            $contactId = isset($contactResult['data']['contact']['id']) ? $contactResult['data']['contact']['id'] : null;
-            $connectionid = $this->coreHelper->getConnectionId($customer->getStoreId());
 
-            if (isset($contactResult['data']['contact']['id'])) {
-                if (!$customer->getAcCustomerId()) {
-                    $ecomCustomer['connectionid'] = $connectionid;
-                    $ecomCustomer['externalid'] = $customerId;
-                    $ecomCustomer['email'] = $customerEmail;
-                    $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
-                    $AcCustomer = $this->curl->listAllCustomers(
-                        self::GET_METHOD,
-                        self::ECOM_CUSTOMER_ENDPOINT,
-                        $customerEmail
-                    );
-                    if (isset($AcCustomer['data']['ecomCustomers'][0])) {
-                        foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
-                            if ($Ac['connectionid'] == $connectionid) {
-                                $ecomCustomerId = $Ac['id'];
+            $contactId = $contactResult['data']['contact']['id'] ?? null;
+
+            $connectionid = $this->coreHelper->getConnectionId($quote->getStoreId());
+
+            if (!$quote->getCustomerIsGuest()) {
+                if (isset($contactResult['data']['contact']['id'])) {
+                    if (!$customer->getAcCustomerId()) {
+                        $ecomCustomer['connectionid'] = $connectionid;
+                        $ecomCustomer['externalid'] = $customerId;
+                        $ecomCustomer['email'] = $customerEmail;
+                        $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
+                        $AcCustomer = $this->curl->listAllCustomers(
+                            self::GET_METHOD,
+                            self::ECOM_CUSTOMER_ENDPOINT,
+                            $customerEmail
+                        );
+                        if (isset($AcCustomer['data']['ecomCustomers'][0])) {
+                            foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
+                                if ($Ac['connectionid'] === $connectionid) {
+                                    $ecomCustomerId = $Ac['id'];
+                                }
                             }
                         }
+                        if (!$ecomCustomerId) {
+                            $ecomCustomerResult = $this->curl->createContacts(
+                                self::METHOD,
+                                self::ECOM_CUSTOMER_ENDPOINT,
+                                $ecomCustomerData
+                            );
+                            $ecomCustomerId = $ecomCustomerResult['data']['ecomCustomer']['id'] ?? null;
+                        }
+                    } else {
+                        $ecomCustomerId = $customer->getAcCustomerId();
                     }
-                    if (!$ecomCustomerId) {
-                        $ecomCustomerResult = $this->curl->createContacts(
-                            self::METHOD,
-                            self::ECOM_CUSTOMER_ENDPOINT,
-                            $ecomCustomerData
-                        );
-                        $ecomCustomerId = isset($ecomCustomerResult['data']['ecomCustomer']['id']) ? $ecomCustomerResult['data']['ecomCustomer']['id'] : null;
-                    }
-                } else {
-                    $ecomCustomerId = $customer->getAcCustomerId();
                 }
             }
 
-            if ($ecomCustomerId !=  0) {
+            if ($quote->getCustomerIsGuest()) {
+                $ecomCustomerData= [
+                    "ecomCustomer"=>[
+                        "connection"=>$connectionid,
+                        'externals' =>$quote->getBillingAddress()->getEmail(),
+                        'email'=>$quote->getBillingAddress()->getEmail(),
+                ]];
+                $ecomCustomerResult = $this->curl->createContacts(
+                    self::METHOD,
+                    self::ECOM_CUSTOMER_ENDPOINT,
+                    $ecomCustomerData
+                );
+                $ecomCustomerId = $ecomCustomerResult['data']['ecomCustomer']['id'] ?? null;
+            }
+
+            if ($ecomCustomerId !==  0) {
                 $syncStatus = CronConfig::SYNCED;
             } else {
                 $syncStatus = CronConfig::FAIL_SYNCED;
             }
 
-            if ($customerId) {
-                $this->saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
-            } else {
+            if ($quote->getCustomerIsGuest()) {
                 $this->saveCustomerResultQuote($quote, $ecomCustomerId);
+            } else {
+                $this->saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
             }
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->critical("MODULE AbandonedCart: " . $e->getMessage());
+        } catch (GuzzleException $e) {
+            $this->logger->critical("MODULE AbandonedCart: " . $e->getMessage());
         }
     }
 
@@ -498,33 +555,44 @@ class AbandonedCartSendData extends \Magento\Framework\Model\AbstractModel
      * @param $syncStatus
      * @param $contactId
      * @param $ecomCustomerId
-     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws AlreadyExistsException
      */
-    private function saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId)
+    private function saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId): void
     {
-        $customerModel = $this->customerFactory->create();
-        if ($customerId) {
+        if (is_numeric($customerId)) {
+            $customerModel = $this->customerFactory->create();
             $this->customerResource->load($customerModel, $customerId);
+            $customerModel->setAcSyncStatus($syncStatus);
+            $customerModel->setAcContactId($contactId);
+            $customerModel->setAcCustomerId($ecomCustomerId);
+            $this->customerResource->save($customerModel);
         }
-
-        $customerModel->setAcSyncStatus($syncStatus);
-
-        $customerModel->setAcContactId($contactId);
-        $customerModel->setAcCustomerId($ecomCustomerId);
-
-        $this->customerResource->save($customerModel);
     }
 
     /**
      * @param $quote
      * @param $ecomCustomerId
-     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws AlreadyExistsException
      */
-    private function saveCustomerResultQuote($quote, $ecomCustomerId)
+    private function saveCustomerResultQuote($quote, $ecomCustomerId): void
     {
         if ($ecomCustomerId) {
             $quote->setData("ac_temp_customer_id", $ecomCustomerId);
             $quote->save();
         }
+    }
+
+    /**
+     * @param $customerId
+     * @return CustomerModel
+     */
+    private function getCustomer($customerId): CustomerModel
+    {
+        $customerModel = $this->customerFactory->create();
+        if (is_numeric($customerId)) {
+            $this->customerResource->load($customerModel, $customerId);
+            return $customerModel;
+        }
+        return $customerModel;
     }
 }

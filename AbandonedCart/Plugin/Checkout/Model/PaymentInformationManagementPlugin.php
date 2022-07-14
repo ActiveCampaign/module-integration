@@ -44,11 +44,10 @@ class PaymentInformationManagementPlugin
         \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
         \Magento\Quote\Api\Data\AddressInterface $billingAddress = null
     ) {
-
         $quoteRepository = $this->getCartRepository();
         /** @var \Magento\Quote\Model\Quote $quote */
         $quote = $quoteRepository->getActive($cartId);
-    
+
         if ($this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
             $response = $this->abandonedCartSendData->sendAbandonedCartData($quote->getId());
         }
@@ -68,4 +67,4 @@ class PaymentInformationManagementPlugin
         }
         return $this->cartRepository;
     }
-}   
+}

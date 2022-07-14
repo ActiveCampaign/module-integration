@@ -86,7 +86,7 @@ class CustomerSaveAfter implements ObserverInterface
             }
             $this->customer->saveResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->critical("MODULE: Customer " . $e);
         }
     }
 }

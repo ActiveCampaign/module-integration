@@ -15,7 +15,7 @@ class Data extends AbstractHelper
      * @param null $scopeCode
      * @return bool
      */
-    public function isAbandonedCartSyncingEnabled($scopeCode = null)
+    public function isAbandonedCartSyncingEnabled($scopeCode = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_ABANDONED_CART_SYNC,
