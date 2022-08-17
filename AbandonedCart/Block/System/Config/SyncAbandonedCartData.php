@@ -3,6 +3,7 @@
  * Copyright © Wagento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace ActiveCampaign\AbandonedCart\Block\System\Config;
 
@@ -15,16 +16,24 @@ use ActiveCampaign\AbandonedCart\Model\Config\CronConfig;
 
 class SyncAbandonedCartData extends Field
 {
-    const AC_SYNC_STATUS = "ac_sync_status";
+    public const AC_SYNC_STATUS = 'ac_sync_status';
+
     /**
      * @var string
      */
     protected $_template = 'ActiveCampaign_AbandonedCart::system/config/sync_abandoned_cart_data.phtml';
 
     /**
+     * @var QuoteResourceCollectionFactory
+     */
+    protected $quoteResourceCollectionFactory;
+
+    /**
+     * Construct
+     *
      * @param Context $context
-     * @param array $data
      * @param QuoteResourceCollectionFactory $quoteResourceCollectionFactory
+     * @param array $data
      */
     public function __construct(
         Context $context,
@@ -37,6 +46,7 @@ class SyncAbandonedCartData extends Field
 
     /**
      * Remove scope label
+     *
      * @param AbstractElement $element
      * @return string
      */
@@ -48,6 +58,7 @@ class SyncAbandonedCartData extends Field
 
     /**
      * Return element html
+     *
      * @param AbstractElement $element
      * @return string
      */
@@ -58,6 +69,7 @@ class SyncAbandonedCartData extends Field
 
     /**
      * Return ajax url for field sync button
+     *
      * @return string
      */
     public function getAjaxUrl()
@@ -67,93 +79,109 @@ class SyncAbandonedCartData extends Field
 
     /**
      * Generate field sync button html
+     *
      * @return string
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getButtonHtml()
     {
         $button = $this->getLayout()->createBlock(
             Button::class
         )->setData([
-            'id' => 'ac_sync_abandoned_cart_button',
+            'id'    => 'ac_sync_abandoned_cart_button',
             'label' => __('Sync Abandoned Cart Data'),
         ]);
+
         return $button->toHtml();
     }
 
     /**
-     * @return $this
+     * Get abandoned cart collection
+     *
+     * @return \Magento\Quote\Model\ResourceModel\Quote\Collection
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getAbandonedCartCollection()
     {
-        $collection = $this->quoteResourceCollectionFactory->create()
+        return $this->quoteResourceCollectionFactory->create()
             ->addFieldToSelect('*')
             ->addFieldToFilter(
                 'main_table.is_active',
                 '1'
             );
-        return $collection;
     }
 
     /**
-     * @return int|void
+     * Get sync abandoned cart
+     *
+     * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getSyncAbandonedCart()
     {
-        $sync = $this->getAbandonedCartCollection()->addFieldToFilter(
+        $collection = $this->getAbandonedCartCollection()->addFieldToFilter(
             self::AC_SYNC_STATUS,
             [
                 ['eq' => CronConfig::SYNCED]
             ]
         );
-        return count($sync);
+
+        return $collection->getSize();
     }
 
     /**
-     * @return int|void
+     * Get total abandoned cart
+     *
+     * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getTotalAbandonedCart()
     {
-        $total = $this->getAbandonedCartCollection()->addFieldToFilter(
+        $collection = $this->getAbandonedCartCollection()->addFieldToFilter(
             self::AC_SYNC_STATUS,
             [
                 ['eq' => CronConfig::SYNCED],
                 ['eq' => CronConfig::NOT_SYNCED],
-                ['eq' => CronConfig::FAIL_SYNCED],
+                ['eq' => CronConfig::FAIL_SYNCED]
             ]
         );
-        return count($total);
+
+        return $collection->getSize();
     }
 
     /**
-     * @return int|void
+     * Get not sync abandoned cart
+     *
+     * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getNotSyncAbandonedCart()
     {
-        $notSync = $this->getAbandonedCartCollection()->addFieldToFilter(
+        $collection = $this->getAbandonedCartCollection()->addFieldToFilter(
             self::AC_SYNC_STATUS,
             [
-                ['eq' => CronConfig::NOT_SYNCED],
+                ['eq' => CronConfig::NOT_SYNCED]
             ]
-        )->getData();
-        return count($notSync);
+        );
+
+        return $collection->getSize();
     }
 
     /**
-     * @return int|void
+     * Get failed sync
+     *
+     * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getFailedSync()
     {
-        $failSync = $this->getAbandonedCartCollection()->addFieldToFilter(
+        $collection = $this->getAbandonedCartCollection()->addFieldToFilter(
             self::AC_SYNC_STATUS,
             [
-                ['eq' => CronConfig::FAIL_SYNCED],
+                ['eq' => CronConfig::FAIL_SYNCED]
             ]
         );
-        return count($failSync);
+
+        return $collection->getSize();
     }
 }
