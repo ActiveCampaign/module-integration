@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
-        <tab id="active_campaign" translate="label" sortOrder="1">
+        <tab id="active_campaign" translate="label" sortOrder="10000">
             <label>ActiveCampaign</label>
         </tab>
         <section id="active_campaign" translate="label" type="text" sortOrder="100" showInDefault="1" showInStore="1">
