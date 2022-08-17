@@ -1,52 +1,53 @@
 <?php
+declare(strict_types=1);
+
 namespace ActiveCampaign\Core\Block\Adminhtml\System\Config;
 
-use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
-use Magento\Config\Block\System\Config\Form\Field;
-use Magento\Framework\Data\Form\Element\AbstractElement;
-use Magento\Store\Model\ScopeInterface;
-
-class FieldDisable extends Field
+class FieldDisable extends \Magento\Config\Block\System\Config\Form\Field
 {
     /**
-     * @param AbstractElement $element
-     * @return string
+     * @inheritdoc
      */
-    protected function _getElementHtml(AbstractElement $element)
+    protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
     {
-        if($this->isConnected()) {
+        if ($this->isConnected()) {
             $element->setDisabled('disabled');
         }
+
         return $element->getElementHtml();
     }
 
     /**
+     * Is connected
+     *
      * @return bool
      */
-    public function isConnected()
+    public function isConnected(): bool
     {
-        $store = $this->getRequest()->getParam('store');
-        if ($store) {
+        if ($store = $this->getRequest()->getParam('store')) {
             $connectionId = $this->_scopeConfig->getValue(
-                ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
-                ScopeInterface::SCOPE_STORES,
+                \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
                 $store
             );
 
-            return ($connectionId) ? true : false;
-        } else {
-            $stores = $this->_storeManager->getStores();
-            foreach ($stores as $store) {
-                $connectionId = $this->_scopeConfig->getValue(
-                    ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
-                    ScopeInterface::SCOPE_STORES,
-                    $store->getId()
-                );
-                if (!$connectionId) {
-                    return false;
-                }
-            }
-            return true;
+            return (bool)$connectionId;
         }
+
+        $stores = $this->_storeManager->getStores();
+
+        foreach ($stores as $store) {
+            $connectionId = $this->_scopeConfig->getValue(
+                \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+                $store->getId()
+            );
+
+            if (!$connectionId) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
