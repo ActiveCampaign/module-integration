@@ -1,14 +1,11 @@
 <?php
+declare(strict_types=1);
 
 namespace ActiveCampaign\Order\Block\Adminhtml\System\Config;
 
-use ActiveCampaign\Order\Model\Config\CronConfig;
-use Magento\Backend\Block\Template\Context;
-use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
-
 class OrderSyncStatus extends \Magento\Backend\Block\Template
 {
-    const AC_SYNC_STATUS = "ac_order_sync_status";
+    public const AC_SYNC_STATUS = 'ac_order_sync_status';
 
     /**
      * @var string
@@ -16,96 +13,127 @@ class OrderSyncStatus extends \Magento\Backend\Block\Template
     protected $_template = 'ActiveCampaign_Order::system/config/order_sync_status.phtml';
 
     /**
-     * @var OrderFactory|CollectionFactory
+     * @var \Magento\Sales\Api\OrderRepositoryInterface
      */
-    protected $orderFactory;
+    private $orderRepository;
 
     /**
-     * OrderSyncStatus constructor.
-     * @param Context $context
-     * @param OrderFactory $orderFactory
+     * @var \Magento\Framework\Api\SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
+     * @var \Magento\Framework\Api\FilterBuilder
+     */
+    private $filterBuilder;
+
+    /**
+     * Construct
+     *
+     * @param \Magento\Backend\Block\Template\Context $context
+     * @param \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+     * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param \Magento\Framework\Api\FilterBuilder $filterBuilder
      * @param array $data
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function __construct(
-        Context $context,
-        CollectionFactory $orderFactory,
+        \Magento\Backend\Block\Template\Context $context,
+        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
+        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
+        \Magento\Framework\Api\FilterBuilder $filterBuilder,
         array $data = []
     ) {
-        $this->orderFactory = $orderFactory;
+        $this->orderRepository = $orderRepository;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->filterBuilder = $filterBuilder;
+
         parent::__construct($context, $data);
-        $this->setSyncStatusData();
     }
 
     /**
-     * @return $this
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * Get order count helper
+     *
+     * @param \Magento\Framework\Api\Filter[] $filter
+     * @return int
      */
-    public function getOrderCollection()
+    public function getOrderCountHelper(array $filter = []): int
     {
-        $collection = $this->orderFactory->create()->addAttributeToSelect('*');
-        return $collection;
+        $searchCriteria = $this->searchCriteriaBuilder;
+
+        if (count($filter)) {
+            $searchCriteria->addFilters($filter);
+        }
+
+        $searchCriteria->setCurrentPage(1)
+            ->setPageSize(1);
+
+        return $this->orderRepository
+            ->getList($searchCriteria->create())
+            ->getTotalCount();
     }
 
     /**
-     * @return int|void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * Get total order
+     *
+     * @return int
      */
-    public function getSyncOrder()
+    public function getTotalOrder(): int
     {
-        $sync = $this->getOrderCollection()->addFieldToFilter(
-            self::AC_SYNC_STATUS,
+        return $this->getOrderCountHelper();
+    }
+
+    /**
+     * Get sync order
+     *
+     * @return int
+     */
+    public function getSyncOrder(): int
+    {
+        return $this->getOrderCountHelper([
+            $this->filterBuilder
+                ->setField(self::AC_SYNC_STATUS)
+                ->setValue(\ActiveCampaign\Order\Model\Config\CronConfig::SYNCED)
+                ->setConditionType('eq')
+                ->create()
+        ]);
+    }
+
+    /**
+     * Get not sync order
+     *
+     * @return int
+     */
+    public function getNotSyncOrder(): int
+    {
+        return $this->getOrderCountHelper(
             [
-                ['eq' => CronConfig::SYNCED],
+                $this->filterBuilder
+                    ->setField(self::AC_SYNC_STATUS)
+                    ->setValue(\ActiveCampaign\Order\Model\Config\CronConfig::NOT_SYNCED)
+                    ->setConditionType('eq')
+                    ->create(),
+                $this->filterBuilder
+                    ->setField(self::AC_SYNC_STATUS)
+                    ->setValue(true)
+                    ->setConditionType('null')
+                    ->create()
             ]
         );
-        return count($sync);
     }
 
     /**
-     * @return int|void
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * Get failed sync
+     *
+     * @return int
      */
-    public function getTotalOrder()
+    public function getFailedSync(): int
     {
-        $total = $this->getOrderCollection()->addFieldToFilter(
-            self::AC_SYNC_STATUS,
-            [
-                ['eq' => CronConfig::SYNCED],
-                ['eq' => CronConfig::NOT_SYNCED],
-                ['eq' => CronConfig::FAIL_SYNCED],
-            ]
-        );
-        return count($total);
-    }
-
-    /**
-     * @return int|void
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function getNotSyncOrder()
-    {
-        $notSync = $this->getOrderCollection()->addFieldToFilter(
-            self::AC_SYNC_STATUS,
-            [
-                ['eq' => CronConfig::NOT_SYNCED],
-            ]
-        )->getData();
-        return count($notSync);
-    }
-
-    /**
-     * @return int|void
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function getFailedSync()
-    {
-        $failSync = $this->getOrderCollection()->addFieldToFilter(
-            self::AC_SYNC_STATUS,
-            [
-                ['eq' => CronConfig::FAIL_SYNCED],
-            ]
-        );
-        return count($failSync);
+        return $this->getOrderCountHelper([
+            $this->filterBuilder
+                ->setField(self::AC_SYNC_STATUS)
+                ->setValue(\ActiveCampaign\Order\Model\Config\CronConfig::FAIL_SYNCED)
+                ->setConditionType('eq')
+                ->create()
+        ]);
     }
 }
