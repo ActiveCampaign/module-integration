@@ -1,87 +1,77 @@
 <?php
+declare(strict_types=1);
+
 namespace ActiveCampaign\Core\Controller\Adminhtml\System\Config;
 
-use ActiveCampaign\Core\Helper\Curl;
-use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\Cache\Type\Config;
-use Magento\Framework\App\Cache\TypeListInterface;
-use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
-use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\PageCache\Model\Cache\Type;
-use Magento\Store\Api\StoreRepositoryInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\StoreManagerInterface;
-
-class Disconnect extends Action
+class Disconnect extends \Magento\Backend\App\Action
 {
-    const URL_ENDPOINT = "connections";
-    const METHOD = "DELETE";
-    const GET_METHOD = "GET";
+    public const URL_ENDPOINT = 'connections';
+    public const METHOD = 'DELETE';
+    public const GET_METHOD = 'GET';
 
     /**
      * Authorization level of a basic admin session.
      *
      * @see _isAllowed()
      */
-    const ADMIN_RESOURCE = 'ActiveCampaign_Core::config_active_campaign';
+    public const ADMIN_RESOURCE = 'ActiveCampaign_Core::config_active_campaign';
 
     /**
-     * @var JsonFactory
+     * @var \Magento\Framework\Controller\Result\JsonFactory
      */
     private $resultJsonFactory;
 
     /**
-     * @var TypeListInterface
+     * @var \Magento\Framework\App\Cache\TypeListInterface
      */
     private $cacheTypeList;
 
     /**
-     * @var ConfigInterface
+     * @var \Magento\Framework\App\Config\ConfigResource\ConfigInterface
      */
     private $configInterface;
 
     /**
-     * @var StoreRepositoryInterface
+     * @var \Magento\Store\Api\StoreRepositoryInterface
      */
     private $storeRepository;
 
     /**
-     * @var ActiveCampaignHelper
+     * @var \ActiveCampaign\Core\Helper\Data
      */
     private $activeCampaignHelper;
 
     /**
-     * @var Curl
+     * @var \ActiveCampaign\Core\Helper\Curl
      */
     private $curl;
 
     /**
-     * @var StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     private $storeManager;
 
     /**
-     * Connection constructor.
-     * @param Context $context
-     * @param JsonFactory $resultJsonFactory
-     * @param TypeListInterface $cacheTypeList
-     * @param ConfigInterface $configInterface
-     * @param StoreRepositoryInterface $storeRepository
-     * @param StoreManagerInterface $storeManager
-     * @param ActiveCampaignHelper $activeCampaignHelper
-     * @param Curl $curl
+     * Construct
+     *
+     * @param \Magento\Backend\App\Action\Context $context
+     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
+     * @param \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
+     * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface
+     * @param \Magento\Store\Api\StoreRepositoryInterface $storeRepository
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \ActiveCampaign\Core\Helper\Data $activeCampaignHelper
+     * @param \ActiveCampaign\Core\Helper\Curl $curl
      */
     public function __construct(
-        Context $context,
-        JsonFactory $resultJsonFactory,
-        TypeListInterface $cacheTypeList,
-        ConfigInterface $configInterface,
-        StoreRepositoryInterface $storeRepository,
-        StoreManagerInterface $storeManager,
-        ActiveCampaignHelper $activeCampaignHelper,
-        Curl $curl
+        \Magento\Backend\App\Action\Context $context,
+        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
+        \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
+        \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface,
+        \Magento\Store\Api\StoreRepositoryInterface $storeRepository,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \ActiveCampaign\Core\Helper\Data $activeCampaignHelper,
+        \ActiveCampaign\Core\Helper\Curl $curl
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
@@ -97,6 +87,7 @@ class Disconnect extends Action
      * Check for connection to server
      *
      * @return \Magento\Framework\Controller\Result\Json
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function execute()
     {
@@ -108,33 +99,39 @@ class Disconnect extends Action
         $return = [];
         $return['success'] = false;
 
-        if ($request['status'] && !empty($request['api_url']) && !empty($request['api_key'])) {
+        if ($request['status']
+            && !empty($request['api_url'])
+            && !empty($request['api_key'])
+        ) {
             try {
                 if ((int)$request['store']) {
                     $connectionId = $this->activeCampaignHelper->getConnectionId($request['store']);
-                    $urlEndpoint = self::URL_ENDPOINT . "/" . $connectionId;
+                    $urlEndpoint = self::URL_ENDPOINT . '/' . $connectionId;
                     $result = $this->curl->deleteConnection(self::METHOD, $urlEndpoint);
+
                     if ($result['success']) {
                         $this->configInterface->deleteConfig(
-                            ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
-                            ScopeInterface::SCOPE_STORES,
+                            \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
+                            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
                             $request['store']
                         );
                     } else {
                         $return['success'] = false;
                         $return['errorMessage'] = $result['message'];
                     }
-                } elseif ($request['store'] == "0") {
+                } elseif ($request['store'] == '0') {
                     $stores = $this->storeRepository->getList();
+
                     foreach ($stores as $store) {
                         if ($store->getId()) {
-                            $connectionId = $this->activeCampaignHelper->getConnectionId($store->getId());
-                            $urlEndpoint = self::URL_ENDPOINT . "/" . $connectionId;
+                            $connectionId = $this->activeCampaignHelper->getConnectionId((int)$store->getId());
+                            $urlEndpoint = self::URL_ENDPOINT . '/' . $connectionId;
                             $result = $this->curl->deleteConnection(self::METHOD, $urlEndpoint);
+
                             if ($result['success']) {
                                 $this->configInterface->deleteConfig(
-                                    ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
-                                    ScopeInterface::SCOPE_STORES,
+                                    \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
+                                    \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
                                     $store->getId()
                                 );
                             } else {
@@ -145,7 +142,10 @@ class Disconnect extends Action
                     }
                 }
 
-                $allConnections = $this->curl->getAllConnections(self::GET_METHOD, self::URL_ENDPOINT);
+                $allConnections = $this->curl->getAllConnections(
+                    self::GET_METHOD,
+                    self::URL_ENDPOINT
+                );
                 $checkConnections = $this->activeCampaignHelper->checkConnections($allConnections);
                 $return['success'] = $checkConnections;
             } catch (\Exception $e) {
@@ -156,12 +156,13 @@ class Disconnect extends Action
 
         if ($return['success'] === true) {
             $this->cacheTypeList->invalidate([
-                Config::TYPE_IDENTIFIER,
-                Type::TYPE_IDENTIFIER
+                \Magento\Framework\App\Cache\Type\Config::TYPE_IDENTIFIER,
+                \Magento\PageCache\Model\Cache\Type::TYPE_IDENTIFIER
             ]);
         }
 
         $resultJson = $this->resultJsonFactory->create();
+
         return $resultJson->setData($return);
     }
 }

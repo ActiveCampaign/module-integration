@@ -1,48 +1,43 @@
 <?php
+declare(strict_types=1);
+
 namespace ActiveCampaign\Core\Helper;
 
-use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
-use Magento\Store\Api\StoreRepositoryInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Theme\Block\Html\Header\Logo;
-
-class Data extends AbstractHelper
+class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
-    const ACTIVE_CAMPAIGN_GENERAL_STATUS = "active_campaign/general/status";
-    const ACTIVE_CAMPAIGN_GENERAL_API_URL = "active_campaign/general/api_url";
-    const ACTIVE_CAMPAIGN_GENERAL_API_KEY = "active_campaign/general/api_key";
-    const ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID = "active_campaign/general/connection_id";
+    public const ACTIVE_CAMPAIGN_GENERAL_STATUS = 'active_campaign/general/status';
+    public const ACTIVE_CAMPAIGN_GENERAL_API_URL = 'active_campaign/general/api_url';
+    public const ACTIVE_CAMPAIGN_GENERAL_API_KEY = 'active_campaign/general/api_key';
+    public const ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID = 'active_campaign/general/connection_id';
 
     /**
-     * @var StoreRepositoryInterface
+     * @var \Magento\Store\Api\StoreRepositoryInterface
      */
     private $storeRepository;
 
     /**
-     * @var ConfigInterface
+     * @var \Magento\Framework\App\Config\ConfigResource\ConfigInterface
      */
     private $configInterface;
 
     /**
-     * @var Logo
+     * @var \Magento\Theme\Block\Html\Header\Logo
      */
     private $logo;
 
     /**
-     * Data constructor.
-     * @param StoreRepositoryInterface $storeRepository
-     * @param ConfigInterface $configInterface
-     * @param Context $context
-     * @param Logo $logo
+     * Construct
+     *
+     * @param \Magento\Store\Api\StoreRepositoryInterface $storeRepository
+     * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface
+     * @param \Magento\Framework\App\Helper\Context $context
+     * @param \Magento\Theme\Block\Html\Header\Logo $logo
      */
     public function __construct(
-        StoreRepositoryInterface $storeRepository,
-        ConfigInterface $configInterface,
-        Context $context,
-        Logo $logo
+        \Magento\Store\Api\StoreRepositoryInterface $storeRepository,
+        \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface,
+        \Magento\Framework\App\Helper\Context $context,
+        \Magento\Theme\Block\Html\Header\Logo $logo
     ) {
         parent::__construct($context);
         $this->storeRepository = $storeRepository;
@@ -51,62 +46,77 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * Is enabled
+     *
+     * @param int|string|null $scopeCode
+     *
      * @return bool
      */
-    public function isEnabled($scopeCode = null)
+    public function isEnabled(int|string $scopeCode = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_GENERAL_STATUS,
-            ScopeInterface::SCOPE_STORES,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $scopeCode
         );
     }
 
     /**
-     * @param null $scopeCode
-     * @return mixed
+     * Get API URL
+     *
+     * @param int|string|null $scopeCode
+     *
+     * @return string|null
      */
-    public function getApiUrl($scopeCode = null)
+    public function getApiUrl(int|string $scopeCode = null): ?string
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_GENERAL_API_URL,
-            ScopeInterface::SCOPE_STORES,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $scopeCode
         );
     }
 
     /**
-     * @param null $scopeCode
-     * @return mixed
+     * Get API key
+     *
+     * @param int|string|null $scopeCode
+     *
+     * @return string|null
      */
-    public function getApiKey($scopeCode = null)
+    public function getApiKey(int|string $scopeCode = null): ?string
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_GENERAL_API_KEY,
-            ScopeInterface::SCOPE_STORES,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $scopeCode
         );
     }
 
     /**
-     * @param null $scopeCode
-     * @return mixed
+     * Get connection ID
+     *
+     * @param int|string|null $scopeCode
+     *
+     * @return string|null
      */
-    public function getConnectionId($scopeCode = null)
+    public function getConnectionId(int|string $scopeCode = null): ?string
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
-            ScopeInterface::SCOPE_STORES,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $scopeCode
         );
     }
 
     /**
-     * @param null $scopeCode
+     * Get store logo
+     *
+     * @param int|string|null $scopeCode
+     *
      * @return string
      */
-    public function getStoreLogo($scopeCode = null)
+    public function getStoreLogo(int|string $scopeCode = null): string
     {
         $folderName = \Magento\Config\Model\Config\Backend\Image\Logo::UPLOAD_DIR;
         $storeLogoPath = $this->scopeConfig->getValue(
@@ -130,26 +140,32 @@ class Data extends AbstractHelper
      * Converts to cents the price amount
      *
      * @param float|null $price
+     *
      * @return int
      */
-    public function priceToCents($price = 0.0)
+    public function priceToCents(?float $price = 0.0): int
     {
         return (int) (round($price, 2) * 100);
     }
 
     /**
-     * @param $allConnections
+     * Check connections
+     *
+     * @param array $allConnections
+     *
      * @return bool
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function checkConnections($allConnections)
+    public function checkConnections(array $allConnections): bool
     {
         if ($allConnections['success']) {
             $activeConnectionIds = [];
-            foreach ($allConnections['data']['connections'] as  $connection) {
+
+            foreach ($allConnections['data']['connections'] as $connection) {
                 $store = $this->storeRepository->get($connection['externalid']);
                 $connectionId = $this->getConnectionId($store->getId());
                 $activeConnectionIds[] = $connection['id'];
+
                 if ($connectionId != $connection['id']) {
                     $this->saveConfig(
                         self::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
@@ -160,13 +176,14 @@ class Data extends AbstractHelper
             }
 
             $stores = $this->storeRepository->getList();
+
             foreach ($stores as $store) {
                 if ($store->getId()) {
                     $connectionId = $this->getConnectionId($store->getId());
                     if (($connectionId) && (!in_array($connectionId, $activeConnectionIds))) {
                         $this->configInterface->deleteConfig(
                             self::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
-                            ScopeInterface::SCOPE_STORES,
+                            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
                             $store->getId()
                         );
                     }
@@ -175,17 +192,27 @@ class Data extends AbstractHelper
 
             return true;
         }
+
         return false;
     }
 
     /**
-     * @param $path
-     * @param $value
-     * @param $scopeId
+     * Save config
+     *
+     * @param string $path
+     * @param string $value
+     * @param int $scopeId
+     *
+     * @return void
      */
-    public function saveConfig($path, $value, $scopeId)
-    {
-        $scope = ($scopeId) ? ScopeInterface::SCOPE_STORES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+    public function saveConfig(
+        string $path,
+        string $value,
+        int $scopeId
+    ) {
+        $scope = ($scopeId)
+            ? \Magento\Store\Model\ScopeInterface::SCOPE_STORES
+            : \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
         $this->configInterface->saveConfig($path, $value, $scope, $scopeId);
     }
 }

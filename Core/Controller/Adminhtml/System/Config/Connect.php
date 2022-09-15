@@ -1,78 +1,70 @@
 <?php
+declare(strict_types=1);
+
 namespace ActiveCampaign\Core\Controller\Adminhtml\System\Config;
 
-use ActiveCampaign\Core\Helper\Curl;
-use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Store\Api\StoreRepositoryInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\StoreManagerInterface;
-
-class Connect extends Action
+class Connect extends \Magento\Backend\App\Action
 {
-    const URL_ENDPOINT = "connections";
-    const METHOD = "POST";
-    const GET_METHOD = "GET";
+    public const URL_ENDPOINT = 'connections';
+    public const METHOD = 'POST';
+    public const GET_METHOD = 'GET';
 
     /**
      * Authorization level of a basic admin session.
      *
      * @see _isAllowed()
      */
-    const ADMIN_RESOURCE = 'ActiveCampaign_Core::config_active_campaign';
+    public const ADMIN_RESOURCE = 'ActiveCampaign_Core::config_active_campaign';
 
     /**
-     * @var JsonFactory
+     * @var \Magento\Framework\Controller\Result\JsonFactory
      */
     private $resultJsonFactory;
 
     /**
-     * @var ConfigInterface
+     * @var \Magento\Framework\App\Config\ConfigResource\ConfigInterface
      */
     private $configInterface;
 
     /**
-     * @var StoreRepositoryInterface
+     * @var \Magento\Store\Api\StoreRepositoryInterface
      */
     private $storeRepository;
 
     /**
-     * @var ActiveCampaignHelper
+     * @var \ActiveCampaign\Core\Helper\Data
      */
     private $activeCampaignHelper;
 
     /**
-     * @var StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     private $storeManager;
 
     /**
-     * @var Curl
+     * @var \ActiveCampaign\Core\Helper\Curl
      */
     private $curl;
 
     /**
-     * Connection constructor.
-     * @param Context $context
-     * @param JsonFactory $resultJsonFactory
-     * @param ConfigInterface $configInterface
-     * @param StoreRepositoryInterface $storeRepository
-     * @param StoreManagerInterface $storeManager
-     * @param ActiveCampaignHelper $activeCampaignHelper
-     * @param Curl $curl
+     * Construct
+     *
+     * @param \Magento\Backend\App\Action\Context $context
+     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
+     * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface
+     * @param \Magento\Store\Api\StoreRepositoryInterface $storeRepository
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \ActiveCampaign\Core\Helper\Data $activeCampaignHelper
+     * @param \ActiveCampaign\Core\Helper\Curl $curl
      */
     public function __construct(
-        Context $context,
-        JsonFactory $resultJsonFactory,
-        ConfigInterface $configInterface,
-        StoreRepositoryInterface $storeRepository,
-        StoreManagerInterface $storeManager,
-        ActiveCampaignHelper $activeCampaignHelper,
-        Curl $curl
+        \Magento\Backend\App\Action\Context $context,
+        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
+        \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface,
+        \Magento\Store\Api\StoreRepositoryInterface $storeRepository,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \ActiveCampaign\Core\Helper\Data $activeCampaignHelper,
+        \ActiveCampaign\Core\Helper\Curl $curl
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
@@ -87,6 +79,7 @@ class Connect extends Action
      * Check for connection to server
      *
      * @return \Magento\Framework\Controller\Result\Json
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function execute()
     {
@@ -97,11 +90,14 @@ class Connect extends Action
 
         $return = [];
 
-        if ($request['status'] && !empty($request['api_url']) && !empty($request['api_key'])) {
+        if ($request['status']
+            && !empty($request['api_url'])
+            && !empty($request['api_key'])
+        ) {
             $isEnabled = $this->activeCampaignHelper->isEnabled($request['status']);
             if (!$isEnabled) {
                 $this->saveConfig(
-                    ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_STATUS,
+                    \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_STATUS,
                     $request['status'],
                     $request['store']
                 );
@@ -110,7 +106,7 @@ class Connect extends Action
             $apiUrl = $this->activeCampaignHelper->getApiUrl($request['store']);
             if (empty($apiUrl)) {
                 $this->saveConfig(
-                    ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_API_URL,
+                    \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_API_URL,
                     $request['api_url'],
                     $request['store']
                 );
@@ -119,7 +115,7 @@ class Connect extends Action
             $apiKey = $this->activeCampaignHelper->getApiKey($request['store']);
             if (empty($apiKey)) {
                 $this->saveConfig(
-                    ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_API_KEY,
+                    \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_API_KEY,
                     $request['api_key'],
                     $request['store']
                 );
@@ -127,12 +123,18 @@ class Connect extends Action
 
             try {
                 if ((int)$request['store']) {
-                    $data = $this->curlRequestData($request['store']);
-                    $result = $this->curl->createConnection(self::METHOD, self::URL_ENDPOINT, $request, $data);
+                    $data = $this->curlRequestData((int)$request['store']);
+                    $result = $this->curl->createConnection(
+                        self::METHOD,
+                        self::URL_ENDPOINT,
+                        $request,
+                        $data
+                    );
+
                     if ($result['success']) {
                         $connectionId = $result['data']['connection']['id'];
                         $this->saveConfig(
-                            ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
+                            \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                             $connectionId,
                             $request['store']
                         );
@@ -140,17 +142,24 @@ class Connect extends Action
                         $return['success'] = false;
                         $return['errorMessage'] = $result['message'];
                     }
-                } elseif ($request['store'] == "0") {
+                } elseif ($request['store'] == '0') {
                     $stores = $this->storeRepository->getList();
+
                     foreach ($stores as $store) {
                         if ($store->getId()) {
-                            $data = $this->curlRequestData($store->getId());
-                            $result = $this->curl->createConnection(self::METHOD, self::URL_ENDPOINT, $request, $data);
+                            $data = $this->curlRequestData((int)$store->getId());
+                            $result = $this->curl->createConnection(
+                                self::METHOD,
+                                self::URL_ENDPOINT,
+                                $request,
+                                $data
+                            );
+
                             if ($result['success']) {
                                 $return['success'] = true;
                                 $connectionId = $result['data']['connection']['id'];
                                 $this->saveConfig(
-                                    ActiveCampaignHelper::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
+                                    \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                                     $connectionId,
                                     $store->getId()
                                 );
@@ -161,7 +170,11 @@ class Connect extends Action
                     }
                 }
 
-                $allConnections = $this->curl->getAllConnections(self::GET_METHOD, self::URL_ENDPOINT);
+                $allConnections = $this->curl->getAllConnections(
+                    self::GET_METHOD,
+                    self::URL_ENDPOINT
+                );
+
                 $checkConnections = $this->activeCampaignHelper->checkConnections($allConnections);
                 $return['success'] = $checkConnections;
             } catch (\Exception $e) {
@@ -171,36 +184,49 @@ class Connect extends Action
         }
 
         $resultJson = $this->resultJsonFactory->create();
+
         return $resultJson->setData($return);
     }
 
     /**
-     * @param $path
-     * @param $value
-     * @param $scopeId
+     * Save config
+     *
+     * @param string $path
+     * @param string $value
+     * @param int $scopeId
+     *
+     * @return void
      */
-    public function saveConfig($path, $value, $scopeId)
-    {
-        $scope = ($scopeId) ? ScopeInterface::SCOPE_STORES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+    protected function saveConfig(
+        string $path,
+        string $value,
+        int $scopeId
+    ) {
+        $scope = ($scopeId)
+            ? \Magento\Store\Model\ScopeInterface::SCOPE_STORES
+            : \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
         $this->configInterface->saveConfig($path, $value, $scope, $scopeId);
     }
 
     /**
-     * @param $storeId
-     * @return array[]
+     * CURL request data
+     *
+     * @param int|null $storeId
+     *
+     * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function curlRequestData($storeId)
+    protected function curlRequestData(?int $storeId): array
     {
         $store = $this->storeManager->getStore($storeId);
 
         return [
-            "connection" => [
-                "service" => "magento2-$store->getName()",
-                "externalid" => $store->getCode(),
-                "name" => $store->getName(),
-                "logoUrl" => $this->activeCampaignHelper->getStoreLogo($storeId),
-                "linkUrl" => $store->getBaseUrl()
+            'connection' => [
+                'service'       => 'magento2-' . $store->getName(),
+                'externalid'    => $store->getCode(),
+                'name'          => $store->getName(),
+                'logoUrl'       => $this->activeCampaignHelper->getStoreLogo($storeId),
+                'linkUrl'       => $store->getBaseUrl()
             ]
         ];
     }
