@@ -87,7 +87,7 @@ class Curl extends AbstractHelper
         $apiKey = empty($apiKey) ? $request['api_key'] : $apiKey;
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
 
         $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
@@ -106,7 +106,7 @@ class Curl extends AbstractHelper
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
@@ -123,7 +123,7 @@ class Curl extends AbstractHelper
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
@@ -168,7 +168,7 @@ class Curl extends AbstractHelper
         $apiKey = $this->activeCampaignHelper->getApiKey();
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
         $headers = $this->getHeaders($apiKey);
 
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
@@ -319,7 +319,7 @@ class Curl extends AbstractHelper
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
 
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
 
         $headers = $this->getHeaders($apiKey);
         $type = 'ecomAbandonedCarts';
