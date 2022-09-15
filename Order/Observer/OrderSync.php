@@ -70,23 +70,25 @@ class OrderSync implements ObserverInterface
     }
 
     /**
-     * @throws NoSuchEntityException
+     * @param Observer $observer
+     * @return void
      */
-    public function execute(Observer $observer):void
+    public function execute(Observer $observer)
     {
         $isEnabled = $this->activeCampaignHelper->isOrderSyncEnabled();
         $orderIds = $observer->getEvent()->getOrderIds();
+
         if ($isEnabled) {
             foreach ($orderIds as $orderId) {
                 $orderData = $this->orderModel->load($orderId);
                 $acOrderStatus = $orderData->getAcOrderSyncStatus();
-                if ($acOrderStatus === 0) {
+                if ($acOrderStatus == 0) {
                     $this->orderdataSend->orderDataSend($orderData);
                 }
 
                 $quote = $this->quoteRepository->get($orderData->getQuoteId());
                 $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
-                if ($orderData->getStatus() === 'canceled') {
+                if ($orderData->getStatus() == 'canceled') {
                     $orderSyncId = $orderData->getAcOrderSyncId();
                     $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $orderSyncId);
                 }

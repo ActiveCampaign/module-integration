@@ -14,8 +14,8 @@ use Psr\Log\LoggerInterface;
 
 class OrderSyncCron
 {
-    const DELETE_METHOD = "DELETE";
-    const URL_ENDPOINT = "ecomOrders/";
+    public const DELETE_METHOD = "DELETE";
+    public const URL_ENDPOINT = "ecomOrders/";
 
     /**
      * @var ActiveCampaignOrderHelper
@@ -58,6 +58,8 @@ class OrderSyncCron
      * @param ActiveCampaignOrderHelper $activeCampaignHelper
      * @param State $state
      * @param Curl $curl
+     * @param CartRepositoryInterface $quoteRepository
+     * @param LoggerInterface $logger
      */
     public function __construct(
         OrderDataSend $orderdataSend,
@@ -95,10 +97,14 @@ class OrderSyncCron
                     ->setPageSize($OrderSyncNum);
 
                 foreach ($orderCollection as $order) {
-                    $this->orderdataSend->orderDataSend($order);
-                    $quote = $this->quoteRepository->get($order->getQuoteId());
-                    if ($quote->getAcOrderSyncId() !== 0) {
-                        $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
+                    try {
+                        $this->orderdataSend->orderDataSend($order);
+                        $quote = $this->quoteRepository->get($order->getQuoteId());
+                        if ($quote->getAcOrderSyncId() !== 0) {
+                            $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
+                        }
+                    } catch (NoSuchEntityException|GuzzleException $e) {
+                        $this->logger->error('MODULE Order: ' . $e->getMessage());
                     }
                 }
             }

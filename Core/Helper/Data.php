@@ -132,8 +132,9 @@ class Data extends AbstractHelper
      * @param float|null $price
      * @return int
      */
-    public function priceToCents($price = 0.0)
+    public function priceToCents($price)
     {
+        $price = (is_null($price)) ? $price = 0.0 : $price;
         return (int) (round($price, 2) * 100);
     }
 

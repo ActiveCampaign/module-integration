@@ -6,7 +6,6 @@ use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
 use ActiveCampaign\Core\Logger\Logger;
 use ActiveCampaign\SyncLog\Model\SyncLog;
 use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -21,7 +20,7 @@ class Curl extends AbstractHelper
     public const CONTENT_TYPE = "application/json";
 
     /**
-     * @var Client|ClientInterface
+     * @var Client
      */
     private $client;
 
@@ -48,7 +47,7 @@ class Curl extends AbstractHelper
     /**
      * Curl constructor.
      * @param Context $context
-     * @param ClientInterface|null $client
+     * @param Client $client
      * @param JsonHelper $jsonHelper
      * @param Logger $logger
      * @param Data $activeCampaignHelper
@@ -56,13 +55,12 @@ class Curl extends AbstractHelper
      */
     public function __construct(
         Context              $context,
-        ClientInterface      $client = null,
+        Client               $client = null,
         JsonHelper           $jsonHelper,
         Logger               $logger,
         ActiveCampaignHelper $activeCampaignHelper,
         SyncLog              $syncLog
-    )
-    {
+    ) {
         $this->client = $client ?: new Client();
         $this->jsonHelper = $jsonHelper;
         $this->logger = $logger;
@@ -87,7 +85,7 @@ class Curl extends AbstractHelper
         $apiKey = empty($apiKey) ? $request['api_key'] : $apiKey;
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
+        $bodyData = $this->jsonHelper->jsonEncode($data);
         $headers = $this->getHeaders($apiKey);
 
         $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
@@ -106,7 +104,7 @@ class Curl extends AbstractHelper
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
+        $bodyData = $this->jsonHelper->jsonEncode($data);
         $headers = $this->getHeaders($apiKey);
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
@@ -123,7 +121,7 @@ class Curl extends AbstractHelper
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
+        $bodyData = $this->jsonHelper->jsonEncode($data);
         $headers = $this->getHeaders($apiKey);
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
@@ -168,7 +166,7 @@ class Curl extends AbstractHelper
         $apiKey = $this->activeCampaignHelper->getApiKey();
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
+        $bodyData = $this->jsonHelper->jsonEncode($data);
         $headers = $this->getHeaders($apiKey);
 
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
@@ -319,7 +317,7 @@ class Curl extends AbstractHelper
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
 
-        $bodyData = (!empty($data)) ? $this->jsonHelper->jsonEncode($data) : '';
+        $bodyData = $this->jsonHelper->jsonEncode($data);
 
         $headers = $this->getHeaders($apiKey);
         $type = 'ecomAbandonedCarts';
