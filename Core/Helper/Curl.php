@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace ActiveCampaign\Core\Helper;
 
@@ -15,32 +16,32 @@ use Magento\Framework\Phrase;
 
 class Curl extends AbstractHelper
 {
-    public const API_VERSION = "/api/3/";
-    public const HTTP_VERSION = "1.1";
-    public const CONTENT_TYPE = "application/json";
+    public const API_VERSION = '/api/3/';
+    public const HTTP_VERSION = '1.1';
+    public const CONTENT_TYPE = 'application/json';
 
     /**
-     * @var Client
+     * @var \GuzzleHttp\ClientInterface
      */
     private $client;
 
     /**
-     * @var JsonHelper
+     * @var \Magento\Framework\Serialize\Serializer\Json
      */
     private $jsonHelper;
 
     /**
-     * @var Logger
+     * @var \ActiveCampaign\Core\Logger\Logger
      */
     private $logger;
 
     /**
-     * @var ActiveCampaignHelper
+     * @var \ActiveCampaign\Core\Helper\Data
      */
     private $activeCampaignHelper;
 
     /**
-     * @var SyncLog
+     * @var \ActiveCampaign\SyncLog\Model\SyncLog
      */
     private $syncLog;
 
@@ -66,18 +67,27 @@ class Curl extends AbstractHelper
         $this->logger = $logger;
         $this->activeCampaignHelper = $activeCampaignHelper;
         $this->syncLog = $syncLog;
+
         parent::__construct($context);
     }
 
     /**
-     * @param $method
-     * @param $urlEndpoint
-     * @param $request
+     * Create connection
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     * @param array $request
      * @param array $data
+     *
      * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function createConnection($method, $urlEndpoint, $request, $data = [])
-    {
+    public function createConnection(
+        string $method,
+        string $urlEndpoint,
+        array $request,
+        array $data = []
+    ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiUrl = empty($apiUrl) ? $request['api_url'] : $apiUrl;
 
@@ -85,98 +95,146 @@ class Curl extends AbstractHelper
         $apiKey = empty($apiKey) ? $request['api_key'] : $apiKey;
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
         $headers = $this->getHeaders($apiKey);
 
-        $result = $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
-        return $result;
-    }
-
-    /**
-     * @param $method
-     * @param $urlEndpoint
-     * @param array $data
-     * @return array
-     * @throws GuzzleException
-     */
-    public function orderDataSend($method, $urlEndpoint, array $data = []): array
-    {
-        $apiUrl = $this->activeCampaignHelper->getApiUrl();
-        $apiKey = $this->activeCampaignHelper->getApiKey();
-        $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
-        $headers = $this->getHeaders($apiKey);
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
 
     /**
-     * @param $method
-     * @param $urlEndpoint
+     * Send order data
+     *
+     * @param string $method
+     * @param string $urlEndpoint
      * @param array $data
+     *
      * @return array
-     * @throws GuzzleException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function orderDataUpdate($method, $urlEndpoint, array $data = []): array
-    {
+    public function orderDataSend(
+        string $method,
+        string $urlEndpoint,
+        array $data = []
+    ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
+
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
         $headers = $this->getHeaders($apiKey);
+
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
 
     /**
-     * @param $method
-     * @param $urlEndpoint
-     * @param $orderId
+     * Update order data
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     * @param array $data
+     *
      * @return array
-     * @throws GuzzleException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function orderDataDelete($method, $urlEndpoint, $orderId): array
-    {
+    public function orderDataUpdate(
+        string $method,
+        string $urlEndpoint,
+        array $data = []
+    ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
+
+        $url = $apiUrl . self::API_VERSION . $urlEndpoint;
+        $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
+        $headers = $this->getHeaders($apiKey);
+
+        return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
+    }
+
+    /**
+     * Delete order data
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     * @param int|string $orderId
+     *
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function orderDataDelete(
+        string $method,
+        string $urlEndpoint,
+        int|string $orderId
+    ): array {
+        $apiUrl = $this->activeCampaignHelper->getApiUrl();
+        $apiKey = $this->activeCampaignHelper->getApiKey();
+
         $url = $apiUrl . self::API_VERSION . $urlEndpoint . $orderId;
         $headers = $this->getHeaders($apiKey);
+
         return $this->sendRequest($urlEndpoint, $method, $url, $headers);
     }
 
     /**
-     * @param $method
-     * @param $urlEndpoint
+     * Delete connection
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     *
      * @return array
-     * @throws GuzzleException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function deleteConnection($method, $urlEndpoint): array
-    {
+    public function deleteConnection(
+        string $method,
+        string $urlEndpoint
+    ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
+
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $headers = $this->getHeaders($apiKey);
+
         return $this->sendRequest($urlEndpoint, $method, $url, $headers);
     }
 
     /**
-     * @throws GuzzleException
+     * Create contacts
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     * @param array $data
+     *
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function createContacts($method, $urlEndpoint, $data = []): array
-    {
+    public function createContacts(
+        string $method,
+        string $urlEndpoint,
+        array $data = []
+    ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
 
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-        $bodyData = $this->jsonHelper->jsonEncode($data);
+        $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
         $headers = $this->getHeaders($apiKey);
 
         return $this->sendRequest($urlEndpoint, $method, $url, $headers, $bodyData);
     }
 
     /**
-     * @throws GuzzleException
+     * Get all connections
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     *
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getAllConnections($method, $urlEndpoint): array
-    {
+    public function getAllConnections(
+        string $method,
+        string $urlEndpoint
+    ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
 
@@ -187,57 +245,127 @@ class Curl extends AbstractHelper
     }
 
     /**
-     * @param $apiKey
+     * Send request for abandoned cart
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     * @param array $data
+     *
      * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    private function getHeaders($apiKey): array
-    {
-        $headers = [];
-        $headers['Content-Type'] = self::CONTENT_TYPE;
-        $headers['Api-Token'] = $apiKey;
-        return $headers;
+    public function sendRequestAbandonedCart(
+        string $method,
+        string $urlEndpoint,
+        array $data = []
+    ): array {
+        $apiUrl = $this->activeCampaignHelper->getApiUrl();
+        $apiKey = $this->activeCampaignHelper->getApiKey();
+
+        $url = $apiUrl . self::API_VERSION . $urlEndpoint;
+        $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
+        $headers = $this->getHeaders($apiKey);
+
+        return $this->sendRequest('ecomAbandonedCarts', $method, $url, $headers, $bodyData);
     }
 
     /**
-     * @param $urlEndpoint
-     * @param $method
-     * @param $url
-     * @param $headers
-     * @param string $bodyData
+     * List all customers
+     *
+     * @param string $method
+     * @param string $urlEndpoint
+     * @param string $customerEmail
+     *
      * @return array
-     * @throws GuzzleException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    private function sendRequest($urlEndpoint, $method, $url, $headers, string $bodyData = ''): array
+    public function listAllCustomers(
+        string $method,
+        string $urlEndpoint,
+        string $customerEmail
+    ): array {
+        $apiUrl = $this->activeCampaignHelper->getApiUrl();
+        $apiKey = $this->activeCampaignHelper->getApiKey();
+
+        $url = $apiUrl . self::API_VERSION . $urlEndpoint . '?filters[email]=' . urlencode($customerEmail);
+        $headers = $this->getHeaders($apiKey);
+
+        return $this->sendRequest('ecomCustomers', $method, $url, $headers);
+    }
+
+    /**
+     * Get headers
+     *
+     * @param string|null $apiKey
+     *
+     * @return array
+     */
+    private function getHeaders(?string $apiKey): array
     {
+        return [
+            'Content-Type'  => self::CONTENT_TYPE,
+            'Api-Token'     => $apiKey
+        ];
+    }
+
+    /**
+     * Send request
+     *
+     * @param string $urlEndpoint
+     * @param string $method
+     * @param string $url
+     * @param array $headers
+     * @param string $bodyData
+     *
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    private function sendRequest(
+        string $urlEndpoint,
+        string $method,
+        string $url,
+        array $headers,
+        string $bodyData = ''
+    ): array {
         $result = [];
         $synclog = $this->syncLog;
+
         try {
             $request = [
-                "METHOD" => $method,
-                "URL" => $url,
-                "HTTP VERSION" => self::HTTP_VERSION,
-                "HEADERS" => $headers,
-                "BODY DATA" => $bodyData
+                'METHOD'        => $method,
+                'URL'           => $url,
+                'HTTP VERSION'  => self::HTTP_VERSION,
+                'HEADERS'       => $headers,
+                'BODY DATA'     => $bodyData
             ];
+
+            /**
+             * @todo Create data interfaces to maintain integrity of data
+             */
             $synclog->setType($urlEndpoint);
             $synclog->setEndpoint($urlEndpoint);
             $synclog->setMethod($method);
-            $synclog->setRequest($this->jsonHelper->jsonEncode($request));
-            $this->logger->info("REQUEST", $request);
+            $synclog->setRequest($this->jsonHelper->serialize($request));
+
+            $this->logger->info('REQUEST', $request);
 
             $options = [];
-            $options[RequestOptions::HEADERS] = $headers;
+            $options[\GuzzleHttp\RequestOptions::HEADERS] = $headers;
+
             if ($bodyData !== null) {
-                $options[RequestOptions::BODY] = $bodyData;
+                $options[\GuzzleHttp\RequestOptions::BODY] = $bodyData;
             }
 
             $resultCurl = $this->client->request($method, $url, $options);
 
             $body = $resultCurl->getBody()->getContents();
-            $response = $this->jsonHelper->jsonDecode($body);
-            $this->logger->info("RESPONSE", $response);
+            $response = $this->jsonHelper->unserialize($body);
+
+            $this->logger->info('RESPONSE', $response);
+
             $synclog->setResponse($body);
             $synclog->setStatus(1);
+
             if (!empty($resultCurl)) {
                 $result['status'] = $resultCurl->getStatusCode();
                 if (isset($result['status']) && array_key_exists($result['status'], $this->successCodes())) {
@@ -258,84 +386,68 @@ class Curl extends AbstractHelper
         } catch (\Exception $e) {
             $synclog->setStatus(0);
             $synclog->setErrors($e->getMessage());
-            $this->logger->critical("MODULE Core" . $e);
+
+            $this->logger->critical('MODULE Core: ' . $e->getMessage());
+
             $result['success'] = false;
             $result['message'] = $e->getMessage();
         }
+
+        /**
+         * @todo Replace with repository service contract
+         */
         $synclog->save();
         $synclog->unsetData();
+
         return $result;
     }
 
     /**
-     * @return string[]
+     * Success codes
+     *
+     * @return array
      */
     private function successCodes(): array
     {
         return [
-            200 => "OK",
-            201 => "Created"
+            200 => 'OK',
+            201 => 'Created'
         ];
     }
 
     /**
-     * @return string[]
+     * Failure codes
+     *
+     * @return array
      */
     private function failureCodes(): array
     {
         return [
-            400 => "Bad Request",
-            404 => "Not Found",
-            422 => "Unprocessable Entity"
+            400 => 'Bad Request',
+            404 => 'Not Found',
+            422 => 'Unprocessable Entity'
         ];
     }
 
     /**
-     * @param $response
-     * @return Phrase
+     * Get message
+     *
+     * @param mixed $response
+     *
+     * @return \Magento\Framework\Phrase|string
      */
-    private function getMessage($response): Phrase
+    private function getMessage(mixed $response): \Magento\Framework\Phrase|string
     {
-        if (isset($response['message'])) {
-            return $response['message'];
-        } elseif (isset($response['error']['title'])) {
-            return $response['error']['title'];
-        } elseif (isset($response['errors']['0']['title'])) {
-            return $response['errors']['0']['title'];
+        if (is_array($response)) {
+            if (isset($response['message'])) {
+                return $response['message'];
+            } elseif (isset($response['error']['title'])) {
+                return $response['error']['title'];
+            } elseif (isset($response['errors']['0']['title'])) {
+                return $response['errors']['0']['title'];
+            }
         }
 
-        return __("Something was wrong Please try again later");
-    }
-
-    /**
-     * @throws GuzzleException
-     */
-    public function sendRequestAbandonedCart($method, $urlEndpoint, $data = []): array
-    {
-        $apiUrl = $this->activeCampaignHelper->getApiUrl();
-        $apiKey = $this->activeCampaignHelper->getApiKey();
-
-        $url = $apiUrl . self::API_VERSION . $urlEndpoint;
-
-        $bodyData = $this->jsonHelper->jsonEncode($data);
-
-        $headers = $this->getHeaders($apiKey);
-        $type = 'ecomAbandonedCarts';
-        return $this->sendRequest($type, $method, $url, $headers, $bodyData);
-    }
-
-    /**
-     * @throws GuzzleException
-     */
-    public function listAllCustomers($method, $urlEndpoint, $customerEmail): array
-    {
-        $apiUrl = $this->activeCampaignHelper->getApiUrl();
-        $apiKey = $this->activeCampaignHelper->getApiKey();
-
-        $url = $apiUrl . self::API_VERSION . $urlEndpoint . '?filters[email]=' . urlencode($customerEmail);
-
-        $headers = $this->getHeaders($apiKey);
-        $type = 'ecomCustomers';
-        return $this->sendRequest($type, $method, $url, $headers);
+        return __('An unknown error occurred. Please try again later');
     }
 }
