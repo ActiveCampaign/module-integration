@@ -3,7 +3,18 @@ declare(strict_types=1);
 
 namespace ActiveCampaign\Core\Helper;
 
-class Curl extends \Magento\Framework\App\Helper\AbstractHelper
+use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
+use ActiveCampaign\Core\Logger\Logger;
+use ActiveCampaign\SyncLog\Model\SyncLog;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Json\Helper\Data as JsonHelper;
+use Magento\Framework\Phrase;
+
+class Curl extends AbstractHelper
 {
     public const API_VERSION = '/api/3/';
     public const HTTP_VERSION = '1.1';
@@ -35,24 +46,23 @@ class Curl extends \Magento\Framework\App\Helper\AbstractHelper
     private $syncLog;
 
     /**
-     * Construct
-     *
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Framework\Serialize\Serializer\Json $jsonHelper
-     * @param \ActiveCampaign\Core\Logger\Logger $logger
-     * @param \ActiveCampaign\Core\Helper\Data $activeCampaignHelper
-     * @param \ActiveCampaign\SyncLog\Model\SyncLog $syncLog
-     * @param \GuzzleHttp\ClientInterface|null $client
+     * Curl constructor.
+     * @param Context $context
+     * @param Client $client
+     * @param JsonHelper $jsonHelper
+     * @param Logger $logger
+     * @param Data $activeCampaignHelper
+     * @param SyncLog $syncLog
      */
     public function __construct(
-        \Magento\Framework\App\Helper\Context $context,
-        \Magento\Framework\Serialize\Serializer\Json $jsonHelper,
-        \ActiveCampaign\Core\Logger\Logger $logger,
-        \ActiveCampaign\Core\Helper\Data $activeCampaignHelper,
-        \ActiveCampaign\SyncLog\Model\SyncLog $syncLog,
-        \GuzzleHttp\ClientInterface $client = null
+        Context              $context,
+        Client               $client = null,
+        JsonHelper           $jsonHelper,
+        Logger               $logger,
+        ActiveCampaignHelper $activeCampaignHelper,
+        SyncLog              $syncLog
     ) {
-        $this->client = $client ?: new \GuzzleHttp\Client();
+        $this->client = $client ?: new Client();
         $this->jsonHelper = $jsonHelper;
         $this->logger = $logger;
         $this->activeCampaignHelper = $activeCampaignHelper;

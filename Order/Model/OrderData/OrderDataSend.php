@@ -1,27 +1,27 @@
 <?php
 namespace ActiveCampaign\Order\Model\OrderData;
 
+use ActiveCampaign\AbandonedCart\Model\Config\CronConfig;
 use ActiveCampaign\Core\Helper\Curl;
 use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
+use ActiveCampaign\Core\Helper\Data as CoreHelper;
 use ActiveCampaign\Order\Helper\Data as ActiveCampaignOrderHelper;
+use GuzzleHttp\Exception\GuzzleException;
 use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
 use Magento\Catalog\Helper\ImageFactory;
-use Magento\Customer\Api\CustomerRepositoryInterface;
-use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
-use Magento\Framework\Data\Collection\AbstractDb;
-use Magento\Framework\Model\Context;
-use Magento\Framework\Model\ResourceModel\AbstractResource;
-use Magento\Store\Api\StoreRepositoryInterface;
-use Magento\Customer\Model\CustomerFactory;
-use Magento\Store\Model\StoreManagerInterface as StoreManagerInterface;
-use Magento\Customer\Model\Customer as CustomerModel;
 use Magento\Customer\Api\AddressRepositoryInterface;
-use Magento\Eav\Model\ResourceModel\Entity\Attribute;
-use ActiveCampaign\Core\Helper\Data as CoreHelper;
+use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Model\Customer as CustomerModel;
+use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
-use ActiveCampaign\AbandonedCart\Model\Config\CronConfig;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute;
+use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Api\StoreRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface as StoreManagerInterface;
 
-class OrderDataSend extends \Magento\Framework\Model\AbstractModel
+class OrderDataSend
 {
     const URL_ENDPOINT = "ecomOrders";
     const METHOD = "POST";
@@ -31,7 +31,6 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
     const CONTACT_ENDPOINT = "contact/sync";
     const ECOM_CUSTOMER_ENDPOINT = "ecomOrders";
     const ECOM_CUSTOMERLIST_ENDPOINT = "ecomCustomers";
-
 
     /**
      * @var ActiveCampaignOrderHelper
@@ -99,19 +98,15 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
     protected $customerResource;
 
     /**
-     * OrderDataSend constructor.
-     * @param \Magento\Framework\Model\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
-     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
-     * @param \Magento\Catalog\Api\ProductRepositoryInterfaceFactory $productRepositoryFactory
-     * @param \Magento\Catalog\Helper\ImageFactory $imageHelperFactory
+     * Order Data send Construct
+     *
+     * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
+     * @param ImageFactory $imageHelperFactory
      * @param ActiveCampaignOrderHelper $activeCampaignOrderHelper
-     * @param ActiveCampaignHelper $activeCampaignHelper
+     * @param CoreHelper $activeCampaignHelper
      * @param ConfigInterface $configInterface
      * @param Curl $curl
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface
+     * @param CustomerRepositoryInterface $customerRepositoryInterface
      * @param StoreRepositoryInterface $storeRepository
      * @param CustomerFactory $customerFactory
      * @param StoreManagerInterface $storeManager
@@ -120,13 +115,8 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
      * @param Attribute $eavAttribute
      * @param CoreHelper $coreHelper
      * @param CustomerResource $customerResource
-     * @param array $data
      */
     public function __construct(
-        Context $context,
-        \Magento\Framework\Registry $registry,
-        AbstractResource $resource = null,
-        AbstractDb $resourceCollection = null,
         ProductRepositoryInterfaceFactory $productRepositoryFactory,
         ImageFactory $imageHelperFactory,
         ActiveCampaignOrderHelper $activeCampaignOrderHelper,
@@ -141,8 +131,7 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
         AddressRepositoryInterface $addressRepository,
         Attribute $eavAttribute,
         CoreHelper $coreHelper,
-        CustomerResource $customerResource,
-        array $data = []
+        CustomerResource $customerResource
     ) {
         $this->_productRepositoryFactory = $productRepositoryFactory;
         $this->imageHelperFactory = $imageHelperFactory;
@@ -159,17 +148,16 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
         $this->eavAttribute = $eavAttribute;
         $this->coreHelper = $coreHelper;
         $this->customerResource = $customerResource;
-        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
     /**
-     * @param $OrderSyncNum
+     * @param $order
      * @return array
+     * @throws GuzzleException
      */
-    public function orderDataSend($order)
+    public function orderDataSend($order): array
     {
         $return = [];
-        $acOrderId = 0;
         $isEnabled = $this->activeCampaignOrderHelper->isOrderSyncEnabled();
         if ($isEnabled) {
             try {
@@ -307,9 +295,9 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
     /**
      * @param null $billingId
      * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    private function getTelephone($billingId = null)
+    private function getTelephone($billingId = null): ?string
     {
         if ($billingId) {
             $address = $this->addressRepository->getById($billingId);
@@ -321,8 +309,8 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
     /**
      * @param $customerId
      * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     private function getFieldValues($customerId)
     {
@@ -342,9 +330,9 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
 
     /**
      * @param $customerId
-     * @return array
+     * @return object
      */
-    private function getCustomer($customerId)
+    private function getCustomer($customerId): object
     {
         $customerModel = $this->customerFactory->create();
         $this->customerResource->load($customerModel, $customerId);
@@ -395,7 +383,7 @@ class OrderDataSend extends \Magento\Framework\Model\AbstractModel
                         self::ECOM_CUSTOMERLIST_ENDPOINT,
                         $customerEmail
                     );
-                    if (ISSET($AcCustomer['data']['ecomCustomers'][0])) {
+                    if (isset($AcCustomer['data']['ecomCustomers'][0])) {
                         foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
                             if ($Ac['connectionid'] == $connectionid) {
                                 $ecomCustomerId = $Ac['id'];

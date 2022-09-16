@@ -145,6 +145,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function priceToCents(?float $price = 0.0): int
     {
+        $price = (is_null($price)) ? $price = 0.0 : $price;
         return (int) (round($price, 2) * 100);
     }
 
