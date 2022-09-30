@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="active_campaign" sortOrder="10" showInWebsite="1" showInStore="1" showInDefault="1"
+                 translate="label">
+            <tab>active_campaign</tab>
+            <resource>ActiveCampaign_SyncLog::config_activecampaign_synclog</resource>
+            <group id="synclog" sortOrder="100" showInWebsite="1" showInStore="1" showInDefault="1" translate="label">
+                <label>Sync Log Settings</label>
+                <field id="synclog_delete" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>SyncLog Delete</label>
+                    <comment><![CDATA[Choosing yes will start deleting your past 7 days existing SyncLog stored in database.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="cron_minute" translate="label comment" type="text" sortOrder="20" showInDefault="1">
+                    <label>Cron Minute</label>
+                    <comment><![CDATA[0-59 Allowed value. Set * for every minute.]]></comment>
+                    <depends>
+                        <field id="synclog_delete">1</field>
+                    </depends>
+                    <backend_model>ActiveCampaign\SyncLog\Model\Config\CronConfig</backend_model>
+                </field>
+                <field id="cron_hour" translate="label comment" type="text" sortOrder="21" showInDefault="1">
+                    <label>Cron Hour</label>
+                    <comment><![CDATA[0-23 Allowed value. Set * for every hour.]]></comment>
+                    <depends>
+                        <field id="synclog_delete">1</field>
+                    </depends>
+                </field>
+                <field id="cron_day" translate="label comment" type="text" sortOrder="22" showInDefault="1">
+                    <label>Cron Day</label>
+                    <comment><![CDATA[1-31 Allowed value. Set * for every day.]]></comment>
+                    <depends>
+                        <field id="synclog_delete">1</field>
+                    </depends>
+                </field>
+                <field id="cron_month" translate="label comment" type="text" sortOrder="23" showInDefault="1">
+                    <label>Cron Month</label>
+                    <comment><![CDATA[1-12 Allowed value. Set * for every month.]]></comment>
+                    <depends>
+                        <field id="synclog_delete">1</field>
+                    </depends>
+                </field>
+                <field id="cron_weekday" translate="label comment" type="text" sortOrder="24" showInDefault="1">
+                    <label>Cron Weekday</label>
+                    <comment><![CDATA[0-6 Allowed value. Set * for every weekday.]]></comment>
+                    <depends>
+                        <field id="synclog_delete">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

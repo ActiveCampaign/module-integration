@@ -1,0 +1,40 @@
+<?php
+/** @var $block ActiveCampaign\Core\Block\Adminhtml\System\Config\ConnectActiveCampaign */
+$connectedStores = $block->getConnectedStores();
+?>
+<p class="note">
+    <span><?= $block->escapeHtmlAttr(__('Before clicking on this button Please click on Save Config button. ')) ?>
+    </span>
+</p>
+<button class="scalable" type="button" id="<?= $block->getHtmlId() ?>" data-mage-init='{"Connection":{
+    "connection": "<?= $block->escapeUrl($block->getConnection()) ?>",
+    "url": "<?= $block->escapeUrl($block->getAjaxUrl()) ?>",
+    "elementId": "<?= $block->getHtmlId() ?>",
+    "successText": "<?= $block->getSuccessText() ?>",
+    "failedText": "<?= $block->escapeHtmlAttr(__('Failed! Try again?')) ?>",
+    "fieldMapping": "<?= /* @noEscape */ $block->getFieldMapping() ?>"}, "validation": {}}'>
+    <span id="<?= $block->getHtmlId() ?>_result"><?= $block->escapeHtml($block->getButtonLabel()) ?></span>
+</button>
+<p class="note">
+    <span><?= $block->escapeHtmlAttr(__('After clicking on this button Please go to ')) ?>
+        <a href="<?= $block->getCacheUrl() ?>"><?= $block->escapeHtmlAttr(__('Cache Management ')) ?>
+        </a><?= $block->escapeHtmlAttr(__('and refresh cache types.')) ?>
+    </span>
+</p>
+<p class="note"><span>&nbsp;</span></p>
+<?php if ($block->isDefaultConfig()): ?>
+    <?php foreach ($connectedStores as $key => $store): ?>
+<div class="messages">
+    <div class="message message-notice">
+        <div>
+            <?= $block->escapeHtml(__($store['name'] . " :")) ?>
+            <?php if ($store['status']): ?>
+                <strong><?= $block->escapeHtml(__("Connected")) ?></strong>
+            <?php else: ?>
+                <strong class="colorRed"><?= $block->escapeHtml(__("Disconnected")) ?></strong>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
+<?php endif; ?>
