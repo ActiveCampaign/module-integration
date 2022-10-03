@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="active_campaign" translate="label" type="text" sortOrder="300" showInDefault="1" showInStore="1">
+            <group id="abandoned_cart" translate="label" type="text" sortOrder="20" showInDefault="1" showInStore="1">
+                <label>Abandoned Cart</label>
+                <field id="sync" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Abandoned Cart Syncing</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="cron_minute" translate="label comment" type="text" sortOrder="20" showInDefault="1">
+                    <label>Cron Minute</label>
+                    <comment><![CDATA[0-59 Allowed value. Set * for every minute.]]></comment>
+                    <depends>
+                        <field id="sync">1</field>
+                    </depends>
+                    <backend_model>ActiveCampaign\AbandonedCart\Model\Config\CronConfig</backend_model>
+                </field>
+                <field id="cron_hour" translate="label comment" type="text" sortOrder="21" showInDefault="1">
+                    <label>Cron Hour</label>
+                    <comment><![CDATA[0-23 Allowed value. Set * for every hour.]]></comment>
+                    <depends>
+                        <field id="sync">1</field>
+                    </depends>
+                </field>
+                <field id="cron_day" translate="label comment" type="text" sortOrder="22" showInDefault="1">
+                    <label>Cron Day</label>
+                    <comment><![CDATA[1-31 Allowed value. Set * for every day.]]></comment>
+                    <depends>
+                        <field id="sync">1</field>
+                    </depends>
+                </field>
+                <field id="cron_month" translate="label comment" type="text" sortOrder="23" showInDefault="1">
+                    <label>Cron Month</label>
+                    <comment><![CDATA[1-12 Allowed value. Set * for every month.]]></comment>
+                    <depends>
+                        <field id="sync">1</field>
+                    </depends>
+                </field>
+                <field id="cron_weekday" translate="label comment" type="text" sortOrder="24" showInDefault="1">
+                    <label>Cron Weekday</label>
+                    <comment><![CDATA[0-6 Allowed value. Set * for every weekday.]]></comment>
+                    <depends>
+                        <field id="sync">1</field>
+                    </depends>
+                </field>
+                <field id="number_of_abandoned_cart" translate="label comment" type="text" sortOrder="30" showInDefault="1">
+                    <label>Number of abandoned cart</label>
+                    <validate>required-entry validate-number validate-greater-than-zero validate-integer</validate>
+                    <comment><![CDATA[Enter here a number of abandoned cart for syncing in every X time.]]></comment>
+                    <depends>
+                        <field id="sync">1</field>
+                    </depends>
+                </field>
+                <field id="ac_abandoned_cart_syncing" translate="label comment" type="button" sortOrder="40" showInDefault="1">
+                    <frontend_model>ActiveCampaign\AbandonedCart\Block\System\Config\SyncAbandonedCartData</frontend_model>
+                    <label>Sync Abandoned Cart Data</label>
+                    <depends>
+                        <field id="active_campaign/abandoned_cart/sync">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

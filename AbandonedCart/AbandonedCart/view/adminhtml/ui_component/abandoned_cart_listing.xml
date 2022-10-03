@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">abandoned_cart_listing.abandoned_cart_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <spinner>spinner_columns</spinner>
+        <deps>
+            <dep>abandoned_cart_listing.abandoned_cart_listing_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="abandoned_cart_listing_data_source" component="Magento_Ui/js/grid/provider">
+        <settings>
+            <storageConfig>
+                <param name="indexField" xsi:type="string">entity_id</param>
+            </storageConfig>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>ActiveCampaign_AbandonedCart::abandonedcart_operation</aclResource>
+        <dataProvider class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider" name="abandoned_cart_listing_data_source">
+            <settings>
+                <requestFieldName>entity_id</requestFieldName>
+                <primaryFieldName>entity_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <settings>
+            <sticky>true</sticky>
+        </settings>
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filterSearch name="fulltext"/>
+        <filters name="listing_filters">
+            <argument name="data" xsi:type="array">
+                <item name="observers" xsi:type="array">
+                    <item name="column" xsi:type="string">column</item>
+                </item>
+            </argument>
+            <settings>
+                <templates>
+                    <filters>
+                        <select>
+                            <param name="template" xsi:type="string">ui/grid/filters/elements/ui-select</param>
+                            <param name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</param>
+                        </select>
+                    </filters>
+                </templates>
+            </settings>
+        </filters>
+        <massaction name="listing_massaction">
+            <action name="massSync">
+                <settings>
+                    <url path="acecommerce/index/massSync"/>
+                    <type>massSync</type>
+                    <label translate="true">Sync</label>
+                </settings>
+            </action>
+        </massaction>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="spinner_columns">
+        <selectionsColumn name="ids">
+            <settings>
+                <indexField>entity_id</indexField>
+                <resizeEnabled>false</resizeEnabled>
+                <resizeDefaultWidth>55</resizeDefaultWidth>
+            </settings>
+        </selectionsColumn>
+        <column name="entity_id">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">ID</label>
+                <sorting>asc</sorting>
+            </settings>
+        </column>
+        <column name="is_active">
+            <settings>
+                <filter>text</filter>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">Is Active</label>
+            </settings>
+        </column>
+        <column name="items_count">
+            <settings>
+                <filter>text</filter>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">Items Count</label>
+            </settings>
+        </column>
+        <column name="items_qty">
+            <settings>
+                <filter>text</filter>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">Items QTY</label>
+            </settings>
+        </column>
+        <column name="grand_total">
+            <settings>
+                <filter>text</filter>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">Grand Total</label>
+                <visible>true</visible>
+            </settings>
+        </column>
+        <column name="customer_id">
+            <settings>
+                <filter>text</filter>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">Customer ID</label>
+                <visible>true</visible>
+            </settings>
+        </column>
+        <column name="email">
+            <settings>
+                <filter>text</filter>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">Customer Email</label>
+                <visible>true</visible>
+            </settings>
+        </column>
+        <column name="ac_sync_status" class="ActiveCampaign\AbandonedCart\Ui\Component\Listing\Column\AcSyncStatus">
+            <settings>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">AC Sync Status</label>
+                <visible>true</visible>
+            </settings>
+        </column>
+        <column name="ac_order_sync_id">
+            <settings>
+                <filter>text</filter>
+                <editor>
+                    <editorType>text</editorType>
+                </editor>
+                <label translate="true">AC Order Sync ID</label>
+                <visible>true</visible>
+            </settings>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Created</label>
+            </settings>
+        </column>
+        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Modified</label>
+            </settings>
+        </column>
+        <actionsColumn class="ActiveCampaign\AbandonedCart\Ui\Component\Listing\Column\Actions" name="actions">
+            <settings>
+                <indexField>entity_id</indexField>
+                <resizeEnabled>false</resizeEnabled>
+            </settings>
+        </actionsColumn>
+    </columns>
+</listing>
