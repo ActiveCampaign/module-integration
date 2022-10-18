@@ -265,7 +265,7 @@ class OrderDataSend
                         }
                         $acOrderId = $ecomOrderArray[$customerEmail];
                     } else {
-                        $acOrderId = isset($result['data']['ecomOrders']['id']) ? $result['data']['ecomOrders']['id'] : null;
+                        $acOrderId = isset($result['data']['ecomOrder']['id']) ? $result['data']['ecomOrder']['id'] : null;
                     }
                 } else {
                     $acOrderId = $order->getAcOrderSyncId();

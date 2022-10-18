@@ -11,7 +11,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
+use Magento\Framework\Serialize\Serializer\Json  as JsonHelper;
 use Magento\Framework\Phrase;
 
 class Curl extends AbstractHelper
@@ -164,7 +164,7 @@ class Curl extends AbstractHelper
     public function orderDataDelete(
         string $method,
         string $urlEndpoint,
-        int|string $orderId
+         $orderId
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
@@ -436,7 +436,7 @@ class Curl extends AbstractHelper
      *
      * @return \Magento\Framework\Phrase|string
      */
-    private function getMessage(mixed $response): \Magento\Framework\Phrase|string
+    private function getMessage(mixed $response)
     {
         if (is_array($response)) {
             if (isset($response['message'])) {
