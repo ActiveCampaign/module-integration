@@ -63,12 +63,12 @@ class OrderSyncStatus extends \Magento\Backend\Block\Template
         if (count($filter)) {
             $searchCriteria->addFilters($filter);
         }
-
+        $searchCriteria = $searchCriteria->create();
         $searchCriteria->setCurrentPage(1)
             ->setPageSize(1);
 
         return $this->orderRepository
-            ->getList($searchCriteria->create())
+            ->getList($searchCriteria)
             ->getTotalCount();
     }
 
