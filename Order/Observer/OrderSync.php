@@ -76,9 +76,11 @@ class OrderSync implements ObserverInterface
     public function execute(Observer $observer)
     {
         $isEnabled = $this->activeCampaignHelper->isOrderSyncEnabled();
+        $synInRealTime = $this->activeCampaignHelper->isOrderSyncInRealTime();
+
         $orderIds = $observer->getEvent()->getOrderIds();
 
-        if ($isEnabled) {
+        if ($isEnabled && $synInRealTime) {
             foreach ($orderIds as $orderId) {
                 $orderData = $this->orderModel->load($orderId);
                 $acOrderStatus = $orderData->getAcOrderSyncStatus();

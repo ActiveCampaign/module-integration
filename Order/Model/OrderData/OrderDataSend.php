@@ -197,9 +197,9 @@ class OrderDataSend
                                 self::ECOM_CUSTOMER_ENDPOINT,
                                 $customerEmail
                             );
-                            foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
+                            foreach ($AcCustomer['data']['ecomOrders'] as $Ac) {
                                 if ($Ac['connectionid'] == $connectionId) {
-                                    $customerAcId = $Ac['id'];
+                                    $customerAcId = $Ac['customerid'];
                                 }
                             }
                         }

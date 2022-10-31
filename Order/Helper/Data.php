@@ -9,6 +9,7 @@ class Data extends AbstractHelper
 {
     const ACTIVE_CAMPAIGN_ORDER_STATUS = "active_campaign/order_sync/order_sync_enable";
     const ACTIVE_CAMPAIGN_ORDER_SYNC_NUM = "active_campaign/order_sync/order_sync_num";
+    const ACTIVE_CAMPAIGN_ORDER_SYNC_REAL_TIME = "active_campaign/order_sync/order_sync_real_time";
 
     /**
      * @var \Magento\Framework\App\State *
@@ -35,6 +36,19 @@ class Data extends AbstractHelper
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_ORDER_STATUS,
+            ScopeInterface::SCOPE_STORES,
+            $scopeCode
+        );
+    }
+
+    /**
+     * @param null $scopeCode
+     * @return bool
+     */
+    public function isOrderSyncInRealTime($scopeCode = null)
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::ACTIVE_CAMPAIGN_ORDER_SYNC_REAL_TIME,
             ScopeInterface::SCOPE_STORES,
             $scopeCode
         );
