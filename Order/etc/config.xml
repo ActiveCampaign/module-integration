@@ -11,6 +11,7 @@
                 <cron_day>*</cron_day>
                 <cron_month>*</cron_month>
                 <cron_weekday>*</cron_weekday>
+                <order_sync_real_time>1</order_sync_real_time>
             </order_sync>
         </active_campaign>
     </default>

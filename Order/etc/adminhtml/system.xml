@@ -59,6 +59,11 @@
                         <field id="sync">1</field>
                     </depends>
                 </field>
+                <field id="order_sync_real_time" translate="Order Sync in real time" type="select" sortOrder="30" showInDefault="1" showInStore="1">
+                    <label>Order Sync in real time</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If set yes order is sync after place order.</comment>
+                </field>
             </group>
         </section>
     </system>
