@@ -136,7 +136,7 @@ class Connect extends \Magento\Backend\App\Action
                         $this->saveConfig(
                             \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                             $connectionId,
-                            $request['store']
+                            (int)$request['store']
                         );
                     } else {
                         $return['success'] = false;
@@ -161,7 +161,7 @@ class Connect extends \Magento\Backend\App\Action
                                 $this->saveConfig(
                                     \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                                     $connectionId,
-                                    $store->getId()
+                                    (int)$store->getId()
                                 );
                             } else {
                                 $return['errorMessage'] = $result['message'];

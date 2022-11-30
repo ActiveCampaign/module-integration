@@ -370,7 +370,7 @@ class OrderDataSend
         try {
             $contactResult = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
             $contactId = isset($contactResult['data']['contact']['id']) ? $contactResult['data']['contact']['id'] : null;
-            $connectionid = $this->coreHelper->getConnectionId($customer->getStoreId());
+            $connectionid = $this->coreHelper->getConnectionId($quote->getStoreId());
 
             if (isset($contactResult['data']['contact']['id'])) {
                 if (!$customer->getAcCustomerId()) {
