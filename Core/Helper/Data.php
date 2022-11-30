@@ -163,7 +163,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $activeConnectionIds = [];
 
             foreach ($allConnections['data']['connections'] as $connection) {
-                $store = $this->storeRepository->get($connection['externalid']);
+                try{
+                    $store = $this->storeRepository->get($connection['externalid']);
+                }catch (\Exception $e){
+                    continue;
+                }
                 $connectionId = $this->getConnectionId($store->getId());
                 $activeConnectionIds[] = $connection['id'];
 
