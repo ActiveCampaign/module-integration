@@ -6,13 +6,15 @@ namespace ActiveCampaign\Core\Helper;
 use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
 use ActiveCampaign\Core\Logger\Logger;
 use ActiveCampaign\SyncLog\Model\SyncLog;
+use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
 use Magento\Framework\Phrase;
+use Magento\Framework\Serialize\Serializer\Json;
 
 class Curl extends AbstractHelper
 {
@@ -20,49 +22,33 @@ class Curl extends AbstractHelper
     public const HTTP_VERSION = '1.1';
     public const CONTENT_TYPE = 'application/json';
 
-    /**
-     * @var \GuzzleHttp\ClientInterface
-     */
-    private $client;
+    private ClientInterface $client;
+
+    private Json $jsonHelper;
+
+    private Logger $logger;
+
+    private Data $activeCampaignHelper;
+
+    private SyncLog $syncLog;
 
     /**
-     * @var \Magento\Framework\Serialize\Serializer\Json
-     */
-    private $jsonHelper;
-
-    /**
-     * @var \ActiveCampaign\Core\Logger\Logger
-     */
-    private $logger;
-
-    /**
-     * @var \ActiveCampaign\Core\Helper\Data
-     */
-    private $activeCampaignHelper;
-
-    /**
-     * @var \ActiveCampaign\SyncLog\Model\SyncLog
-     */
-    private $syncLog;
-
-    /**
-     * Curl constructor.
      * @param Context $context
-     * @param Client $client
-     * @param JsonHelper $jsonHelper
+     * @param Json $jsonHelper
      * @param Logger $logger
      * @param Data $activeCampaignHelper
      * @param SyncLog $syncLog
+     * @param Client|null $client
      */
     public function __construct(
-        Context              $context,
-        Client               $client = null,
-        JsonHelper           $jsonHelper,
-        Logger               $logger,
+        Context $context,
+        Json $jsonHelper,
+        Logger $logger,
         ActiveCampaignHelper $activeCampaignHelper,
-        SyncLog              $syncLog
+        SyncLog $syncLog,
+        Client $client = null
     ) {
-        $this->client = $client ?: new Client();
+        $this->client = $client ?? new Client();
         $this->jsonHelper = $jsonHelper;
         $this->logger = $logger;
         $this->activeCampaignHelper = $activeCampaignHelper;
@@ -80,7 +66,7 @@ class Curl extends AbstractHelper
      * @param array $data
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function createConnection(
         string $method,
@@ -109,7 +95,7 @@ class Curl extends AbstractHelper
      * @param array $data
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function orderDataSend(
         string $method,
@@ -134,7 +120,7 @@ class Curl extends AbstractHelper
      * @param array $data
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function orderDataUpdate(
         string $method,
@@ -159,7 +145,7 @@ class Curl extends AbstractHelper
      * @param int|string $orderId
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function orderDataDelete(
         string $method,
@@ -182,7 +168,7 @@ class Curl extends AbstractHelper
      * @param string $urlEndpoint
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function deleteConnection(
         string $method,
@@ -205,7 +191,7 @@ class Curl extends AbstractHelper
      * @param array $data
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function createContacts(
         string $method,
@@ -229,7 +215,7 @@ class Curl extends AbstractHelper
      * @param string $urlEndpoint
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getAllConnections(
         string $method,
@@ -252,7 +238,7 @@ class Curl extends AbstractHelper
      * @param array $data
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function sendRequestAbandonedCart(
         string $method,
@@ -277,7 +263,7 @@ class Curl extends AbstractHelper
      * @param string $customerEmail
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function listAllCustomers(
         string $method,
@@ -318,7 +304,7 @@ class Curl extends AbstractHelper
      * @param string $bodyData
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     private function sendRequest(
         string $urlEndpoint,
@@ -350,10 +336,10 @@ class Curl extends AbstractHelper
             $this->logger->info('REQUEST', $request);
 
             $options = [];
-            $options[\GuzzleHttp\RequestOptions::HEADERS] = $headers;
+            $options[RequestOptions::HEADERS] = $headers;
 
             if ($bodyData !== null) {
-                $options[\GuzzleHttp\RequestOptions::BODY] = $bodyData;
+                $options[RequestOptions::BODY] = $bodyData;
             }
 
             $resultCurl = $this->client->request($method, $url, $options);
@@ -383,7 +369,7 @@ class Curl extends AbstractHelper
                 $result['success'] = false;
                 $result['message'] = __('Cannot connect to active campaign server. Please try again later.');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $synclog->setStatus(0);
             $synclog->setErrors($e->getMessage());
 
@@ -434,9 +420,9 @@ class Curl extends AbstractHelper
      *
      * @param mixed $response
      *
-     * @return \Magento\Framework\Phrase|string
+     * @return Phrase|string
      */
-    private function getMessage(mixed $response): \Magento\Framework\Phrase|string
+    private function getMessage(mixed $response): Phrase|string
     {
         if (is_array($response)) {
             if (isset($response['message'])) {
