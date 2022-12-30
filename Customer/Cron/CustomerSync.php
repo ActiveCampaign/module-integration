@@ -14,6 +14,7 @@ use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerResourceCollectionFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute;
 use Psr\Log\LoggerInterface;
+use Magento\Framework\App\Cache\TypeListInterface;
 
 class CustomerSync
 {
@@ -24,6 +25,8 @@ class CustomerSync
     const ECOM_CUSTOMER_ENDPOINT = "ecomCustomers";
 
     const METHOD = "POST";
+
+    const METHOD_PUT = "PUT";
 
     /**
      * @var CustomerRepositoryInterface
@@ -76,6 +79,11 @@ class CustomerSync
     protected $logger;
 
     /**
+     * @var CacheTypeList
+     */
+    protected $cacheTypeList;
+
+    /**
      * CustomerSync constructor.
      * @param CustomerRepositoryInterface $customerRepository
      * @param AddressRepositoryInterface $addressRepository
@@ -98,7 +106,8 @@ class CustomerSync
         CustomerHelper $customerHelper,
         CoreHelper $coreHelper,
         Curl $curl,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        TypeListInterface $cacheTypeList
     ) {
         $this->customerRepository = $customerRepository;
         $this->addressRepository = $addressRepository;
@@ -110,6 +119,7 @@ class CustomerSync
         $this->coreHelper = $coreHelper;
         $this->curl = $curl;
         $this->logger = $logger;
+        $this->cacheTypeList = $cacheTypeList;
     }
 
     public function execute()
@@ -117,6 +127,7 @@ class CustomerSync
         if ($this->customerHelper->isCustomerSyncingEnabled()) {
             $contact = [];
             $ecomCustomer = [];
+            $this->updateCustomers();
             $numberOfCustomers = (int)$this->customerHelper->getNumberOfCustomers();
 
             $customers = $this->customerResourceCollectionFactory->create()
@@ -128,16 +139,10 @@ class CustomerSync
 
             foreach ($customers as $customer) {
                 $contactId = 0;
+                $customerId = $customer->getId();
                 $ecomCustomerId = 0;
                 $syncStatus = CronConfig::NOT_SYNCED;
-                $customerId = $customer->getId();
-
-                $contact['email'] = $customer->getEmail();
-                $contact['firstName'] = $customer->getFirstname();
-                $contact['lastName'] = $customer->getLastname();
-                $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
-                $contact['fieldValues'] = $this->getFieldValues($customerId);
-                $contactData['contact'] = $contact;
+                $contactData = $this->contactBody($customer);
 
                 try {
                     $contactResult = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
@@ -220,5 +225,42 @@ class CustomerSync
             }
         }
         return $fieldValues;
+    }
+
+    public function updateCustomers(){
+
+        $numberOfCustomers = (int)$this->customerHelper->getNumberOfCustomers();
+        $customers = $this->customerResourceCollectionFactory->create()
+            ->addAttributeToSelect('ac_contact_id')
+            ->addAttributeToFilter( 'ac_contact_id',['neq' => null ])
+            ->addAttributeToFilter( self::AC_SYNC_STATUS,['eq' => CronConfig::SYNCED ])
+            ->addAttributeToFilter('updated_at',['gt' => $this->customerHelper->getLastCustomerUpdateSync()])
+            ->setOrder('updated_at','asc')
+            ->setPageSize($numberOfCustomers);
+        foreach ($customers as $customer){
+            $contactData = $this->contactBody($customer);
+            $lastUpdate = $this->customerHelper->getLastCustomerUpdateSync();
+            try {
+                $this->curl->createContacts(self::METHOD_PUT, self::CONTACT_ENDPOINT.'/'.$customer->getAcContactId(), $contactData);
+                $lastUpdate = $customer->getUpdatedAt();
+            } catch (\Exception $e) {
+                $this->logger->critical("MODULE: Customer  contact/sync" . $e);
+            }
+        }
+        $this->customerHelper->setLastCustomerUpdateSync($lastUpdate);
+        $this->cacheTypeList->cleanType('config');
+    }
+
+
+    private function contactBody($customer){
+        $customerId = $customer->getId();
+        $contact['email'] = $customer->getEmail();
+        $contact['firstName'] = $customer->getFirstname();
+        $contact['lastName'] = $customer->getLastname();
+        $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
+        $contact['fieldValues'] = $this->getFieldValues($customerId);
+        $contactData['contact'] = $contact;
+
+        return $contactData;
     }
 }
