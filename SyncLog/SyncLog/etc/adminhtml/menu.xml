@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
-    <menu>
-        <add id="ActiveCampaign_SyncLog::activecampaign" title="ActiveCampaign" module="ActiveCampaign_SyncLog" sortOrder="51" resource="ActiveCampaign_SyncLog::activecampaign"/>
-        <add id="ActiveCampaign_SyncLog::logs" title="Sync Logs" module="ActiveCampaign_SyncLog" sortOrder="10" action="synclog/index/index" resource="ActiveCampaign_SyncLog::logs" parent="ActiveCampaign_SyncLog::activecampaign"/>
-        <add id="ActiveCampaign_SyncLog::configuration" title="Configuration" module="ActiveCampaign_SyncLog" sortOrder="40" action="adminhtml/system_config/edit/section/active_campaign" resource="ActiveCampaign_SyncLog::configuration" parent="ActiveCampaign_SyncLog::activecampaign"/>
-    </menu>
-</config>

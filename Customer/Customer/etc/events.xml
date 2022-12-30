@@ -1,5 +1,0 @@
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <event name="customer_save_after_data_object">
-        <observer name="activecampaign_customer" instance="ActiveCampaign\Customer\Observer\CustomerSaveAfter" />
-    </event>
-</config>
