@@ -9,6 +9,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public const ACTIVE_CAMPAIGN_GENERAL_API_URL = 'active_campaign/general/api_url';
     public const ACTIVE_CAMPAIGN_GENERAL_API_KEY = 'active_campaign/general/api_key';
     public const ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID = 'active_campaign/general/connection_id';
+    public const ACTIVE_CAMPAIGN_SYNLOG_DEBUG = 'active_campaign/synclog/debug_enabled';
+
 
     /**
      * @var \Magento\Store\Api\StoreRepositoryInterface
@@ -134,6 +136,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $url;
+    }
+    /**
+     * Get is debug enabled
+     *
+     * @param int|string|null $scopeCode
+     *
+     * @return bool
+     */
+    public function isDebugEnabled($scopeCode = null)
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::ACTIVE_CAMPAIGN_SYNLOG_DEBUG,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeCode
+        );
     }
 
     /**

@@ -16,6 +16,7 @@
                 <cron_day>*</cron_day>
                 <cron_month>*</cron_month>
                 <cron_weekday>*</cron_weekday>
+                <last_customers_updated>0</last_customers_updated>
             </customer>
         </active_campaign>
     </default>
