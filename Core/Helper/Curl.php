@@ -347,7 +347,9 @@ class Curl extends AbstractHelper
             $synclog->setMethod($method);
             $synclog->setRequest($this->jsonHelper->serialize($request));
 
-            $this->logger->info('REQUEST', $request);
+            if($this->activeCampaignHelper->isDebugEnabled()){
+                $this->logger->info('REQUEST', $request);
+            }
 
             $options = [];
             $options[\GuzzleHttp\RequestOptions::HEADERS] = $headers;
@@ -361,7 +363,9 @@ class Curl extends AbstractHelper
             $body = $resultCurl->getBody()->getContents();
             $response = $this->jsonHelper->unserialize($body);
 
-            $this->logger->info('RESPONSE', $response);
+            if($this->activeCampaignHelper->isDebugEnabled()){
+                $this->logger->info('RESPONSE', $response);
+            }
 
             $synclog->setResponse($body);
             $synclog->setStatus(1);
