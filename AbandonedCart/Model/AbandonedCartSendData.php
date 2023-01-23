@@ -22,6 +22,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\UrlInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteResourceCollectionFactory;
@@ -120,10 +121,15 @@ class AbandonedCartSendData extends AbstractModel
      */
     private $quoteRepository;
 
+    /**
+     * @var UrlInterface
+     */
+    protected $urlBuilder;
+
     private $customerId;
 
     /**
-     * CustomerSync constructor.
+     * AbandonedCartSendData constructor.
      * @param CustomerRepositoryInterface $customerRepository
      * @param AddressRepositoryInterface $addressRepository
      * @param CustomerResourceCollectionFactory $customerResourceCollectionFactory
@@ -145,6 +151,7 @@ class AbandonedCartSendData extends AbstractModel
      * @param CustomerModel $customerModel
      * @param DateTime $dateTime
      * @param CartRepositoryInterface $quoteRepository
+     * @param UrlInterface $urlBuilder
      */
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
@@ -167,8 +174,10 @@ class AbandonedCartSendData extends AbstractModel
         StoreManagerInterface $storeManager,
         CustomerModel $customerModel,
         DateTime $dateTime,
-        CartRepositoryInterface $quoteRepository
+        CartRepositoryInterface $quoteRepository,
+        UrlInterface $urlBuilder
     ) {
+        $this->urlBuilder = $urlBuilder;
         $this->customerRepository = $customerRepository;
         $this->addressRepository = $addressRepository;
         $this->customerResourceCollectionFactory = $customerResourceCollectionFactory;
@@ -205,7 +214,7 @@ class AbandonedCartSendData extends AbstractModel
         $abandonedCarts = $this->quoteResourceCollectionFactory->create()
             ->addFieldToSelect('*')
             ->addFieldToFilter('ac_synced_date', [
-                ['gt' => new \Zend_Db_Expr('updated_at')],
+                ['lt' => new \Zend_Db_Expr('updated_at')],
                 ['null' => true]
             ])
             ->addFieldToFilter(
@@ -297,6 +306,7 @@ class AbandonedCartSendData extends AbstractModel
                     "orderDiscounts" => [
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
+                    "orderUrl" =>  $this->urlBuilder->getDirectUrl('checkout/cart'),
                     "abandonedDate" => $abandonedCart->getCreatedAt(),
                     "externalCreatedDate" => $abandonedCart->getCreatedAt(),
                     "externalUpdatedDate" => $abandonedCart->getUpdatedAt(),

@@ -35,6 +35,14 @@
                     </depends>
                 </field>
             </group>
+            <group id="synclog">
+                <field id="debug_enabled" translate="label" sortOrder="10" type="select" showInStore="0"
+                       showInWebsite="1" showInDefault="1">
+                    <label>Debug Mode</label>
+                    <comment>/var/log/activecampaign.log</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+            </group>
         </section>
     </system>
 </config>
