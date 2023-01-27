@@ -214,7 +214,7 @@ class AbandonedCartSendData extends AbstractModel
         $abandonedCarts = $this->quoteResourceCollectionFactory->create()
             ->addFieldToSelect('*')
             ->addFieldToFilter('ac_synced_date', [
-                ['lt' => new \Zend_Db_Expr('updated_at')],
+                ['lt' => new \Zend_Db_Expr('main_table.updated_at')],
                 ['null' => true]
             ])
             ->addFieldToFilter(
@@ -226,7 +226,8 @@ class AbandonedCartSendData extends AbstractModel
             $abandonedCarts->addFieldToFilter('entity_id', ['eq' => $quoteId]);
         }
         $abandonedCarts->setPageSize($numberOfAbandonedCart);
-
+        $abandonedCarts->getSelect()->join(array('address' => $abandonedCarts->getResource()->getTable('quote_address')),'main_table.entity_id = address.quote_id')
+            ->where("address.address_type='billing' and (main_table.customer_email is not null or  address.email is not null)");
         foreach ($abandonedCarts as $abandonedCart) {
             $connectionId = $this->coreHelper->getConnectionId($abandonedCart->getStoreId());
 
