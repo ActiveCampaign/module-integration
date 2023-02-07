@@ -214,7 +214,7 @@ class AbandonedCartSendData extends AbstractModel
         $abandonedCarts = $this->quoteResourceCollectionFactory->create()
             ->addFieldToSelect('*')
             ->addFieldToFilter('ac_synced_date', [
-                ['lt' => new \Zend_Db_Expr('updated_at')],
+                ['lt' => new \Zend_Db_Expr('main_table.updated_at')],
                 ['null' => true]
             ])
             ->addFieldToFilter(
