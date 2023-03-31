@@ -88,8 +88,6 @@ class OrderSync implements ObserverInterface
                     $this->orderdataSend->orderDataSend($orderData);
                 }
 
-                $quote = $this->quoteRepository->get($orderData->getQuoteId());
-                $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
                 if ($orderData->getStatus() == 'canceled') {
                     $orderSyncId = $orderData->getAcOrderSyncId();
                     $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $orderSyncId);

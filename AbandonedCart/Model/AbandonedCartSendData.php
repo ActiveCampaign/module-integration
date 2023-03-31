@@ -220,6 +220,10 @@ class AbandonedCartSendData extends AbstractModel
             ->addFieldToFilter(
                 'is_active',
                 '1'
+            )
+            ->addFieldToFilter(
+                'items_count',
+                ['gt' => 0]
             );
 
         if ($quoteId) {
@@ -295,7 +299,7 @@ class AbandonedCartSendData extends AbstractModel
                     $this->customerId  = $customerModel->getAcCustomerId();
                 }
             }
-
+            $abandonedCart->collectTotals();
             $quoteItemsData = $this->getQuoteItemsData($abandonedCart->getEntityId(), $abandonedCart->getStoreId());
 
             $abandonedCartData = [

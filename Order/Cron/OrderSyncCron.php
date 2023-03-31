@@ -99,10 +99,6 @@ class OrderSyncCron
                 foreach ($orderCollection as $order) {
                     try {
                         $this->orderdataSend->orderDataSend($order);
-                        $quote = $this->quoteRepository->get($order->getQuoteId());
-                        if ($quote->getAcOrderSyncId() !== 0) {
-                            $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
-                        }
                     } catch (NoSuchEntityException|GuzzleException $e) {
                         $this->logger->error('MODULE Order: ' . $e->getMessage());
                     }
