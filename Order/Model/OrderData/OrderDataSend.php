@@ -20,6 +20,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface as StoreManagerInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 class OrderDataSend
 {
@@ -98,8 +99,12 @@ class OrderDataSend
     protected $customerResource;
 
     /**
-     * Order Data send Construct
-     *
+     * @var CartRepositoryInterface
+     */
+    protected $quoteRepository;
+
+    /**
+     * OrderDataSend constructor.
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
      * @param ImageFactory $imageHelperFactory
      * @param ActiveCampaignOrderHelper $activeCampaignOrderHelper
@@ -115,6 +120,7 @@ class OrderDataSend
      * @param Attribute $eavAttribute
      * @param CoreHelper $coreHelper
      * @param CustomerResource $customerResource
+     * @param CartRepositoryInterface $quoteRepository
      */
     public function __construct(
         ProductRepositoryInterfaceFactory $productRepositoryFactory,
@@ -131,7 +137,8 @@ class OrderDataSend
         AddressRepositoryInterface $addressRepository,
         Attribute $eavAttribute,
         CoreHelper $coreHelper,
-        CustomerResource $customerResource
+        CustomerResource $customerResource,
+        CartRepositoryInterface $quoteRepository
     ) {
         $this->_productRepositoryFactory = $productRepositoryFactory;
         $this->imageHelperFactory = $imageHelperFactory;
@@ -148,6 +155,7 @@ class OrderDataSend
         $this->eavAttribute = $eavAttribute;
         $this->coreHelper = $coreHelper;
         $this->customerResource = $customerResource;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -247,11 +255,21 @@ class OrderDataSend
                         ];
 
                 if (!$order->getAcOrderSyncId()) {
-                    $result = $this->curl->orderDataSend(
-                        self::METHOD,
-                        self::URL_ENDPOINT,
-                        $data
-                    );
+                    $quote = $this->quoteRepository->get($order->getQuoteId());
+                    $AcOrderId = $quote->getAcOrderSyncId();
+                    if($AcOrderId > 0){
+                        $result = $this->curl->orderDataSend(
+                            self::UPDATE_METHOD,
+                            self::URL_ENDPOINT . '/' . (int) $AcOrderId,
+                            $data
+                        );
+                    }else{
+                        $result = $this->curl->orderDataSend(
+                            self::METHOD,
+                            self::URL_ENDPOINT,
+                            $data
+                        );
+                    }
                     if ($result['status'] == '422' || $result['status'] == '400') {
                         $ecomAlreadyExistOrderData = [];
                         $ecomAlreadyExistOrderResult = $this->curl->createContacts(

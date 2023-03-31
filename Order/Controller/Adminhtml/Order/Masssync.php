@@ -75,10 +75,7 @@ class Masssync extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassAct
                 if (array_key_exists('success', $result) && $result['success'] != false) {
                     $countUpdateOrder++;
                 }
-                $quote = $this->quoteRepository->get($order->getQuoteId());
-                if ($quote->getAcOrderSyncId() != 0) {
-                    $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $quote->getAcOrderSyncId());
-                }
+
             } else {
                 $countAlreadySync++;
             }
