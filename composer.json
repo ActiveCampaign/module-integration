@@ -1,17 +1,11 @@
 {
     "name": "activecampaign/module-integration",
     "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
-    "type": "metapackage",
-    "license": "OSL-3.0",
+    "type": "magento2-component",
     "version": "2.0.9",
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://repo.magento.com/"
-        }
-    ],
+    "license": "OSL-3.0",
     "require": {
-        "php": "~7.3.0||~7.4.0||~8.0||~8.1",
+        "php": "~7.3.0||~7.4.0||~8.0||~8.1||~8.2"
     },
     "replace": {
         "activecampaign/core": "self.version",
