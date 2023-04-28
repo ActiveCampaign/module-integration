@@ -247,8 +247,10 @@ class CustomerSync
                 $this->logger->critical("MODULE: Customer  contact/sync" . $e);
             }
         }
-        $this->customerHelper->setLastCustomerUpdateSync($lastUpdate);
-        $this->cacheTypeList->cleanType('config');
+        if(isset($lastUpdate)) {
+            $this->customerHelper->setLastCustomerUpdateSync($lastUpdate);
+            $this->cacheTypeList->cleanType('config');
+        }
     }
 
 
