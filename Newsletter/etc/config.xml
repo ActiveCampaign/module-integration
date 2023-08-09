@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <active_campaign>
+            <newsletter_sync>
+                <newsletter_sync_enable>0</newsletter_sync_enable>
+                <newsletter_sync_num>100</newsletter_sync_num>
+                <cron_minute>5</cron_minute>
+                <cron_hour>*</cron_hour>
+                <cron_day>*</cron_day>
+                <cron_month>*</cron_month>
+                <cron_weekday>*</cron_weekday>
+            </newsletter_sync>
+        </active_campaign>
+    </default>
+</config>

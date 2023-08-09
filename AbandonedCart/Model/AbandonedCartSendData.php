@@ -176,7 +176,8 @@ class AbandonedCartSendData extends AbstractModel
         DateTime $dateTime,
         CartRepositoryInterface $quoteRepository,
         UrlInterface $urlBuilder
-    ) {
+    )
+    {
         $this->urlBuilder = $urlBuilder;
         $this->customerRepository = $customerRepository;
         $this->addressRepository = $addressRepository;
@@ -210,7 +211,7 @@ class AbandonedCartSendData extends AbstractModel
     public function sendAbandonedCartData($quoteId = null): array
     {
         $result = [];
-        $numberOfAbandonedCart = (int) $this->abandonedCartHelper->getNumberOfAbandonedCart();
+        $numberOfAbandonedCart = (int)$this->abandonedCartHelper->getNumberOfAbandonedCart();
         $abandonedCarts = $this->quoteResourceCollectionFactory->create()
             ->addFieldToSelect('*')
             ->addFieldToFilter('ac_synced_date', [
@@ -230,7 +231,7 @@ class AbandonedCartSendData extends AbstractModel
             $abandonedCarts->addFieldToFilter('entity_id', ['eq' => $quoteId]);
         }
         $abandonedCarts->setPageSize($numberOfAbandonedCart);
-        $abandonedCarts->getSelect()->join(array('address' => $abandonedCarts->getResource()->getTable('quote_address')),'main_table.entity_id = address.quote_id')
+        $abandonedCarts->getSelect()->join(array('address' => $abandonedCarts->getResource()->getTable('quote_address')), 'main_table.entity_id = address.quote_id')
             ->where("address.address_type='billing' and (main_table.customer_email is not null or  address.email is not null)");
         foreach ($abandonedCarts as $abandonedCart) {
             $connectionId = $this->coreHelper->getConnectionId($abandonedCart->getStoreId());
@@ -296,7 +297,7 @@ class AbandonedCartSendData extends AbstractModel
                 $customerModel = $this->customerFactory->create();
                 $this->customerResource->load($customerModel, $customerId);
                 if ($customerModel->getAcCustomerId()) {
-                    $this->customerId  = $customerModel->getAcCustomerId();
+                    $this->customerId = $customerModel->getAcCustomerId();
                 }
             }
             $abandonedCart->collectTotals();
@@ -311,7 +312,7 @@ class AbandonedCartSendData extends AbstractModel
                     "orderDiscounts" => [
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
-                    "orderUrl" =>  $this->urlBuilder->getDirectUrl('checkout/cart'),
+                    "orderUrl" => $this->urlBuilder->getDirectUrl('checkout/cart'),
                     "abandonedDate" => $abandonedCart->getCreatedAt(),
                     "externalCreatedDate" => $abandonedCart->getCreatedAt(),
                     "externalUpdatedDate" => $abandonedCart->getUpdatedAt(),
@@ -328,6 +329,7 @@ class AbandonedCartSendData extends AbstractModel
             ];
 
             try {
+
                 if (is_null($abandonedCart->getAcSyncedDate())) {
                     $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
                         self::METHOD,
@@ -337,7 +339,7 @@ class AbandonedCartSendData extends AbstractModel
                 } else {
                     $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
                         self::UPDATE_METHOD,
-                        self::ABANDONED_CART_URL_ENDPOINT . "/" . (int) $abandonedCart->getAcOrderSyncId(),
+                        self::ABANDONED_CART_URL_ENDPOINT . "/" . (int)$abandonedCart->getAcOrderSyncId(),
                         $abandonedCartData
                     );
                 }
@@ -407,7 +409,8 @@ class AbandonedCartSendData extends AbstractModel
         $quoteItemCollection = $this->quoteItemCollectionFactory->create();
         return $quoteItemCollection
             ->addFieldToSelect('*')
-            ->addFieldToFilter('quote_id', [$quoteId]);
+            ->addFieldToFilter('quote_id', [$quoteId])
+            ->addFieldToFilter('parent_item_id', ['null' => true]);
     }
 
     /**
@@ -461,7 +464,8 @@ class AbandonedCartSendData extends AbstractModel
         return $fieldValues;
     }
 
-    public function isGuest($quote): bool{
+    public function isGuest($quote): bool
+    {
         return is_null($quote->getCustomerId());
     }
 
@@ -510,6 +514,7 @@ class AbandonedCartSendData extends AbstractModel
                         $ecomCustomer['connectionid'] = $connectionid;
                         $ecomCustomer['externalid'] = $customerId;
                         $ecomCustomer['email'] = $customerEmail;
+                        $ecomCustomer['acceptsMarketing'] = 1;
                         $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
                         $AcCustomer = $this->curl->listAllCustomers(
                             self::GET_METHOD,
@@ -538,22 +543,35 @@ class AbandonedCartSendData extends AbstractModel
             }
 
             if ($this->isGuest($quote)) {
-                $ecomCustomerData = [
-                    "ecomCustomer" => [
-                        "connection" => $connectionid,
-                        'externals' => $quote->getBillingAddress()->getEmail(),
-                        'email' => $quote->getBillingAddress()->getEmail(),
-                    ]
-                ];
-                $ecomCustomerResult = $this->curl->createContacts(
-                    self::METHOD,
-                    self::ECOM_CUSTOMER_ENDPOINT,
-                    $ecomCustomerData
-                );
-                $ecomCustomerId = $ecomCustomerResult['data']['ecomCustomer']['id'] ?? null;
-            }
 
-            if ($ecomCustomerId !==  0) {
+                $ecomCustomerResult = $this->curl->listAllCustomers(
+                    self::GET_METHOD,
+                    self::ECOM_CUSTOMER_ENDPOINT,
+                    $quote->getBillingAddress()->getEmail()
+                );
+                if (isset($ecomCustomerResult['data']['ecomCustomers'][0])) {
+                    foreach ($ecomCustomerResult['data']['ecomCustomers'] as $Ac) {
+                        if ($Ac['connectionid'] === $connectionid) {
+                            $ecomCustomerId = $Ac['id'];
+                        }
+                    }
+                } else {
+                    $ecomCustomerData = [
+                        "ecomCustomer" => [
+                            "connection" => $connectionid,
+                            'externals' => $quote->getBillingAddress()->getEmail(),
+                            'email' => $quote->getBillingAddress()->getEmail(),
+                        ]
+                    ];
+                    $ecomCustomerResult = $this->curl->createContacts(
+                        self::METHOD,
+                        self::ECOM_CUSTOMER_ENDPOINT,
+                        $ecomCustomerData
+                    );
+                    $ecomCustomerId = $ecomCustomerResult['data']['ecomCustomer']['id'] ?? null;
+                }
+            }
+            if ($ecomCustomerId !== 0) {
                 $syncStatus = CronConfig::SYNCED;
             } else {
                 $syncStatus = CronConfig::FAIL_SYNCED;
@@ -564,7 +582,8 @@ class AbandonedCartSendData extends AbstractModel
             } else {
                 $this->saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
             }
-        } catch (\Exception $e) {
+        } catch
+        (\Exception $e) {
             $this->logger->critical("MODULE AbandonedCart: " . $e->getMessage());
         } catch (GuzzleException $e) {
             $this->logger->critical("MODULE AbandonedCart: " . $e->getMessage());

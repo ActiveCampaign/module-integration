@@ -46,9 +46,11 @@ class Connect extends \Magento\Backend\App\Action
      */
     private $curl;
 
+    private $cacheTypeList;
+
+
     /**
-     * Construct
-     *
+     * Connect constructor.
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
      * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface
@@ -56,6 +58,7 @@ class Connect extends \Magento\Backend\App\Action
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \ActiveCampaign\Core\Helper\Data $activeCampaignHelper
      * @param \ActiveCampaign\Core\Helper\Curl $curl
+     * @param \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -64,7 +67,8 @@ class Connect extends \Magento\Backend\App\Action
         \Magento\Store\Api\StoreRepositoryInterface $storeRepository,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \ActiveCampaign\Core\Helper\Data $activeCampaignHelper,
-        \ActiveCampaign\Core\Helper\Curl $curl
+        \ActiveCampaign\Core\Helper\Curl $curl,
+        \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
@@ -73,6 +77,8 @@ class Connect extends \Magento\Backend\App\Action
         $this->storeManager = $storeManager;
         $this->activeCampaignHelper = $activeCampaignHelper;
         $this->curl = $curl;
+        $this->cacheTypeList = $cacheTypeList;
+
     }
 
     /**
@@ -99,7 +105,7 @@ class Connect extends \Magento\Backend\App\Action
                 $this->saveConfig(
                     \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_STATUS,
                     $request['status'],
-                    $request['store']
+                    (int)$request['store']
                 );
             }
 
@@ -108,7 +114,7 @@ class Connect extends \Magento\Backend\App\Action
                 $this->saveConfig(
                     \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_API_URL,
                     $request['api_url'],
-                    $request['store']
+                    (int)$request['store']
                 );
             }
 
@@ -117,7 +123,7 @@ class Connect extends \Magento\Backend\App\Action
                 $this->saveConfig(
                     \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_API_KEY,
                     $request['api_key'],
-                    $request['store']
+                    (int)$request['store']
                 );
             }
 
@@ -177,6 +183,8 @@ class Connect extends \Magento\Backend\App\Action
 
                 $checkConnections = $this->activeCampaignHelper->checkConnections($allConnections);
                 $return['success'] = $checkConnections;
+                $this->cacheTypeList->cleanType(\Magento\Framework\App\Cache\Type\Config::TYPE_IDENTIFIER);
+
             } catch (\Exception $e) {
                 $return['success'] = false;
                 $return['errorMessage'] = __($e->getMessage());

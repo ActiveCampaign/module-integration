@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="newsletter_subscriber">
+        <column xsi:type="int" name="ac_newsletter_sync_id" nullable="false" default="0"
+                comment="ActiveCampaign Newsletter Id"/>
+        <column xsi:type="int" name="ac_newsletter_sync_status" nullable="false" default="0"
+                comment="ActiveCampaign Status"/>
+    </table>
+
+</schema>

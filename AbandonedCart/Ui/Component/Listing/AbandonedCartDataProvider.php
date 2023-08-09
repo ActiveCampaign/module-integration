@@ -19,7 +19,7 @@ class AbandonedCartDataProvider extends SearchResult
 				'main_table.entity_id = quote_address.quote_id',
                 ['quote_address.quote_id','quote_address.email'],
 			)
-			->where("main_table.is_active = 1 AND quote_address.address_type = 'billing'");
+			->where("main_table.is_active = 1 AND quote_address.address_type = 'billing' and main_table.items_count>0");
         return $this;
     }
 }

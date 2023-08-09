@@ -109,7 +109,7 @@ class Disconnect extends \Magento\Backend\App\Action
                     $urlEndpoint = self::URL_ENDPOINT . '/' . $connectionId;
                     $result = $this->curl->deleteConnection(self::METHOD, $urlEndpoint);
 
-                    if ($result['success']) {
+                    if ($result['success'] || str_contains($result['message'],'403 Forbidden')) {
                         $this->configInterface->deleteConfig(
                             \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
@@ -128,19 +128,20 @@ class Disconnect extends \Magento\Backend\App\Action
                             $urlEndpoint = self::URL_ENDPOINT . '/' . $connectionId;
                             $result = $this->curl->deleteConnection(self::METHOD, $urlEndpoint);
 
-                            if ($result['success']) {
+                            if ($result['success'] || str_contains($result['message'],'403 Forbidden')) {
                                 $this->configInterface->deleteConfig(
                                     \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                                     \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
                                     $store->getId()
                                 );
-                            } else {
+                            }else{
                                 $return['success'] = false;
                                 $return['errorMessage'] = $result['message'];
                             }
                         }
                     }
                 }
+
 
                 $allConnections = $this->curl->getAllConnections(
                     self::GET_METHOD,
@@ -154,12 +155,13 @@ class Disconnect extends \Magento\Backend\App\Action
             }
         }
 
-        if ($return['success'] === true) {
+       // if ($return['success'] === true) {
             $this->cacheTypeList->invalidate([
                 \Magento\Framework\App\Cache\Type\Config::TYPE_IDENTIFIER,
                 \Magento\PageCache\Model\Cache\Type::TYPE_IDENTIFIER
             ]);
-        }
+            $this->cacheTypeList->cleanType(\Magento\Framework\App\Cache\Type\Config::TYPE_IDENTIFIER);
+        //}
 
         $resultJson = $this->resultJsonFactory->create();
 

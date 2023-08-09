@@ -144,7 +144,8 @@ class SyncAbandonedCartData extends Field
                 ['eq' => CronConfig::NOT_SYNCED],
                 ['eq' => CronConfig::FAIL_SYNCED]
             ]
-        );
+        )
+        ->addFieldToFilter('items_count',['gt' => 0]);
 
         return $collection->getSize();
     }
@@ -162,7 +163,8 @@ class SyncAbandonedCartData extends Field
             [
                 ['eq' => CronConfig::NOT_SYNCED]
             ]
-        );
+        )
+            ->addFieldToFilter('items_count',['gt' => 0]);
 
         return $collection->getSize();
     }
@@ -180,7 +182,8 @@ class SyncAbandonedCartData extends Field
             [
                 ['eq' => CronConfig::FAIL_SYNCED]
             ]
-        );
+        )
+            ->addFieldToFilter('items_count',['gt' => 0]);
 
         return $collection->getSize();
     }
