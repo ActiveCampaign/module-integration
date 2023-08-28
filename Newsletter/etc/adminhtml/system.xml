@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="active_campaign" translate="label" type="text" sortOrder="100" showInDefault="1" showInStore="1">
+            <group id="newsletter_sync" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0"
+                   showInStore="0">
+                <label>Newsletter Sync Configuration</label>
+                <field id="newsletter_sync_enable" translate="Newsletter Sync Enable" type="select" sortOrder="1"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Newsletter Sync Enable</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="cron_minute" translate="label comment" type="text" sortOrder="20" showInDefault="1">
+                    <label>Cron Minute</label>
+                    <comment><![CDATA[0-59 Allowed value. Set * for every minute.]]></comment>
+                    <depends>
+                        <field id="newsletter_sync_enable">1</field>
+                    </depends>
+                    <backend_model>ActiveCampaign\Newsletter\Model\Config\CronConfig</backend_model>
+                </field>
+                <field id="cron_hour" translate="label comment" type="text" sortOrder="21" showInDefault="1">
+                    <label>Cron Hour</label>
+                    <comment><![CDATA[0-23 Allowed value. Set * for every hour.]]></comment>
+                    <depends>
+                        <field id="newsletter_sync_enable">1</field>
+                    </depends>
+                </field>
+                <field id="cron_day" translate="label comment" type="text" sortOrder="22" showInDefault="1">
+                    <label>Cron Day</label>
+                    <comment><![CDATA[1-31 Allowed value. Set * for every day.]]></comment>
+                    <depends>
+                        <field id="newsletter_sync_enable">1</field>
+                    </depends>
+                </field>
+                <field id="cron_month" translate="label comment" type="text" sortOrder="23" showInDefault="1">
+                    <label>Cron Month</label>
+                    <comment><![CDATA[1-12 Allowed value. Set * for every month.]]></comment>
+                    <depends>
+                        <field id="newsletter_sync_enable">1</field>
+                    </depends>
+                </field>
+                <field id="cron_weekday" translate="label comment" type="text" sortOrder="24" showInDefault="1">
+                    <label>Cron Weekday</label>
+                    <comment><![CDATA[0-6 Allowed value. Set * for every weekday.]]></comment>
+                    <depends>
+                        <field id="newsletter_sync_enable">1</field>
+                    </depends>
+                </field>
+                <field id="newsletter_sync_num" translate="Newsletter Sync Numbers" type="text" sortOrder="30"
+                       showInDefault="1" showInStore="1">
+                    <label>Newsletter Sync Numbers</label>
+                    <comment>Number of Newsletters sync at a time</comment>
+                </field>
+                <field id="newsletter_sync_status" translate="label" sortOrder="40" showInDefault="1">
+                    <label>Number of Newsletters test</label>
+                    <frontend_model>ActiveCampaign\Newsletter\Block\Adminhtml\System\Config\Widget</frontend_model>
+                    <depends>
+                        <field id="sync">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

@@ -2,7 +2,7 @@
   "name": "activecampaign/module-integration",
   "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
   "type": "metapackage",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "license": [
     "OSL-3.0"
   ],
@@ -11,6 +11,7 @@
     "activecampaign/customer": "2.1.*",
     "activecampaign/abandonedcart": "2.1.*",
     "activecampaign/order": "2.1.*",
-    "activecampaign/synclog": "2.1.*"
+    "activecampaign/synclog": "2.1.*",
+    "activecampaign/newsletter": "1.0.*"
   }
 }

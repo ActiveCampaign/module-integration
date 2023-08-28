@@ -109,6 +109,7 @@ class Customer
         $ecomCustomer['connectionid'] = $this->coreHelper->getConnectionId($customer->getStoreId());
         $ecomCustomer['externalid'] = $customer->getId();
         $ecomCustomer['email'] = $customer->getEmail();
+        $ecomCustomerData['acceptsMarketing'] = 1;
         $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
 
         return $ecomCustomerData;

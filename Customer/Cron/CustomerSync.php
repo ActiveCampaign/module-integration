@@ -152,6 +152,7 @@ class CustomerSync
                         $ecomCustomer['connectionid'] = $this->coreHelper->getConnectionId($customer->getStoreId());
                         $ecomCustomer['externalid'] = $customerId;
                         $ecomCustomer['email'] = $customer->getEmail();
+                        $ecomCustomer['acceptsMarketing'] = 1;
                         $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
                         $ecomCustomerResult = $this->curl->createContacts(
                             self::METHOD,
@@ -260,6 +261,7 @@ class CustomerSync
         $contact['firstName'] = $customer->getFirstname();
         $contact['lastName'] = $customer->getLastname();
         $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
+
         $contact['fieldValues'] = $this->getFieldValues($customerId);
         $contactData['contact'] = $contact;
 
