@@ -315,8 +315,8 @@ class AbandonedCartSendData extends AbstractModel
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
                     "orderUrl" => $this->urlBuilder->getDirectUrl('checkout/cart'),
-                    "abandonedDate" => $abandonedCart->getCreatedAt(),
-                    "externalCreatedDate" => $this->dateTime->date($abandonedCart->getUpdatedAt())->format('Y-m-d H:i:s'),
+                    "abandonedDate" => $this->dateTime->date($abandonedCart->getCreatedAt())->format('Y-m-d H:i:s'),
+                    "externalCreatedDate" => $this->dateTime->date($abandonedCart->getCreatedAt())->format('Y-m-d H:i:s'),
                     "externalUpdatedDate" => $this->dateTime->date($abandonedCart->getUpdatedAt())->format('Y-m-d H:i:s'),
                     "shippingMethod" => $abandonedCart->getShippingMethod(),
                     "totalPrice" => $this->coreHelper->priceToCents($abandonedCart->getGrandTotal()),
