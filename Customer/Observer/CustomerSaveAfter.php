@@ -28,6 +28,11 @@ class CustomerSaveAfter implements ObserverInterface
     protected $curl;
 
     /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * CustomerSaveAfter constructor.
      * @param Customer $customer
      * @param Curl $curl
