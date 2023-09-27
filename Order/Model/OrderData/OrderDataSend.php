@@ -104,6 +104,16 @@ class OrderDataSend
     protected $quoteRepository;
 
     /**
+     * @var CustomerModel
+     */
+    protected  $customerModel;
+
+    /**
+     * @var CustomerModel
+     */
+    protected  $coreHelper;
+
+    /**
      * OrderDataSend constructor.
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
      * @param ImageFactory $imageHelperFactory

@@ -21,7 +21,7 @@ use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
-use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\QuoteFactory;
@@ -128,6 +128,8 @@ class AbandonedCartSendData extends AbstractModel
 
     private $customerId;
 
+
+
     /**
      * AbandonedCartSendData constructor.
      * @param CustomerRepositoryInterface $customerRepository
@@ -149,7 +151,7 @@ class AbandonedCartSendData extends AbstractModel
      * @param AppEmulation $appEmulation
      * @param StoreManagerInterface $storeManager
      * @param CustomerModel $customerModel
-     * @param DateTime $dateTime
+     * @param TimezoneInterface $dateTime
      * @param CartRepositoryInterface $quoteRepository
      * @param UrlInterface $urlBuilder
      */
@@ -173,7 +175,7 @@ class AbandonedCartSendData extends AbstractModel
         AppEmulation $appEmulation,
         StoreManagerInterface $storeManager,
         CustomerModel $customerModel,
-        DateTime $dateTime,
+        TimezoneInterface $dateTime,
         CartRepositoryInterface $quoteRepository,
         UrlInterface $urlBuilder
     )
@@ -313,9 +315,9 @@ class AbandonedCartSendData extends AbstractModel
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
                     "orderUrl" => $this->urlBuilder->getDirectUrl('checkout/cart'),
-                    "abandonedDate" => $abandonedCart->getCreatedAt(),
-                    "externalCreatedDate" => $abandonedCart->getCreatedAt(),
-                    "externalUpdatedDate" => $abandonedCart->getUpdatedAt(),
+                    "abandonedDate" => $this->dateTime->date($abandonedCart->getCreatedAt())->format('Y-m-d H:i:s'),
+                    "externalCreatedDate" => $this->dateTime->date($abandonedCart->getCreatedAt())->format('Y-m-d H:i:s'),
+                    "externalUpdatedDate" => $this->dateTime->date($abandonedCart->getUpdatedAt())->format('Y-m-d H:i:s'),
                     "shippingMethod" => $abandonedCart->getShippingMethod(),
                     "totalPrice" => $this->coreHelper->priceToCents($abandonedCart->getGrandTotal()),
                     "shippingAmount" => $this->coreHelper->priceToCents($abandonedCart->getShippingAmount()),
@@ -425,7 +427,7 @@ class AbandonedCartSendData extends AbstractModel
         if ($quoteModel->getEntityId()) {
             $quoteModel->setAcOrderSyncId($acOrderId);
             $quoteModel->setAcSyncStatus($syncStatus);
-            $quoteModel->setAcSyncedDate($this->dateTime->formatDate(time()));
+            $quoteModel->setAcSyncedDate($this->dateTime->date()->format('Y-m-d H:i:s'));
         }
         $quoteModel->save();
     }
