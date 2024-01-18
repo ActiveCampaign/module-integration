@@ -39,4 +39,5 @@ class AcSyncStatus extends Column
         }
         return __('Something Wrong');
     }
+
 }

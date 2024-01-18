@@ -5,11 +5,15 @@ namespace ActiveCampaign\Newsletter\Cron;
 use ActiveCampaign\Core\Helper\Curl;
 use ActiveCampaign\Newsletter\Helper\Data as ActiveCampaignNewsletterHelper;
 use GuzzleHttp\Exception\GuzzleException;
+use Magento\Customer\Model\Customer as CustomerModel;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection;
 use Psr\Log\LoggerInterface;
+use ActiveCampaign\Customer\Model\Customer;
+use Magento\Customer\Model\CustomerFactory;
+use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 
 class NewsletterSyncCron
 {
@@ -51,13 +55,30 @@ class NewsletterSyncCron
     protected $logger;
 
     /**
-     * OrderSyncCron constructor.
+     * @var Customer
+     */
+    protected $customer;
+
+    /**
+     * @var CustomerFactory
+     */
+    protected $customerFactory;
+
+    /**
+     * @var CustomerResource
+     */
+    protected $customerResource;
+
+    /**
+     * NewsletterSyncCron constructor.
      * @param Collection $newsletterCollection
      * @param ActiveCampaignNewsletterHelper $activeCampaignHelper
      * @param State $state
      * @param Curl $curl
      * @param CartRepositoryInterface $quoteRepository
      * @param LoggerInterface $logger
+     * @param Customer $custoner
+     * @param CustomerFactory $customerFactory
      */
     public function __construct(
         Collection $newsletterCollection,
@@ -65,7 +86,10 @@ class NewsletterSyncCron
         State $state,
         Curl $curl,
         CartRepositoryInterface $quoteRepository,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        Customer $custoner,
+        CustomerFactory $customerFactory,
+        CustomerResource $customerResource
     )
     {
         $this->newsletterCollection = $newsletterCollection;
@@ -74,6 +98,9 @@ class NewsletterSyncCron
         $this->curl = $curl;
         $this->quoteRepository = $quoteRepository;
         $this->logger = $logger;
+        $this->customer = $custoner;
+        $this->customerFactory = $customerFactory;
+        $this->customerResource = $customerResource;
     }
 
     /**
@@ -100,16 +127,21 @@ class NewsletterSyncCron
                     ->setCurPage(1);
 
                 foreach ($newsletterCollection as $news) {
-
+                    $acContact=NULL;
                     try {
                         $contactData = [
-                            'contact' => [
                                 'email' => $news->getSubscriberEmail()
-                            ]
                         ];
-                        $contactResult = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
-                        if (isset($contactResult['data']['contact']['id'])) {
-                            $news->setAcNewsletterSyncId($contactResult['data']['contact']['id']);
+                        if($news->getCustomerId()){
+                            $result = $this->customer->updateCustomer($this->getCustomer($news->getCustomerId()));
+                            $acContact = $result['ac_contact_id'];
+                        }else{
+                            $acContact = $this->customer->createGuestContact($contactData);
+
+                        }
+
+                        if ($acContact) {
+                            $news->setAcNewsletterSyncId($acContact);
                             $news->setAcNewsletterSyncStatus(1);
                             $news->save();
                         }
@@ -122,5 +154,18 @@ class NewsletterSyncCron
             $this->logger->error('MODULE Order: ' . $e->getMessage());
         }
 
+    }
+    /**
+     * @param $customerId
+     * @return CustomerModel
+     */
+    private function getCustomer($customerId): CustomerModel
+    {
+        $customerModel = $this->customerFactory->create();
+        if (is_numeric($customerId)) {
+            $this->customerResource->load($customerModel, $customerId);
+            return $customerModel;
+        }
+        return $customerModel;
     }
 }

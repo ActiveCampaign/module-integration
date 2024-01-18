@@ -31,6 +31,7 @@ use Magento\Quote\Model\ResourceModel\Quote\Item\CollectionFactory as QuoteItemC
 use Magento\Store\Model\App\Emulation as AppEmulation;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
+use ActiveCampaign\Customer\Model\Customer;
 
 class AbandonedCartSendData extends AbstractModel
 {
@@ -122,12 +123,16 @@ class AbandonedCartSendData extends AbstractModel
     private $quoteRepository;
 
     /**
+     * @var Customer
+     */
+    protected $customer;
+
+    /**
      * @var UrlInterface
      */
     protected $urlBuilder;
 
     private $customerId;
-
 
 
     /**
@@ -154,6 +159,7 @@ class AbandonedCartSendData extends AbstractModel
      * @param TimezoneInterface $dateTime
      * @param CartRepositoryInterface $quoteRepository
      * @param UrlInterface $urlBuilder
+     * @param Customer $customer
      */
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
@@ -177,7 +183,8 @@ class AbandonedCartSendData extends AbstractModel
         CustomerModel $customerModel,
         TimezoneInterface $dateTime,
         CartRepositoryInterface $quoteRepository,
-        UrlInterface $urlBuilder
+        UrlInterface $urlBuilder,
+        Customer $customer
     )
     {
         $this->urlBuilder = $urlBuilder;
@@ -202,6 +209,7 @@ class AbandonedCartSendData extends AbstractModel
         $this->customerModel = $customerModel;
         $this->dateTime = $dateTime;
         $this->quoteRepository = $quoteRepository;
+        $this->customer = $customer;
     }
 
     /**
@@ -236,89 +244,46 @@ class AbandonedCartSendData extends AbstractModel
         $abandonedCarts->getSelect()->join(array('address' => $abandonedCarts->getResource()->getTable('quote_address')), 'main_table.entity_id = address.quote_id')
             ->where("address.address_type='billing' and (main_table.customer_email is not null or  address.email is not null)");
         foreach ($abandonedCarts as $abandonedCart) {
+
             $connectionId = $this->coreHelper->getConnectionId($abandonedCart->getStoreId());
 
-            $customerId = $abandonedCart->getCustomerId();
-
             $quote = $this->quoteRepository->get($abandonedCart->getEntityId());
-
+            $AcCustomer = NULL;
             if ($this->isGuest($quote)) {
                 $customerEmail = $quote->getBillingAddress()->getEmail();
-
                 if (!$customerEmail) {
                     $result['error'] = __('Customer Email does not exist.');
                     continue;
                 }
-
-                if (!$this->isGuest($quote)) {
-                    $websiteId = $this->storeManager->getStore($abandonedCart->getStoreId())->getWebsiteId();
-                    $customerModel = $this->customerModel;
-                    $customerModel->setWebsiteId($websiteId);
-                    $customerModel->loadByEmail($customerEmail);
-                    if ($customerModel->getId()) {
-                        $this->customerId = $customerModel->getId();
-                    } else {
-                        $this->customerId = $customerEmail;
-                    }
-                } else {
-                    $this->customerId = $customerEmail;
-                }
-
-                $this->createEcomCustomer($this->customerId, $quote);
-
-                if (!$this->isGuest($quote)) {
-                    $customerModel = $this->customerFactory->create();
-                    $this->customerResource->load($customerModel, $this->customerId);
-
-                    if ($customerModel->getAcCustomerId()) {
-                        $this->customerId = $customerModel->getAcCustomerId();
-                    } else {
-                        if ($quote->getAcTempCustomerId()) {
-                            $this->customerId = $quote->getAcTempCustomerId();
-                        } else {
-                            $AcCustomer = $this->curl->listAllCustomers(
-                                self::GET_METHOD,
-                                self::ECOM_CUSTOMER_ENDPOINT,
-                                $customerEmail
-                            );
-                            foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
-                                if ($Ac['connectionid'] === $connectionId) {
-                                    $this->customerId = $Ac['id'];
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if ($this->isGuest($quote)) {
-                    $this->customerId = $quote->getAcTempCustomerId();
-                }
+                $contact['email'] = $quote->getBillingAddress()->getEmail();
+                $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
+                $contact['lastName'] = $quote->getBillingAddress()->getLastname();
+                $contact['phone'] = $quote->getBillingAddress()->getTelephone();
+                $contact['fieldValues'] = [];
+                $AcCustomer = $this->customer->createGuestCustomer($contact,$quote->getStoreId());
             } else {
-                $this->createEcomCustomer($abandonedCart->getCustomerId(), $quote);
-                $customerEmail = $abandonedCart->getCustomerEmail();
-                $customerModel = $this->customerFactory->create();
-                $this->customerResource->load($customerModel, $customerId);
-                if ($customerModel->getAcCustomerId()) {
-                    $this->customerId = $customerModel->getAcCustomerId();
-                }
+                $AcCustomer = $this->customer->updateCustomer($this->getCustomer($abandonedCart->getCustomerId()));
             }
+            $this->customerId = $AcCustomer['ac_customer_id'];
+            $this->saveCustomerResultQuote($quote,$this->customerId);
+
             $abandonedCart->collectTotals();
             $quoteItemsData = $this->getQuoteItemsData($abandonedCart->getEntityId(), $abandonedCart->getStoreId());
-
+            $abandonedCartRepository = $this->quoteRepository->get($abandonedCart->getId());
             $abandonedCartData = [
                 "ecomOrder" => [
                     "externalcheckoutid" => $abandonedCart->getEntityId(),
                     "source" => 1,
-                    "email" => $customerEmail,
+                    "email" => $quote->getBillingAddress()->getEmail(),
                     "orderProducts" => $quoteItemsData,
                     "orderDiscounts" => [
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
                     "orderUrl" => $this->urlBuilder->getDirectUrl('checkout/cart'),
-                    "abandonedDate" => $this->dateTime->date($abandonedCart->getCreatedAt())->format('Y-m-d H:i:s'),
-                    "externalCreatedDate" => $this->dateTime->date($abandonedCart->getCreatedAt())->format('Y-m-d H:i:s'),
-                    "externalUpdatedDate" => $this->dateTime->date($abandonedCart->getUpdatedAt())->format('Y-m-d H:i:s'),
-                    "shippingMethod" => $abandonedCart->getShippingMethod(),
+                    "abandonedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getUpdatedAt()))->format('Y-m-d\TH:i:sP'),
+                    "externalCreatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getCreatedAt()))->format('Y-m-d\TH:i:sP'),
+                    "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getUpdatedAt()))->format('Y-m-d\TH:i:sP'),
+                    "shippingMethod" => $abandonedCart->getShippingAddress()->getShippingMethod(),
                     "totalPrice" => $this->coreHelper->priceToCents($abandonedCart->getGrandTotal()),
                     "shippingAmount" => $this->coreHelper->priceToCents($abandonedCart->getShippingAmount()),
                     "taxAmount" => $this->coreHelper->priceToCents($abandonedCart->getTaxAmount()),
@@ -331,7 +296,6 @@ class AbandonedCartSendData extends AbstractModel
             ];
 
             try {
-
                 if (is_null($abandonedCart->getAcSyncedDate())) {
                     $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
                         self::METHOD,
@@ -349,7 +313,18 @@ class AbandonedCartSendData extends AbstractModel
                 if ($abandonedCartResult['success']) {
                     $syncStatus = CronConfig::SYNCED;
                 } else {
-                    $syncStatus = CronConfig::FAIL_SYNCED;
+                    if(!$abandonedCartResult['success'] && $abandonedCartResult['status'] == "404"){
+                        $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
+                            self::UPDATE_METHOD,
+                            self::ABANDONED_CART_URL_ENDPOINT . "/" . (int)$abandonedCart->getAcOrderSyncId(),
+                            $abandonedCartData
+                        );
+                    }
+                    if ($abandonedCartResult['success']) {
+                        $syncStatus = CronConfig::SYNCED;
+                    }else{
+                        $syncStatus = CronConfig::FAIL_SYNCED;
+                    }
                 }
 
                 if (isset($abandonedCartResult['data']['ecomOrder']['id'])) {
@@ -391,7 +366,7 @@ class AbandonedCartSendData extends AbstractModel
             $quoteItemsData[] = [
                 "externalid" => $quoteItem->getItemId(),
                 "name" => $quoteItem->getName(),
-                "price" => $this->coreHelper->priceToCents($quoteItem->getPrice()),
+                "price" => $this->coreHelper->priceToCents($quoteItem->getPriceInclTax()),
                 "quantity" => $quoteItem->getQty(),
                 "sku" => $quoteItem->getSku(),
                 "description" => $quoteItem->getDescription(),
@@ -445,170 +420,10 @@ class AbandonedCartSendData extends AbstractModel
         return null;
     }
 
-    /**
-     * @param $customerId
-     * @return array
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
-     */
-    private function getFieldValues($customerId): array
-    {
-        $fieldValues = [];
-        $customAttributes = $this->customerRepository->getById($customerId)->getCustomAttributes();
-        if (!empty($customAttributes)) {
-            foreach ($customAttributes as $attribute) {
-                $attributeId = $this->eavAttribute->getIdByCode(CustomerModel::ENTITY, $attribute->getAttributeCode());
-                $attributeValues['field'] = $attributeId;
-                $attributeValues['value'] = $attribute->getValue();
-                $fieldValues[] = $attributeValues;
-            }
-        }
-        return $fieldValues;
-    }
 
     public function isGuest($quote): bool
     {
         return is_null($quote->getCustomerId());
-    }
-
-    /**
-     * @param $customerId
-     * @return void
-     */
-    private function createEcomCustomer($customerId, $quote): void
-    {
-
-        try {
-            $ecomCustomerId = 0;
-            $contact = [];
-
-            if (!$this->isGuest($quote)) {
-                $customer = $this->getCustomer($customerId);
-                $customerId = $customer->getId();
-                $contact['email'] = $customer->getEmail();
-                $customerEmail = $customer->getEmail();
-                $contact['firstName'] = $customer->getFirstname();
-                $contact['lastName'] = $customer->getLastname();
-                $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
-                $contact['fieldValues'] = $this->getFieldValues($customerId);
-            } else {
-                $customerId = $quote->getBillingAddress()->getEmail();
-                $contact['email'] = $quote->getBillingAddress()->getEmail();
-                $customerEmail = $quote->getBillingAddress()->getEmail();
-                $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
-                $contact['lastName'] = $quote->getBillingAddress()->getLastname();
-                $contact['phone'] = $quote->getBillingAddress()->getTelephone();
-                $contact['fieldValues'] = [];
-            }
-
-
-            $contactData['contact'] = $contact;
-
-            $contactResult = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
-
-            $contactId = $contactResult['data']['contact']['id'] ?? null;
-
-            $connectionid = $this->coreHelper->getConnectionId($quote->getStoreId());
-
-            if (!$this->isGuest($quote)) {
-                if (isset($contactResult['data']['contact']['id'])) {
-                    if (!$customer->getAcCustomerId()) {
-                        $ecomCustomer['connectionid'] = $connectionid;
-                        $ecomCustomer['externalid'] = $customerId;
-                        $ecomCustomer['email'] = $customerEmail;
-                        $ecomCustomer['acceptsMarketing'] = 1;
-                        $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
-                        $AcCustomer = $this->curl->listAllCustomers(
-                            self::GET_METHOD,
-                            self::ECOM_CUSTOMER_ENDPOINT,
-                            $customerEmail
-                        );
-                        if (isset($AcCustomer['data']['ecomCustomers'][0])) {
-                            foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
-                                if ($Ac['connectionid'] === $connectionid) {
-                                    $ecomCustomerId = $Ac['id'];
-                                }
-                            }
-                        }
-                        if (!$ecomCustomerId) {
-                            $ecomCustomerResult = $this->curl->createContacts(
-                                self::METHOD,
-                                self::ECOM_CUSTOMER_ENDPOINT,
-                                $ecomCustomerData
-                            );
-                            $ecomCustomerId = $ecomCustomerResult['data']['ecomCustomer']['id'] ?? null;
-                        }
-                    } else {
-                        $ecomCustomerId = $customer->getAcCustomerId();
-                    }
-                }
-            }
-
-            if ($this->isGuest($quote)) {
-
-                $ecomCustomerResult = $this->curl->listAllCustomers(
-                    self::GET_METHOD,
-                    self::ECOM_CUSTOMER_ENDPOINT,
-                    $quote->getBillingAddress()->getEmail()
-                );
-                if (isset($ecomCustomerResult['data']['ecomCustomers'][0])) {
-                    foreach ($ecomCustomerResult['data']['ecomCustomers'] as $Ac) {
-                        if ($Ac['connectionid'] === $connectionid) {
-                            $ecomCustomerId = $Ac['id'];
-                        }
-                    }
-                } else {
-                    $ecomCustomerData = [
-                        "ecomCustomer" => [
-                            "connection" => $connectionid,
-                            'externals' => $quote->getBillingAddress()->getEmail(),
-                            'email' => $quote->getBillingAddress()->getEmail(),
-                        ]
-                    ];
-                    $ecomCustomerResult = $this->curl->createContacts(
-                        self::METHOD,
-                        self::ECOM_CUSTOMER_ENDPOINT,
-                        $ecomCustomerData
-                    );
-                    $ecomCustomerId = $ecomCustomerResult['data']['ecomCustomer']['id'] ?? null;
-                }
-            }
-            if ($ecomCustomerId !== 0) {
-                $syncStatus = CronConfig::SYNCED;
-            } else {
-                $syncStatus = CronConfig::FAIL_SYNCED;
-            }
-
-            if ($this->isGuest($quote)) {
-                $this->saveCustomerResultQuote($quote, $ecomCustomerId);
-            } else {
-                $this->saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
-            }
-        } catch
-        (\Exception $e) {
-            $this->logger->critical("MODULE AbandonedCart: " . $e->getMessage());
-        } catch (GuzzleException $e) {
-            $this->logger->critical("MODULE AbandonedCart: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * @param $customerId
-     * @param $syncStatus
-     * @param $contactId
-     * @param $ecomCustomerId
-     * @throws AlreadyExistsException
-     */
-    private function saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId): void
-    {
-        if (is_numeric($customerId)) {
-            $customerModel = $this->customerFactory->create();
-            $this->customerResource->load($customerModel, $customerId);
-            $customerModel->setAcSyncStatus($syncStatus);
-            $customerModel->setAcContactId($contactId);
-            $customerModel->setAcCustomerId($ecomCustomerId);
-            $this->customerResource->save($customerModel);
-        }
     }
 
     /**

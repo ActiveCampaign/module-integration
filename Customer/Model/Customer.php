@@ -2,26 +2,36 @@
 
 namespace ActiveCampaign\Customer\Model;
 
+use ActiveCampaign\Core\Helper\Curl;
 use ActiveCampaign\Core\Helper\Data as CoreHelper;
-use Magento\Customer\Api\AddressRepositoryInterface;
-use Magento\Customer\Api\CustomerRepositoryInterface;
+use ActiveCampaign\Customer\Helper\Data as CustomerHelper;
+use ActiveCampaign\Customer\Model\Config\CronConfig;
+use \Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
+use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerResourceCollectionFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute;
-
+use Magento\Framework\App\Cache\TypeListInterface;
+use Magento\Customer\Api\CustomerRepositoryInterface;
+use Psr\Log\LoggerInterface;
+use Magento\Customer\Model\Customer as MageCustomer;
+use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Store\Model\StoreManagerInterface;
 class Customer
 {
     const AC_CUSTOMER_ID = 'ac_customer_id';
 
-    /**
-     * @var bool
-     */
-    private $isEcomCustomer = false;
+    const AC_SYNC_STATUS = "ac_sync_status";
 
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    protected $customerRepository;
+    const CONTACT_ENDPOINT = "contacts";
+
+    const ECOM_CUSTOMER_ENDPOINT = "ecomCustomers";
+
+    const METHOD = "POST";
+    const GET_METHOD = "GET";
+    const METHOD_PUT = "PUT";
+
+
 
     /**
      * @var AddressRepositoryInterface
@@ -29,14 +39,9 @@ class Customer
     protected $addressRepository;
 
     /**
-     * @var Attribute
+     * @var CustomerResourceCollectionFactory
      */
-    protected $eavAttribute;
-
-    /**
-     * @var CoreHelper
-     */
-    private $coreHelper;
+    protected $customerResourceCollectionFactory;
 
     /**
      * @var CustomerFactory
@@ -48,68 +53,119 @@ class Customer
      */
     protected $customerResource;
 
+
+
+    /**
+     * @var CustomerHelper
+     */
+    protected $customerHelper;
+
+    /**
+     * @var CoreHelper
+     */
+    private $coreHelper;
+
+    /**
+     * @var Curl
+     */
+    protected $curl;
+
+    /**
+     * @var TypeListInterface
+     */
+    protected $cacheTypeList;
+
+    /**
+     * @var Attribute
+     */
+    protected $eavAttribute;
+
+    /**
+     * @var CustomerRepositoryInterface
+     */
+    protected $customerRepository;
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+
     /**
      * Customer constructor.
-     * @param CustomerRepositoryInterface $customerRepository
-     * @param AddressRepositoryInterface $addressRepository
-     * @param Attribute $eavAttribute
-     * @param CoreHelper $coreHelper
+     * @param CustomerResourceCollectionFactory $customerResourceCollectionFactory
+     * @param CustomerRepositoryInterface $customerRepositoryInterface
      * @param CustomerFactory $customerFactory
      * @param CustomerResource $customerResource
+     * @param CustomerHelper $customerHelper
+     * @param CoreHelper $coreHelper
+     * @param Curl $curl
+     * @param Attribute $eavAttribute
+     * @param TypeListInterface $cacheTypeList
+     * @param LoggerInterface $logger
+     * @param SubscriberFactory $subscriberFactory
+     * @param AddressRepositoryInterface $addressRepository
      */
     public function __construct(
-        CustomerRepositoryInterface $customerRepository,
-        AddressRepositoryInterface $addressRepository,
-        Attribute $eavAttribute,
-        CoreHelper $coreHelper,
+        CustomerResourceCollectionFactory $customerResourceCollectionFactory,
+        CustomerRepositoryInterface $customerRepositoryInterface,
         CustomerFactory $customerFactory,
-        CustomerResource $customerResource
+        CustomerResource $customerResource,
+        CustomerHelper $customerHelper,
+        CoreHelper $coreHelper,
+        Curl $curl,
+        Attribute $eavAttribute,
+        TypeListInterface $cacheTypeList,
+        LoggerInterface $logger,
+        SubscriberFactory $subscriberFactory,
+        AddressRepositoryInterface $addressRepository,
+        StoreManagerInterface $storeManager
     ) {
-        $this->customerRepository = $customerRepository;
-        $this->addressRepository = $addressRepository;
-        $this->eavAttribute = $eavAttribute;
-        $this->coreHelper = $coreHelper;
+
+        $this->customerResourceCollectionFactory = $customerResourceCollectionFactory;
+        $this->customerRepository = $customerRepositoryInterface;
         $this->customerFactory = $customerFactory;
         $this->customerResource = $customerResource;
+        $this->customerHelper = $customerHelper;
+        $this->coreHelper = $coreHelper;
+        $this->curl = $curl;
+        $this->cacheTypeList = $cacheTypeList;
+        $this->eavAttribute = $eavAttribute;
+        $this->logger = $logger;
+        $this->subscriberFactory = $subscriberFactory;
+        $this->addressRepository = $addressRepository;
+        $this->storeManager = $storeManager;
     }
 
     /**
      * @param $customerId
-     * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @return MageCustomer
      */
-    public function getContactData($customerId)
-    {
-        $contact = [];
-        $customer = $this->customerRepository->getById($customerId);
+    public function getCustomerById($customerId){
+        $customerModel = $this->customerFactory->create();
+        $this->customerResource->load($customerModel, $customerId);
 
-        $contact['email'] = $customer->getEmail();
-        $contact['firstName'] = $customer->getFirstname();
-        $contact['lastName'] = $customer->getLastname();
-        $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
-        $contact['fieldValues'] = $this->getFieldValues($customer->getCustomAttributes());
-        $contact['isEcomCustomer'] = $this->isEcomCustomer;
-        $contactData['contact'] = $contact;
-
-        return $contactData;
+        return $customerModel;
     }
 
+
     /**
-     * @param $customerId
+     * @param $customer
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getEcomCustomerData($customerId)
+    public function getEcomCustomerData($customer)
     {
         $ecomCustomer = [];
-        $customer = $this->customerRepository->getById($customerId);
-
         $ecomCustomer['connectionid'] = $this->coreHelper->getConnectionId($customer->getStoreId());
         $ecomCustomer['externalid'] = $customer->getId();
         $ecomCustomer['email'] = $customer->getEmail();
-        $ecomCustomerData['acceptsMarketing'] = 1;
+        $ecomCustomerData['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadByCustomer($customer->getId(),$customer->getWebsiteId())->isSubscribed();
         $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
 
         return $ecomCustomerData;
@@ -129,22 +185,13 @@ class Customer
         return null;
     }
 
-    /**
-     * @param $customAttributes
-     * @return array
-     */
-    private function getFieldValues($customAttributes)
+    public function getFieldValues($customer)
     {
         $fieldValues = [];
+        $customAttributes = $customer->getCustomAttributes();
         if (!empty($customAttributes)) {
             foreach ($customAttributes as $attribute) {
-                $attributeId = $this->eavAttribute->getIdByCode(
-                    \Magento\Customer\Model\Customer::ENTITY,
-                    $attribute->getAttributeCode()
-                );
-                if ($attribute->getAttributeCode() === self::AC_CUSTOMER_ID) {
-                    $this->isEcomCustomer = ($attribute->getValue()) ? true : false;
-                }
+                $attributeId = $this->eavAttribute->getIdByCode(MageCustomer::ENTITY, $attribute->getAttributeCode());
                 $attributeValues['field'] = $attributeId;
                 $attributeValues['value'] = $attribute->getValue();
                 $fieldValues[] = $attributeValues;
@@ -168,13 +215,191 @@ class Customer
         }
 
         $customerModel->setAcSyncStatus($syncStatus);
-        if ($contactId) {
-            $customerModel->setAcContactId($contactId);
-        }
-        if ($ecomCustomerId) {
-            $customerModel->setAcCustomerId($ecomCustomerId);
-        }
+        $customerModel->setAcContactId($contactId);
+        $customerModel->setAcCustomerId($ecomCustomerId);
 
         $this->customerResource->save($customerModel);
     }
+
+
+    public  function contactBody($customer){
+        $contact['email'] = $customer->getEmail();
+        $contact['firstName'] = $customer->getFirstname();
+        $contact['lastName'] = $customer->getLastname();
+        $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
+        $contact['fieldValues'] = $this->getFieldValues($customer);
+        $contactData['contact'] = $contact;
+
+        return $contactData;
+    }
+
+
+    public function updateCustomers()
+    {
+        $lastUpdate = $this->customerHelper->getLastCustomerUpdateSync();
+        $numberOfCustomers = (int)$this->customerHelper->getNumberOfCustomers();
+        $customers = $this->customerResourceCollectionFactory->create()
+            ->addAttributeToSelect('ac_contact_id')
+            ->addAttributeToFilter('ac_contact_id', ['neq' => null])
+            ->addAttributeToFilter(self::AC_SYNC_STATUS, ['eq' => CronConfig::SYNCED])
+            ->addAttributeToFilter('updated_at', ['gt' => $lastUpdate])
+            ->setOrder('updated_at', 'asc')
+            ->setPageSize($numberOfCustomers);
+        foreach ($customers as $customer) {
+            $this->updateCustomer($customer);
+            $lastUpdate = $customer->getUpdatedAt();
+        }
+        if (isset($lastUpdate)) {
+            $this->customerHelper->setLastCustomerUpdateSync($lastUpdate);
+            $this->cacheTypeList->cleanType('config');
+        }
+    }
+
+    public function createGuestContact($data){
+        $acContact = NULL;
+        if($data['email']){
+            $acContact = $this->searchContact($data['email'] );
+            if(!$acContact){
+                $contactData['contact'] = $data;
+                $result = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT , $contactData);
+                if(!$result['success'] && $result['status'] == "404"){
+                    $acContact = NULL;
+                }
+                if(count($result['data']['contact'])>0){
+                    $acContact = $result['data']['contact']['id'];
+                }
+            }
+        }
+        return $acContact;
+    }
+
+    public function createGuestCustomer($data, $storeId){
+        $acCustomer = NULL;
+        $acContact = NUll;
+
+        if($data['email']) {
+            $acContact = $this->createGuestContact($data);
+
+            $acCustomer = $this->searchCustomer($data['email'], $this->coreHelper->getConnectionId($storeId));
+            if (!$acCustomer) {
+                $ecomCustomerData=[];
+                $data['connectionid'] = $this->coreHelper->getConnectionId($storeId);
+                $data['externalid'] = $data['email'];
+                $data['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($data['email'],$this->storeManager->getStore()->getWebsiteId())->isSubscribed();
+                $ecomCustomerData['ecomCustomer'] = $data;
+
+                $result = $this->curl->createContacts(self::METHOD, self::ECOM_CUSTOMER_ENDPOINT, $ecomCustomerData);
+                if (!$result['success'] && $result['status'] == "404") {
+                    $acCustomer = NULL;
+                }
+                if ($result['success'] && isset($result['data']['ecomCustomer']['id'])) {
+                    $acCustomer = $result['data']['ecomCustomer']['id'];
+                }
+            }
+        }
+        return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
+    }
+
+    public function updateCustomer($customer){
+        $contactData = $this->contactBody($customer);
+        $acContact = NULL;
+        $acCustomer = NULL;
+        try {
+            $acContact =$customer->getAcContactId();
+            if($acContact){
+                $result = $this->curl->createContacts(self::METHOD_PUT, self::CONTACT_ENDPOINT . '/' . $acContact, $contactData);
+                if(!$result['success'] && $result['status'] == "404"){
+                    $acContact = NULL;
+                }
+            }else{
+                $acContact = $this->searchContact($customer->getEmail() );
+                if(!$acContact){
+                    $result = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT , $contactData);
+                    $acContact = $result['data']['contact']['id'];
+                }
+            }
+            if($acContact){
+                $customerData = $this->getEcomCustomerData($customer);
+                $acCustomer = $customer->getAcCustomerId();
+                if($acCustomer){
+                    $result = $this->curl->createContacts(self::METHOD_PUT, self::ECOM_CUSTOMER_ENDPOINT . '/' . $customer->getAcCustomerId(), $customerData);
+                    if(!$result['success'] && $result['status'] == "404"){
+                        $acCustomer = NULL;
+                    }
+                }else{
+                    $acCustomer = $this->searchCustomer($customer->getEmail(),$this->coreHelper->getConnectionId($customer->getStoreId()) );
+                    if(!$acCustomer){
+                        $result = $this->curl->createContacts(self::METHOD, self::ECOM_CUSTOMER_ENDPOINT, $customerData);
+                        $acCustomer = $result['data']['ecomCustomer']['id'];
+                        if(!$result['success'] && $result['status'] == "404") {
+                            $acCustomer = NULL;
+                        }
+                        if($result['success']  && isset($result['data']['ecomCustomer']['id'])){
+                            $acCustomer = $result['data']['ecomCustomer']['id'];
+                        }
+                    }
+
+                }
+                if($acCustomer && $acContact){
+                    $this->saveResult($customer->getId(), CronConfig::SYNCED, $acContact, $acCustomer);
+                }else{
+                    $this->saveResult($customer->getId(), CronConfig::NOT_SYNCED, $acContact, $acCustomer);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->critical("MODULE: Customer  contact/sync" . $e->getMessage());
+        }
+        return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
+    }
+
+    public function searchCustomer($email, $connectionId){
+        $result = 0;
+        $AcCustomer = $this->curl->listAllCustomers(
+            self::GET_METHOD,
+            self::ECOM_CUSTOMER_ENDPOINT,
+            $email
+        );
+        foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
+            if ($Ac['connectionid'] === $connectionId) {
+                $result= $Ac['id'];
+            }
+        }
+        return $result;
+    }
+
+    public function searchContact($email){
+        $result = 0;
+        $AcCustomer = $this->curl->listAllCustomers(
+            self::GET_METHOD,
+            self::CONTACT_ENDPOINT,
+            $email
+        );
+        if($AcCustomer['status'] == 200 && count($AcCustomer['data']['contacts']) > 0){
+            $result = $AcCustomer['data']['contacts'][0]['id'];
+        }
+        return $result;
+    }
+
+    public function syncCustomers(){
+        if ($this->customerHelper->isCustomerSyncingEnabled()) {
+            $this->updateCustomers();
+            $numberOfCustomers = (int)$this->customerHelper->getNumberOfCustomers();
+
+            $customers = $this->customerResourceCollectionFactory->create()
+                ->addAttributeToFilter([
+                    ['attribute' => self::AC_SYNC_STATUS,'null' => true ],
+                    ['attribute' => self::AC_SYNC_STATUS,'neq' => CronConfig::SYNCED ]
+                ])
+                ->setPageSize($numberOfCustomers);
+
+            foreach ($customers as $customer) {
+                try {
+                    $this->updateCustomer($customer);
+                } catch (\Exception $e) {
+                    $this->logger->critical("MODULE: Customer " . $e->getMessage());
+                }
+            }
+        }
+    }
+
 }

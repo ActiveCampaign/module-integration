@@ -21,6 +21,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface as StoreManagerInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
+use ActiveCampaign\Customer\Model\Customer;
 
 class OrderDataSend
 {
@@ -114,6 +115,11 @@ class OrderDataSend
     protected  $coreHelper;
 
     /**
+     * @var Customer
+     */
+    protected $customer;
+
+    /**
      * OrderDataSend constructor.
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
      * @param ImageFactory $imageHelperFactory
@@ -131,6 +137,7 @@ class OrderDataSend
      * @param CoreHelper $coreHelper
      * @param CustomerResource $customerResource
      * @param CartRepositoryInterface $quoteRepository
+     * @param Customer $customer
      */
     public function __construct(
         ProductRepositoryInterfaceFactory $productRepositoryFactory,
@@ -148,7 +155,8 @@ class OrderDataSend
         Attribute $eavAttribute,
         CoreHelper $coreHelper,
         CustomerResource $customerResource,
-        CartRepositoryInterface $quoteRepository
+        CartRepositoryInterface $quoteRepository,
+        Customer $customer
     ) {
         $this->_productRepositoryFactory = $productRepositoryFactory;
         $this->imageHelperFactory = $imageHelperFactory;
@@ -166,6 +174,7 @@ class OrderDataSend
         $this->coreHelper = $coreHelper;
         $this->customerResource = $customerResource;
         $this->quoteRepository = $quoteRepository;
+        $this->customer =  $customer;
     }
 
     /**
@@ -182,47 +191,20 @@ class OrderDataSend
                 $connectionId = $this->activeCampaignHelper->getConnectionId($order->getStoreId());
                 $customerId = $order->getCustomerId();
                 $customerAcId = 0;
+                $quote = $this->quoteRepository->get($order->getQuoteId());
                 if ($customerId) {
-                    $this->createEcomCustomer($order->getCustomerId(), $order);
-                    $customerEmail = $order->getCustomerEmail();
-                    $customerModel = $this->customerFactory->create();
-                    $this->customerResource->load($customerModel, $customerId);
-                    if ($customerModel->getAcCustomerId()) {
-                        $customerAcId = $customerModel->getAcCustomerId();
-                    }
-                } else {
-                    $customerEmail = $order->getBillingAddress()->getEmail();
-                    $websiteId  = $this->storeManager->getWebsite()->getWebsiteId();
-                    $customerModel = $this->customerModel;
-                    $customerModel->setWebsiteId($websiteId);
-                    $customerModel->loadByEmail($customerEmail);
-                    if ($customerModel->getId()) {
-                        $customerId = $customerModel->getId();
-                    } else {
-                        $customerId = 0;
-                    }
-                    $this->createEcomCustomer($customerId, $order);
-                    $customerModel = $this->customerFactory->create();
-                    $this->customerResource->load($customerModel, $customerId);
-                    if ($customerModel->getAcCustomerId()) {
-                        $customerAcId = $customerModel->getAcCustomerId();
-                    } else {
-                        if ($order->getAcTempCustomerId()) {
-                            $customerAcId = $order->getAcTempCustomerId();
-                        } else {
-                            $AcCustomer = $this->curl->listAllCustomers(
-                                self::GET_METHOD,
-                                self::ECOM_CUSTOMER_ENDPOINT,
-                                $customerEmail
-                            );
-                            foreach ($AcCustomer['data']['ecomOrders'] as $Ac) {
-                                if ($Ac['connectionid'] == $connectionId) {
-                                    $customerAcId = $Ac['customerid'];
-                                }
-                            }
-                        }
-                    }
+                    $AcCustomer = $this->customer->updateCustomer($this->getCustomer($customerId));
+                }else{
+                    $customerEmail = $quote->getBillingAddress()->getEmail();
+                    $contact['email'] = $quote->getBillingAddress()->getEmail();
+                    $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
+                    $contact['lastName'] = $quote->getBillingAddress()->getLastname();
+                    $contact['phone'] = $quote->getBillingAddress()->getTelephone();
+                    $contact['fieldValues'] = [];
+                    $AcCustomer = $this->customer->createGuestCustomer($contact,$quote->getStoreId());
                 }
+                $customerAcId = $AcCustomer['ac_customer_id'];
+                $this->saveCustomerResultQuote($quote,$customerAcId);
 
                 foreach ($order->getAllVisibleItems() as $item) {
                     $product = $this->_productRepositoryFactory->create()
@@ -245,7 +227,7 @@ class OrderDataSend
                             "ecomOrder" => [
                                 "externalid" => $order->getId(),
                                 "source" => 1,
-                                "email" => $customerEmail,
+                                "email" => $quote->getBillingAddress()->getEmail(),
                                 "orderProducts" => $items,
                                 "orderDiscounts" => [
                                     "discountAmount" => $this->activeCampaignHelper->priceToCents($order->getDiscountAmount())
@@ -265,7 +247,7 @@ class OrderDataSend
                         ];
 
                 if (!$order->getAcOrderSyncId()) {
-                    $quote = $this->quoteRepository->get($order->getQuoteId());
+
                     $AcOrderId = $quote->getAcOrderSyncId();
                     if($AcOrderId > 0){
                         $result = $this->curl->orderDataSend(
@@ -320,41 +302,6 @@ class OrderDataSend
         return $return;
     }
 
-    /**
-     * @param null $billingId
-     * @return string|null
-     * @throws LocalizedException
-     */
-    private function getTelephone($billingId = null): ?string
-    {
-        if ($billingId) {
-            $address = $this->addressRepository->getById($billingId);
-            return $address->getTelephone();
-        }
-        return null;
-    }
-
-    /**
-     * @param $customerId
-     * @return array
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
-     */
-    private function getFieldValues($customerId)
-    {
-        $fieldValues = [];
-        $customAttributes = $this->_customerRepositoryInterface->getById($customerId);
-        $customAttributes->getCustomAttributes();
-        if (!empty($customAttributes)) {
-            foreach ($customAttributes as $attribute) {
-                $attributeId = $this->eavAttribute->getIdByCode(CustomerModel::ENTITY, $attribute->getAttributeCode());
-                $attributeValues['field'] = $attributeId;
-                $attributeValues['value'] = $attribute->getValue();
-                $fieldValues[] = $attributeValues;
-            }
-        }
-        return $fieldValues;
-    }
 
     /**
      * @param $customerId
@@ -367,107 +314,6 @@ class OrderDataSend
         return $customerModel;
     }
 
-    /**
-     * @param $customerId
-     * @return array
-     */
-    private function createEcomCustomer($customerId, $quote)
-    {
-        $ecomOrderArray = [];
-        $ecomCustomerId = 0;
-        $syncStatus = CronConfig::NOT_SYNCED;
-        $customer = $this->getCustomer($customerId);
-        if ($customerId) {
-            $customerId = $customer->getId();
-            $contact['email'] = $customer->getEmail();
-            $customerEmail = $customer->getEmail();
-            $contact['firstName'] = $customer->getFirstname();
-            $contact['lastName'] = $customer->getLastname();
-            $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
-            $contact['fieldValues'] = $this->getFieldValues($customerId);
-        } else {
-            $customerId = 0;
-            $contact['email'] = $quote->getBillingAddress()->getEmail();
-            $customerEmail = $quote->getBillingAddress()->getEmail();
-            $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
-            $contact['lastName'] = $quote->getBillingAddress()->getLastname();
-            $contact['phone'] = $quote->getBillingAddress()->getTelephone();
-            $contact['fieldValues'] = [];
-        }
-        $contactData['contact'] = $contact;
-        try {
-            $contactResult = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
-            $contactId = isset($contactResult['data']['contact']['id']) ? $contactResult['data']['contact']['id'] : null;
-            $connectionid = $this->coreHelper->getConnectionId($quote->getStoreId());
-
-            if (isset($contactResult['data']['contact']['id'])) {
-                if (!$customer->getAcCustomerId()) {
-                    $ecomCustomer['connectionid'] = $connectionid;
-                    $ecomCustomer['externalid'] = $customerId;
-                    $ecomCustomer['email'] = $customerEmail;
-                    $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
-                    $AcCustomer = $this->curl->listAllCustomers(
-                        self::GET_METHOD,
-                        self::ECOM_CUSTOMERLIST_ENDPOINT,
-                        $customerEmail
-                    );
-                    if (isset($AcCustomer['data']['ecomCustomers'][0])) {
-                        foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
-                            if ($Ac['connectionid'] == $connectionid) {
-                                $ecomCustomerId = $Ac['id'];
-                            }
-                        }
-                    }
-                    if (!$ecomCustomerId) {
-                        $ecomCustomerResult = $this->curl->createContacts(
-                            self::METHOD,
-                            self::ECOM_CUSTOMERLIST_ENDPOINT,
-                            $ecomCustomerData
-                        );
-                        $ecomCustomerId = isset($ecomCustomerResult['data']['ecomCustomer']['id']) ? $ecomCustomerResult['data']['ecomCustomer']['id'] : null;
-                    }
-                } else {
-                    $ecomCustomerId = $customer->getAcCustomerId();
-                }
-            }
-
-            if ($ecomCustomerId !=  0) {
-                $syncStatus = CronConfig::SYNCED;
-            } else {
-                $syncStatus = CronConfig::FAIL_SYNCED;
-            }
-
-            if ($customerId) {
-                $this->saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
-            } else {
-                $this->saveCustomerResultQuote($quote, $ecomCustomerId);
-            }
-        } catch (\Exception $e) {
-            $this->logger->critical("MODULE Order " . $e);
-        }
-    }
-
-    /**
-     * @param $customerId
-     * @param $syncStatus
-     * @param $contactId
-     * @param $ecomCustomerId
-     * @throws \Magento\Framework\Exception\AlreadyExistsException
-     */
-    private function saveCustomerResult($customerId, $syncStatus, $contactId, $ecomCustomerId)
-    {
-        $customerModel = $this->customerFactory->create();
-        if ($customerId) {
-            $this->customerResource->load($customerModel, $customerId);
-        }
-
-        $customerModel->setAcSyncStatus($syncStatus);
-
-        $customerModel->setAcContactId($contactId);
-        $customerModel->setAcCustomerId($ecomCustomerId);
-
-        $this->customerResource->save($customerModel);
-    }
 
     /**
      * @param $quote

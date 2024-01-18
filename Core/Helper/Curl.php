@@ -394,6 +394,7 @@ class Curl extends AbstractHelper
             $this->logger->critical('MODULE Core: ' . $e->getMessage());
 
             $result['success'] = false;
+            $result['status'] = $e->getCode();
             $result['message'] = $e->getMessage();
         }
 
