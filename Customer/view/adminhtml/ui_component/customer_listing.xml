@@ -15,14 +15,5 @@
             </action>
         </massaction>
     </listingToolbar>
-    <columns name="customer_columns" class="Magento\Customer\Ui\Component\Listing\Columns">
-        <column name="ac_sync_status" class="ActiveCampaign\Customer\Ui\Component\Listing\Column\AcSyncStatus" sortOrder="300">
-            <settings>
-                <options class="ActiveCampaign\Customer\Model\AcSyncStatus"/>
-                <dataType>select</dataType>
-                <label translate="true">ActiveCampaign Sync Status</label>
-                <visible>true</visible>
-            </settings>
-        </column>
-    </columns>
+
 </listing>

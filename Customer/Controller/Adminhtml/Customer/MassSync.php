@@ -15,6 +15,7 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Ui\Component\MassAction\Filter;
 use Psr\Log\LoggerInterface;
 
+
 class MassSync extends AbstractMassAction implements HttpPostActionInterface
 {
     const CONTACT_ENDPOINT = "contact/sync";
@@ -78,30 +79,8 @@ class MassSync extends AbstractMassAction implements HttpPostActionInterface
         foreach ($collection->getAllIds() as $customerId) {
             if (!empty($customerId)) {
                 try {
-                    $contactData = $this->customer->getContactData($customerId);
-                    $isEcomCustomer = $contactData['contact']['isEcomCustomer'];
-
-                    unset($contactData['contact']['isEcomCustomer']);
-
-                    $contactResult = $this->curl->createContacts(
-                        self::METHOD,
-                        self::CONTACT_ENDPOINT,
-                        $contactData
-                    );
-                    $contactId = isset($contactResult['data']['contact']['id']) ? $contactResult['data']['contact']['id'] : null;
-                    $syncStatus = ($contactResult['success']) ? CronConfig::SYNCED : CronConfig::FAIL_SYNCED;
-
-                    if ($contactResult['success'] && !$isEcomCustomer) {
-                        $ecomCustomerData = $this->customer->getEcomCustomerData($customerId);
-                        $ecomCustomerResult = $this->curl->createContacts(
-                            self::METHOD,
-                            self::ECOM_CUSTOMER_ENDPOINT,
-                            $ecomCustomerData
-                        );
-                        $ecomCustomerId = isset($ecomCustomerResult['data']['ecomCustomer']['id']) ? $ecomCustomerResult['data']['ecomCustomer']['id'] : null;
-                    }
-
-                    $this->customer->saveResult($customerId, $syncStatus, $contactId, $ecomCustomerId);
+                    $customer = $this->customer->getCustomerById($customerId);
+                    $this->customer->updateCustomer($customer);
                 } catch (\Exception $exception) {
                     $this->logger->critical("MODULE: Customer " . $exception);
                 }
