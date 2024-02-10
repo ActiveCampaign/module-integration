@@ -240,6 +240,7 @@ class Customer
         $numberOfCustomers = (int)$this->customerHelper->getNumberOfCustomers();
         $customers = $this->customerResourceCollectionFactory->create()
             ->addAttributeToSelect('ac_contact_id')
+            ->addAttributeToSelect('ac_customer_id')
             ->addAttributeToFilter('ac_contact_id', ['neq' => null])
             ->addAttributeToFilter(self::AC_SYNC_STATUS, ['eq' => CronConfig::SYNCED])
             ->addAttributeToFilter('updated_at', ['gt' => $lastUpdate])
