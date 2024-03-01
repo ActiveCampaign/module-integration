@@ -190,22 +190,29 @@ class OrderDataSend
             try {
                 $connectionId = $this->activeCampaignHelper->getConnectionId($order->getStoreId());
                 $customerId = $order->getCustomerId();
-                $customerAcId = 0;
-                $quote = $this->quoteRepository->get($order->getQuoteId());
+                $quoteModel = null;
+                try{
+                $quoteModel = $this->quoteRepository->get($order->getQuoteId());
+                    $quote = $quoteModel;
+                }catch (\Exception $e){
+                    $quote = $order;
+                }
+
                 if ($customerId) {
                     $AcCustomer = $this->customer->updateCustomer($this->getCustomer($customerId));
                 }else{
                     $customerEmail = $quote->getBillingAddress()->getEmail();
-                    $contact['email'] = $quote->getBillingAddress()->getEmail();
+                    $contact['email'] = $customerEmail;
                     $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
                     $contact['lastName'] = $quote->getBillingAddress()->getLastname();
                     $contact['phone'] = $quote->getBillingAddress()->getTelephone();
                     $contact['fieldValues'] = [];
-                    $AcCustomer = $this->customer->createGuestCustomer($contact,$quote->getStoreId());
+                    $AcCustomer = $this->customer->createGuestCustomer($contact,$order->getStoreId());
                 }
                 $customerAcId = $AcCustomer['ac_customer_id'];
-                $this->saveCustomerResultQuote($quote,$customerAcId);
-
+                if($quoteModel) {
+                    $this->saveCustomerResultQuote($quote, $customerAcId);
+                }
                 foreach ($order->getAllVisibleItems() as $item) {
                     $product = $this->_productRepositoryFactory->create()
                                 ->get($item->getSku());
@@ -227,7 +234,7 @@ class OrderDataSend
                             "ecomOrder" => [
                                 "externalid" => $order->getId(),
                                 "source" => 1,
-                                "email" => $quote->getBillingAddress()->getEmail(),
+                                "email" => $order->getCustomerEmail(),
                                 "orderProducts" => $items,
                                 "orderDiscounts" => [
                                     "discountAmount" => $this->activeCampaignHelper->priceToCents($order->getDiscountAmount())
@@ -247,8 +254,10 @@ class OrderDataSend
                         ];
 
                 if (!$order->getAcOrderSyncId()) {
-
-                    $AcOrderId = $quote->getAcOrderSyncId();
+                    $AcOrderId=0;
+                    if($quoteModel){
+                        $AcOrderId = $quote->getAcOrderSyncId();
+                    }
                     if($AcOrderId > 0){
                         $result = $this->curl->orderDataSend(
                             self::UPDATE_METHOD,

@@ -44,6 +44,7 @@ class NewsletterSyncStatus extends \Magento\Backend\Block\Template
     {
 
         $this->newsletterCollection->clear()->getSelect()->reset(\Magento\Framework\Db\Select::WHERE);
+        $this->newsletterCollection->addFieldToFilter('customer_id', null);
         if (count($filter)) {
             foreach ($filter as $fil) {
                 $this->newsletterCollection->addFieldToFilter($fil['field'], $fil['value']);
