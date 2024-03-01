@@ -249,7 +249,7 @@ class AbandonedCartSendData extends AbstractModel
 
             $quote = $this->quoteRepository->get($abandonedCart->getEntityId());
             $AcCustomer = NULL;
-            if ($this->isGuest($quote)) {
+            if ($this->isGuest($quote) || ($abandonedCart->getCustomerId() && !$this->getCustomer($abandonedCart->getCustomerId())->getCustomerId())) {
                 $customerEmail = $quote->getBillingAddress()->getEmail();
                 if (!$customerEmail) {
                     $result['error'] = __('Customer Email does not exist.');
@@ -402,7 +402,11 @@ class AbandonedCartSendData extends AbstractModel
         if ($quoteModel->getEntityId()) {
             $quoteModel->setAcOrderSyncId($acOrderId);
             $quoteModel->setAcSyncStatus($syncStatus);
-            $quoteModel->setAcSyncedDate($this->dateTime->date()->format('Y-m-d H:i:s'));
+            if(!$quoteModel->getUpdatedAt()){
+                $quoteModel->setAcSyncedDate($this->dateTime->date()->modify('+1 day')->format('Y-m-d H:i:s'));
+            }else{
+                $quoteModel->setAcSyncedDate($this->dateTime->date($quoteModel->getUpdatedAt())->modify('+1 day')->format('Y-m-d H:i:s'));
+            }
         }
         $quoteModel->save();
     }
