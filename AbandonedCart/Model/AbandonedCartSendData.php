@@ -361,7 +361,7 @@ class AbandonedCartSendData extends AbstractModel
                 ->getById($quoteItem->getProductId());
 
             $imageUrl = $this->imageHelperFactory->create()
-                ->init($product, 'product_thumbnail_image')->getUrl();
+                ->init($product, 'product_page_image_medium')->getUrl();
             $this->appEmulation->stopEnvironmentEmulation();
             $quoteItemsData[] = [
                 "externalid" => $quoteItem->getItemId(),
@@ -369,7 +369,7 @@ class AbandonedCartSendData extends AbstractModel
                 "price" => $this->coreHelper->priceToCents($quoteItem->getPriceInclTax()),
                 "quantity" => $quoteItem->getQty(),
                 "sku" => $quoteItem->getSku(),
-                "description" => $quoteItem->getDescription(),
+                "description" => $product->getDescription(),
                 "imageUrl" => $imageUrl,
                 "productUrl" => $product->getProductUrl()
             ];

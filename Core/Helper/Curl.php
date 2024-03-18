@@ -6,6 +6,7 @@ namespace ActiveCampaign\Core\Helper;
 use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
 use ActiveCampaign\Core\Logger\Logger;
 use ActiveCampaign\SyncLog\Model\SyncLog;
+use ActiveCampaign\SyncLog\Helper\Data as SyncLogHelper;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
@@ -45,6 +46,7 @@ class Curl extends AbstractHelper
      */
     private $syncLog;
 
+    private $syncLogHelper;
     /**
      * Curl constructor.
      * @param Context $context
@@ -60,14 +62,15 @@ class Curl extends AbstractHelper
         JsonHelper           $jsonHelper,
         Logger               $logger,
         ActiveCampaignHelper $activeCampaignHelper,
-        SyncLog              $syncLog
+        SyncLog              $syncLog,
+        SyncLogHelper           $syncLogHelper
     ) {
         $this->client = $client ?: new Client();
         $this->jsonHelper = $jsonHelper;
         $this->logger = $logger;
         $this->activeCampaignHelper = $activeCampaignHelper;
         $this->syncLog = $syncLog;
-
+        $this->syncLogHelper = $syncLogHelper;
         parent::__construct($context);
     }
 
@@ -401,7 +404,9 @@ class Curl extends AbstractHelper
         /**
          * @todo Replace with repository service contract
          */
-        $synclog->save();
+        if(!$this->syncLogHelper->isLogError() || $synclog->getStatus()==0){
+            $synclog->save();
+        }
         $synclog->unsetData();
 
         return $result;

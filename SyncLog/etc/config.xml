@@ -4,6 +4,7 @@
 		<active_campaign>
 			<synclog>
                 <synclog_delete>0</synclog_delete>
+                <synclog_mode>1</synclog_mode>
                 <cron_minute>*</cron_minute>
                 <cron_hour>*</cron_hour>
                 <cron_day>*</cron_day>
