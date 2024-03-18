@@ -21,4 +21,7 @@
             <argument name="resourceModel" xsi:type="string">Magento\Quote\Model\ResourceModel\Quote</argument>
         </arguments>
     </virtualType>
+    <type name="Magento\Checkout\Controller\Cart\Index">
+        <plugin name="ac_checkout_cart_controller" type="ActiveCampaign\AbandonedCart\Plugin\Checkout\Controller\Cart\Index"/>
+    </type>
 </config>

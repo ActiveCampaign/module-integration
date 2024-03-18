@@ -8,6 +8,10 @@
             <resource>ActiveCampaign_SyncLog::config_activecampaign_synclog</resource>
             <group id="synclog" sortOrder="100" showInWebsite="1" showInStore="1" showInDefault="1" translate="label">
                 <label>Sync Log Settings</label>
+                    <field id="synclog_mode" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Only log errors</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="synclog_delete" translate="label" type="select" sortOrder="10" showInDefault="1">
                     <label>SyncLog Delete</label>
                     <comment><![CDATA[Choosing yes will start deleting your past 7 days existing SyncLog stored in database.]]></comment>
