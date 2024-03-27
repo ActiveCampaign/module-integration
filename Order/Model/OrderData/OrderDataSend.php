@@ -18,6 +18,7 @@ use Magento\Eav\Model\ResourceModel\Entity\Attribute;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface as StoreManagerInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
@@ -120,6 +121,11 @@ class OrderDataSend
     protected $customer;
 
     /**
+     * @var DateTime
+     */
+    private $dateTime;
+
+    /**
      * OrderDataSend constructor.
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
      * @param ImageFactory $imageHelperFactory
@@ -138,6 +144,7 @@ class OrderDataSend
      * @param CustomerResource $customerResource
      * @param CartRepositoryInterface $quoteRepository
      * @param Customer $customer
+     * @param TimezoneInterface $dateTime
      */
     public function __construct(
         ProductRepositoryInterfaceFactory $productRepositoryFactory,
@@ -156,7 +163,8 @@ class OrderDataSend
         CoreHelper $coreHelper,
         CustomerResource $customerResource,
         CartRepositoryInterface $quoteRepository,
-        Customer $customer
+        Customer $customer,
+        TimezoneInterface $dateTime
     ) {
         $this->_productRepositoryFactory = $productRepositoryFactory;
         $this->imageHelperFactory = $imageHelperFactory;
@@ -175,6 +183,7 @@ class OrderDataSend
         $this->customerResource = $customerResource;
         $this->quoteRepository = $quoteRepository;
         $this->customer =  $customer;
+        $this->dateTime = $dateTime;
     }
 
     /**
@@ -213,6 +222,7 @@ class OrderDataSend
                 if($quoteModel) {
                     $this->saveCustomerResultQuote($quote, $customerAcId);
                 }
+                $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $order->getStoreId());
                 foreach ($order->getAllVisibleItems() as $item) {
                     $product = $this->_productRepositoryFactory->create()
                                 ->get($item->getSku());
@@ -239,8 +249,8 @@ class OrderDataSend
                                 "orderDiscounts" => [
                                     "discountAmount" => $this->activeCampaignHelper->priceToCents($order->getDiscountAmount())
                                 ],
-                                "externalCreatedDate" => $order->getCreatedAt(),
-                                "externalUpdatedDate" => $order->getUpdatedAt(),
+                                "externalCreatedDate" => $this->dateTime->date(strtotime($order->getCreatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
+                                "externalUpdatedDate" => $this->dateTime->date(strtotime($order->getUpdatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
                                 "shippingMethod" => $order->getShippingMethod(),
                                 "totalPrice" => $this->activeCampaignHelper->priceToCents($order->getGrandTotal()),
                                 "shippingAmount" => $this->activeCampaignHelper->priceToCents($order->getShippingAmount()),
