@@ -94,6 +94,10 @@ class Customer
      * @var StoreManagerInterface
      */
     protected $storeManager;
+    /**
+     * @var SubscriberFactory
+     */
+    protected $subscriberFactory;
 
     /**
      * Customer constructor.
