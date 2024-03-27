@@ -1,0 +1,10 @@
+{
+    "quote": {
+        "column": {
+            "ac_sync_status": true,
+            "ac_order_sync_id": true,
+            "ac_temp_customer_id": true,
+            "ac_synced_date": true
+        }
+    }
+}
