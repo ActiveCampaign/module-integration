@@ -224,20 +224,19 @@ class OrderDataSend
                 }
                 $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $order->getStoreId());
                 foreach ($order->getAllVisibleItems() as $item) {
-                    $product = $this->_productRepositoryFactory->create()
-                                ->get($item->getSku());
+
                     $imageUrl = $this->imageHelperFactory->create()
-                                ->init($product, 'product_thumbnail_image')->getUrl();
+                                ->init($item->getProduct(), 'product_thumbnail_image')->getUrl();
                     $items[] = [
                                 "externalid" => $item->getProductId(),
                                 "name" => $item->getName(),
                                 "price" => $this->activeCampaignHelper->priceToCents($item->getPrice()),
                                 "quantity" => $item->getQtyOrdered(),
-                                "category" => implode(', ', $product->getCategoryIds()),
+                                "category" => implode(', ', $item->getProduct()->getCategoryIds()),
                                 "sku" => $item->getSku(),
                                 "description" => $item->getDescription(),
                                 "imageUrl" => $imageUrl,
-                                "productUrl" => $product->getProductUrl()
+                                "productUrl" => $item->getProduct()->getProductUrl()
                             ];
                 }
                 $data = [

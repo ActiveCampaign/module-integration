@@ -249,7 +249,7 @@ class AbandonedCartSendData extends AbstractModel
 
             $quote = $this->quoteRepository->get($abandonedCart->getEntityId());
             $AcCustomer = NULL;
-            if ($this->isGuest($quote) || ($abandonedCart->getCustomerId() && !$this->getCustomer($abandonedCart->getCustomerId())->getCustomerId())) {
+            if ($this->isGuest($quote) || ($abandonedCart->getCustomerId() && !$this->getCustomer($abandonedCart->getCustomerId())->getId())) {
                 $customerEmail = $quote->getBillingAddress()->getEmail();
                 if (!$customerEmail) {
                     $result['error'] = __('Customer Email does not exist.');
@@ -270,6 +270,10 @@ class AbandonedCartSendData extends AbstractModel
             $abandonedCart->collectTotals();
             $quoteItemsData = $this->getQuoteItemsData($abandonedCart->getEntityId(), $abandonedCart->getStoreId());
             $abandonedCartRepository = $this->quoteRepository->get($abandonedCart->getId());
+            $abandonedUpdateDate = $abandonedCartRepository->getUpdatedAt();
+            if(is_null($abandonedUpdateDate)){
+                $abandonedUpdateDate = $abandonedCartRepository->getCreatedAt();
+            }
             $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $abandonedCart->getStoreId());
             $abandonedCartData = [
                 "ecomOrder" => [
@@ -281,9 +285,9 @@ class AbandonedCartSendData extends AbstractModel
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
                     "orderUrl" => $this->urlBuilder->getDirectUrl('checkout/cart'),
-                    "abandonedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getUpdatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
+                    "abandonedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
                     "externalCreatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getCreatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
-                    "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getUpdatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
+                    "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
                     "shippingMethod" => $abandonedCart->getShippingAddress()->getShippingMethod(),
                     "totalPrice" => $this->coreHelper->priceToCents($abandonedCart->getGrandTotal()),
                     "shippingAmount" => $this->coreHelper->priceToCents($abandonedCart->getShippingAmount()),
