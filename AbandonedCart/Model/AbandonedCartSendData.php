@@ -270,7 +270,8 @@ class AbandonedCartSendData extends AbstractModel
             $abandonedCart->collectTotals();
             $quoteItemsData = $this->getQuoteItemsData($abandonedCart->getEntityId(), $abandonedCart->getStoreId());
             $abandonedCartRepository = $this->quoteRepository->get($abandonedCart->getId());
-            $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $abandonedCart->getStoreId());
+            $updatedAt = $abandonedCartRepository->getUpdatedAt();
+            $createdAt = $abandonedCartRepository->getCreatedAt();
             $abandonedCartData = [
                 "ecomOrder" => [
                     "externalcheckoutid" => $abandonedCart->getEntityId(),
@@ -281,9 +282,9 @@ class AbandonedCartSendData extends AbstractModel
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
                     "orderUrl" => $this->urlBuilder->getDirectUrl('checkout/cart'),
-                    "abandonedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getUpdatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
-                    "externalCreatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getCreatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
-                    "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getUpdatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
+                    "abandonedDate" => $this->formatDate($updatedAt),
+                    "externalCreatedDate" => $this->formatDate($createdAt),
+                    "externalUpdatedDate" => $this->formatDate($updatedAt),
                     "shippingMethod" => $abandonedCart->getShippingAddress()->getShippingMethod(),
                     "totalPrice" => $this->coreHelper->priceToCents($abandonedCart->getGrandTotal()),
                     "shippingAmount" => $this->coreHelper->priceToCents($abandonedCart->getShippingAmount()),
@@ -403,8 +404,11 @@ class AbandonedCartSendData extends AbstractModel
         if ($quoteModel->getEntityId()) {
             $quoteModel->setAcOrderSyncId($acOrderId);
             $quoteModel->setAcSyncStatus($syncStatus);
-            $quoteModel->setAcSyncedDate(new \Zend_Db_Expr('CURRENT_TIMESTAMP'));
-
+            if(!$quoteModel->getUpdatedAt()){
+                $quoteModel->setAcSyncedDate($this->dateTime->date()->modify('+1 day')->format('Y-m-d H:i:s'));
+            }else{
+                $quoteModel->setAcSyncedDate($this->dateTime->date($quoteModel->getUpdatedAt())->modify('+1 day')->format('Y-m-d H:i:s'));
+            }
         }
         $quoteModel->save();
     }
@@ -453,5 +457,9 @@ class AbandonedCartSendData extends AbstractModel
             return $customerModel;
         }
         return $customerModel;
+    }
+
+    private function formatDate(int $timestamp): string {
+        return $this->dateTime->date($timestamp)->format('Y-m-d\TH:i:sP');
     }
 }
