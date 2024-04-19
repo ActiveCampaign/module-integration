@@ -169,7 +169,7 @@ class Customer
         $ecomCustomer['connectionid'] = $this->coreHelper->getConnectionId($customer->getStoreId());
         $ecomCustomer['externalid'] = $customer->getId();
         $ecomCustomer['email'] = $customer->getEmail();
-        $ecomCustomerData['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadByCustomer($customer->getId(),$customer->getWebsiteId())->isSubscribed();
+        $ecomCustomer['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($customer->getEmail(), $customer->getWebsiteId())->isSubscribed();
         $ecomCustomerData['ecomCustomer'] = $ecomCustomer;
 
         return $ecomCustomerData;
@@ -178,13 +178,16 @@ class Customer
     /**
      * @param null $billingId
      * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function getTelephone($billingId = null)
     {
         if ($billingId) {
-            $address = $this->addressRepository->getById($billingId);
-            return $address->getTelephone();
+           try{
+              $address = $this->addressRepository->getById($billingId);
+              return $address->getTelephone();
+          }catch (\Exception $exception){
+
+           }
         }
         return null;
     }
