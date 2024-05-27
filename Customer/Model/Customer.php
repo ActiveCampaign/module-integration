@@ -289,20 +289,22 @@ class Customer
             $acContact = $this->createGuestContact($data);
 
             $acCustomer = $this->searchCustomer($data['email'], $this->coreHelper->getConnectionId($storeId));
+            $ecomCustomerData=[];
+            $data['connectionid'] = $this->coreHelper->getConnectionId($storeId);
+            $data['externalid'] = $data['email'];
+            $data['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($data['email'],$this->storeManager->getStore()->getWebsiteId())->isSubscribed();
+            $ecomCustomerData['ecomCustomer'] = $data;
             if (!$acCustomer) {
-                $ecomCustomerData=[];
-                $data['connectionid'] = $this->coreHelper->getConnectionId($storeId);
-                $data['externalid'] = $data['email'];
-                $data['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($data['email'],$this->storeManager->getStore()->getWebsiteId())->isSubscribed();
-                $ecomCustomerData['ecomCustomer'] = $data;
-
                 $result = $this->curl->createContacts(self::METHOD, self::ECOM_CUSTOMER_ENDPOINT, $ecomCustomerData);
-                if (!$result['success'] && $result['status'] == "404") {
-                    $acCustomer = NULL;
-                }
-                if ($result['success'] && isset($result['data']['ecomCustomer']['id'])) {
-                    $acCustomer = $result['data']['ecomCustomer']['id'];
-                }
+            }else{
+                $result = $this->curl->createContacts(self::METHOD_PUT, self::ECOM_CUSTOMER_ENDPOINT. '/' . $acCustomer, $ecomCustomerData);
+
+            }
+            if (!$result['success'] && $result['status'] == "404") {
+                $acCustomer = NULL;
+            }
+            if ($result['success'] && isset($result['data']['ecomCustomer']['id'])) {
+                $acCustomer = $result['data']['ecomCustomer']['id'];
             }
         }
         return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
@@ -411,3 +413,4 @@ class Customer
     }
 
 }
+

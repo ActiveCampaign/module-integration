@@ -11,6 +11,7 @@
                 <cron_day>*</cron_day>
                 <cron_month>*</cron_month>
                 <cron_weekday>*</cron_weekday>
+                <last_newsletter_updated>0</last_newsletter_updated>
             </newsletter_sync>
         </active_campaign>
     </default>

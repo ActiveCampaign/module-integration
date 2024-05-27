@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use ActiveCampaign\Customer\Model\Customer;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
+use function Safe\strtotime;
 
 class NewsletterSyncCron
 {
@@ -69,6 +70,8 @@ class NewsletterSyncCron
      */
     protected $customerResource;
 
+    protected $orderCollectionFactory;
+
     /**
      * NewsletterSyncCron constructor.
      * @param Collection $newsletterCollection
@@ -79,6 +82,8 @@ class NewsletterSyncCron
      * @param LoggerInterface $logger
      * @param Customer $custoner
      * @param CustomerFactory $customerFactory
+     * @param CustomerResource $customerResource
+     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
      */
     public function __construct(
         Collection $newsletterCollection,
@@ -89,9 +94,11 @@ class NewsletterSyncCron
         LoggerInterface $logger,
         Customer $custoner,
         CustomerFactory $customerFactory,
-        CustomerResource $customerResource
+        CustomerResource $customerResource,
+        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
     )
     {
+        $this->orderCollectionFactory = $orderCollectionFactory;
         $this->newsletterCollection = $newsletterCollection;
         $this->activeCampaignHelper = $activeCampaignHelper;
         $this->state = $state;
@@ -112,22 +119,26 @@ class NewsletterSyncCron
             $isEnabled = $this->activeCampaignHelper->isNewslettersSyncEnabled();
 
             if ($isEnabled) {
+                $date = $this->activeCampaignHelper->getLastSync();
+
                 $newsletterSyncNum = $this->activeCampaignHelper->getNewsletterSyncNum();
                 $newsletterCollection = $this->newsletterCollection
                     ->addFieldToSelect('*')
                     ->addFieldToFilter(
-                        'ac_newsletter_sync_status',
-                        ['neq' => 1]
+                        'change_status_at',
+                        ['gt' => new \Zend_Db_Expr('FROM_UNIXTIME('.$date.')')]
                     )
                     ->addFieldToFilter(
                         'customer_id',
                         ['eq' => 0]
                     )
+                    ->setOrder('change_status_at', 'desc')
                     ->setPageSize($newsletterSyncNum)
                     ->setCurPage(1);
 
                 foreach ($newsletterCollection as $news) {
                     $acContact=NULL;
+
                     try {
                         $contactData = [
                                 'email' => $news->getSubscriberEmail()
@@ -136,7 +147,15 @@ class NewsletterSyncCron
                             $result = $this->customer->updateCustomer($this->getCustomer($news->getCustomerId()));
                             $acContact = $result['ac_contact_id'];
                         }else{
-                            $acContact = $this->customer->createGuestContact($contactData);
+                            $orders = $this->orderCollectionFactory->create()->addAttributeToFilter('customer_email', $news->getEmail())->setOrder('entity_id','desc');
+
+
+                            if($orders->getSize()>0){
+                                $store = $orders->getFirstItem()->getStoreId();
+                                $this->customer->createGuestCustomer($contactData,$store);
+                            }else{
+                                $acContact = $this->customer->createGuestContact($contactData);
+                            }
 
                         }
 
@@ -149,6 +168,7 @@ class NewsletterSyncCron
                         $this->logger->error('MODULE Order: ' . $e->getMessage());
                     }
                 }
+                $this->activeCampaignHelper->setLastSync(strtotime(date('Y-m-d H:i:s')));
             }
         } catch (\Exception $e) {
             $this->logger->error('MODULE Order: ' . $e->getMessage());
