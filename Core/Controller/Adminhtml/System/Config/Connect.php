@@ -100,7 +100,7 @@ class Connect extends \Magento\Backend\App\Action
             && !empty($request['api_url'])
             && !empty($request['api_key'])
         ) {
-            $isEnabled = $this->activeCampaignHelper->isEnabled($request['status']);
+            $isEnabled = $this->activeCampaignHelper->isEnabled($request['store']);
             if (!$isEnabled) {
                 $this->saveConfig(
                     \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_STATUS,
