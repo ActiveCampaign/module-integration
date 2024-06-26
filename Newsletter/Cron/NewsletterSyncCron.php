@@ -135,10 +135,8 @@ class NewsletterSyncCron
                     ->setOrder('change_status_at', 'desc')
                     ->setPageSize($newsletterSyncNum)
                     ->setCurPage(1);
-
                 foreach ($newsletterCollection as $news) {
                     $acContact=NULL;
-
                     try {
                         $contactData = [
                                 'email' => $news->getSubscriberEmail()
@@ -147,16 +145,8 @@ class NewsletterSyncCron
                             $result = $this->customer->updateCustomer($this->getCustomer($news->getCustomerId()));
                             $acContact = $result['ac_contact_id'];
                         }else{
-                            $orders = $this->orderCollectionFactory->create()->addAttributeToFilter('customer_email', $news->getEmail())->setOrder('entity_id','desc');
-
-
-                            if($orders->getSize()>0){
-                                $store = $orders->getFirstItem()->getStoreId();
-                                $this->customer->createGuestCustomer($contactData,$store);
-                            }else{
                                 $acContact = $this->customer->createGuestContact($contactData);
-                            }
-
+                                 $this->customer->createGuestCustomer($contactData,$news->getStoreId());
                         }
 
                         if ($acContact) {

@@ -11,6 +11,7 @@
                 <cron_day>*</cron_day>
                 <cron_month>*</cron_month>
                 <cron_weekday>*</cron_weekday>
+                <min_inactive_time>60</min_inactive_time>
             </abandoned_cart>
         </active_campaign>
     </default>
