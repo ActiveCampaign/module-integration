@@ -292,7 +292,7 @@ class Customer
             $ecomCustomerData=[];
             $data['connectionid'] = $this->coreHelper->getConnectionId($storeId);
             $data['externalid'] = $data['email'];
-            $data['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($data['email'],$this->storeManager->getStore()->getWebsiteId())->isSubscribed();
+            $data['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($data['email'],$this->storeManager->getStore($storeId)->getWebsiteId())->isSubscribed();
             $ecomCustomerData['ecomCustomer'] = $data;
             if (!$acCustomer) {
                 $result = $this->curl->createContacts(self::METHOD, self::ECOM_CUSTOMER_ENDPOINT, $ecomCustomerData);

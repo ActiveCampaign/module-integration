@@ -52,13 +52,19 @@
                         <field id="sync">1</field>
                     </depends>
                 </field>
-                <field id="ac_abandoned_cart_syncing" translate="label comment" type="button" sortOrder="40" showInDefault="1">
+                <field id="min_inactive_time" translate="label comment" type="text" sortOrder="40" showInDefault="1">
+                    <label>Minimum inactivity time</label>
+                    <comment><![CDATA[Minimum inactivity time in minutes]]></comment>
+                </field>
+                <field id="ac_abandoned_cart_syncing" translate="label comment" type="button" sortOrder="50" showInDefault="1">
                     <frontend_model>ActiveCampaign\AbandonedCart\Block\System\Config\SyncAbandonedCartData</frontend_model>
                     <label>Sync Abandoned Cart Data</label>
                     <depends>
                         <field id="active_campaign/abandoned_cart/sync">1</field>
                     </depends>
                 </field>
+
+
             </group>
         </section>
     </system>
