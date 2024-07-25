@@ -6,6 +6,10 @@
             <group id="newsletter_sync" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0"
                    showInStore="0">
                 <label>Newsletter Sync Configuration</label>
+                <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Current Version</label>
+                    <backend_model>ActiveCampaign\Newsletter\Block\Adminhtml\System\Config\Version</backend_model>
+                </field>
                 <field id="newsletter_sync_enable" translate="Newsletter Sync Enable" type="select" sortOrder="1"
                        showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Newsletter Sync Enable</label>
@@ -59,6 +63,7 @@
                         <field id="sync">1</field>
                     </depends>
                 </field>
+
             </group>
         </section>
     </system>

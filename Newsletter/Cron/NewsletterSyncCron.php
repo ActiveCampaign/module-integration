@@ -145,7 +145,7 @@ class NewsletterSyncCron
                             $result = $this->customer->updateCustomer($this->getCustomer($news->getCustomerId()));
                             $acContact = $result['ac_contact_id'];
                         }else{
-                                $acContact = $this->customer->createGuestContact($contactData);
+                             //   $acContact = $this->customer->createGuestContact($contactData);
                                  $this->customer->createGuestCustomer($contactData,$news->getStoreId());
                         }
 
