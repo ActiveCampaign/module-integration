@@ -4,6 +4,10 @@
         <section id="active_campaign" translate="label" type="text" sortOrder="100" showInDefault="1" showInStore="1">
             <group id="customer" translate="label" type="text" sortOrder="20" showInDefault="1" showInStore="1">
                 <label>Customer</label>
+                <field id="version" translate="label" type="label" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Current Version</label>
+                    <backend_model>ActiveCampaign\Customer\Block\Adminhtml\System\Config\Version</backend_model>
+                </field>
                 <field id="sync" translate="label" type="select" sortOrder="10" showInDefault="1">
                     <label>Customer Syncing</label>
                     <comment><![CDATA[Choosing yes will start syncing your all existing customer.]]></comment>
@@ -60,6 +64,7 @@
                         <field id="sync">1</field>
                     </depends>
                 </field>
+
             </group>
         </section>
     </system>

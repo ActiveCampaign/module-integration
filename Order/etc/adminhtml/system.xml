@@ -8,6 +8,10 @@
             <resource>ActiveCampaign_Core::config_active_campaign</resource>
             <group id="order_sync" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Order Sync Configuration</label>
+                <field id="version" translate="label" type="label" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Current Version</label>
+                    <backend_model>ActiveCampaign\Order\Block\Adminhtml\System\Config\Version</backend_model>
+                </field>
                 <field id="order_sync_enable" translate="Order Sync Enable" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Order Sync Enable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -64,6 +68,7 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If set yes order is sync after place order.</comment>
                 </field>
+
             </group>
         </section>
     </system>
