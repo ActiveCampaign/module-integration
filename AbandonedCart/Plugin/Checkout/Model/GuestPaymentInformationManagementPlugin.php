@@ -55,7 +55,11 @@ class GuestPaymentInformationManagementPlugin
     ) {
         $quoteIdMask = $this->quoteIdMaskFactory->create()->load($cartId, 'masked_id');
         if ($this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
-            $response = $this->abandonedCartSendData->sendAbandonedCartData($quoteIdMask->getQuoteId());
+            try{
+                $response = $this->abandonedCartSendData->sendAbandonedCartData($quoteIdMask->getQuoteId());
+            } catch (\Exception $e) {
+
+            }
         }
     }
-}   
+}
