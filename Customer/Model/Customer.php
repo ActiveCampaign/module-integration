@@ -222,9 +222,12 @@ class Customer
         }
 
         $customerModel->setAcSyncStatus($syncStatus);
-        $customerModel->setAcContactId($contactId);
-        $customerModel->setAcCustomerId($ecomCustomerId);
-
+        if ($contactId) {
+            $customerModel->setAcContactId($contactId);
+        }
+        if ($ecomCustomerId) {
+            $customerModel->setAcCustomerId($ecomCustomerId);
+        }
         $this->customerResource->save($customerModel);
     }
 

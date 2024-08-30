@@ -291,7 +291,7 @@ class OrderDataSend
                         foreach ($ecomOrders as $ecomKey => $customers) {
                             $ecomOrderArray[$ecomOrders[$ecomKey]['email']] = $ecomOrders[$ecomKey]['id'];
                         }
-                        $acOrderId = $ecomOrderArray[$customerEmail];
+                        $acOrderId = $ecomOrderArray[$quote->getBillingAddress()->getEmail()];
                     } else {
                         $acOrderId = isset($result['data']['ecomOrder']['id']) ? $result['data']['ecomOrder']['id'] : null;
                     }

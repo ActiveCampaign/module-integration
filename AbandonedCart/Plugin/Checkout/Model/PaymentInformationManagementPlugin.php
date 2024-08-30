@@ -49,7 +49,11 @@ class PaymentInformationManagementPlugin
         $quote = $quoteRepository->getActive($cartId);
 
         if ($this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
-            $response = $this->abandonedCartSendData->sendAbandonedCartData($quote->getId());
+            try{
+                $response = $this->abandonedCartSendData->sendAbandonedCartData($quote->getId());
+            } catch (\Exception $e) {
+
+            }
         }
     }
 
