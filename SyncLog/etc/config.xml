@@ -5,12 +5,25 @@
 			<synclog>
                 <synclog_delete>0</synclog_delete>
                 <synclog_mode>1</synclog_mode>
+                <remove_after_days>7</remove_after_days>
                 <cron_minute>*</cron_minute>
                 <cron_hour>*</cron_hour>
                 <cron_day>*</cron_day>
                 <cron_month>*</cron_month>
                 <cron_weekday>*</cron_weekday>
+
 			</synclog>
 		</active_campaign>
+        <crontab>
+            <default>
+                <jobs>
+                    <activecampaign_synclog>
+                        <schedule>
+                            <cron_expr>* * * * *</cron_expr>
+                        </schedule>
+                    </activecampaign_synclog>
+                </jobs>
+            </default>
+        </crontab>
 	</default>
 </config>

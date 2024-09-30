@@ -227,12 +227,20 @@ class OrderDataSend
 
                     $imageUrl = $this->imageHelperFactory->create()
                                 ->init($item->getProduct(), 'product_thumbnail_image')->getUrl();
+                    $categories = $item->getProduct()->getCategoryCollection()->addAttributeToSelect('name');
+                    $categoriesName = [];
+                    foreach($categories as $category)
+                    {
+                        $categoriesName[] = $category->getName();
+                    }
+                    $categoriesName = implode(', ', $categoriesName);
+
                     $items[] = [
                                 "externalid" => $item->getProductId(),
                                 "name" => $item->getName(),
                                 "price" => $this->activeCampaignHelper->priceToCents($item->getPrice()),
                                 "quantity" => $item->getQtyOrdered(),
-                                "category" => implode(', ', $item->getProduct()->getCategoryIds()),
+                                "category" => $categoriesName,
                                 "sku" => $item->getSku(),
                                 "description" => $item->getDescription(),
                                 "imageUrl" => $imageUrl,
