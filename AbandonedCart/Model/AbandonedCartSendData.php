@@ -229,9 +229,9 @@ class AbandonedCartSendData extends AbstractModel
                 ['lt' => new \Zend_Db_Expr('main_table.updated_at')],
                 ['null' =>  true]
             ])
-            ->addFieldToFilter('main_table.updated_at',
-                ['eq' => new \Zend_Db_Expr('IF( ac_synced_date is not null or main_table.updated_at < DATE_SUB(NOW(), INTERVAL '.$minInactiveTime.' minute), main_table.updated_at,-1)')]
-            )
+        //    ->addFieldToFilter('main_table.updated_at',
+         //       ['eq' => new \Zend_Db_Expr('IF( ac_synced_date is not null or main_table.updated_at < DATE_SUB(NOW(), INTERVAL '.$minInactiveTime.' minute), main_table.updated_at,-1)')]
+         //   )
             ->addFieldToFilter(
                 'is_active',
                 '1'
@@ -372,6 +372,13 @@ class AbandonedCartSendData extends AbstractModel
             $imageUrl = $this->imageHelperFactory->create()
                 ->init($product, 'product_page_image_medium')->getUrl();
             $this->appEmulation->stopEnvironmentEmulation();
+            $categories = $product->getCategoryCollection()->addAttributeToSelect('name');
+            $categoriesName = [];
+            foreach($categories as $category)
+            {
+                $categoriesName[] = $category->getName();
+            }
+            $categoriesName = implode(', ', $categoriesName);
             $quoteItemsData[] = [
                 "externalid" => $quoteItem->getItemId(),
                 "name" => $quoteItem->getName(),
@@ -380,7 +387,8 @@ class AbandonedCartSendData extends AbstractModel
                 "sku" => $quoteItem->getSku(),
                 "description" => $product->getDescription(),
                 "imageUrl" => $imageUrl,
-                "productUrl" => $product->getProductUrl()
+                "productUrl" => $product->getProductUrl(),
+                "category" => $categoriesName
             ];
         }
         return $quoteItemsData;

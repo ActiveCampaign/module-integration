@@ -18,8 +18,14 @@
                 </field>
                 <field id="synclog_delete" translate="label" type="select" sortOrder="10" showInDefault="1">
                     <label>SyncLog Delete</label>
-                    <comment><![CDATA[Choosing yes will start deleting your past 7 days existing SyncLog stored in database.]]></comment>
+                    <comment><![CDATA[Choosing yes will start deleting  existing SyncLog stored in database.]]></comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="remove_after_days" type="text" sortOrder="19" showInDefault="1">
+                    <label>Delete after (days)</label>
+                    <depends>
+                        <field id="synclog_delete">1</field>
+                    </depends>
                 </field>
                 <field id="cron_minute" translate="label comment" type="text" sortOrder="20" showInDefault="1">
                     <label>Cron Minute</label>
