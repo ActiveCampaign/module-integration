@@ -229,9 +229,9 @@ class AbandonedCartSendData extends AbstractModel
                 ['lt' => new \Zend_Db_Expr('main_table.updated_at')],
                 ['null' =>  true]
             ])
-        //    ->addFieldToFilter('main_table.updated_at',
-         //       ['eq' => new \Zend_Db_Expr('IF( ac_synced_date is not null or main_table.updated_at < DATE_SUB(NOW(), INTERVAL '.$minInactiveTime.' minute), main_table.updated_at,-1)')]
-         //   )
+            ->addFieldToFilter('main_table.updated_at',
+                ['eq' => new \Zend_Db_Expr('IF( ac_synced_date is not null or main_table.updated_at < DATE_SUB(NOW(), INTERVAL '.$minInactiveTime.' minute), main_table.updated_at,-1)')]
+            )
             ->addFieldToFilter(
                 'is_active',
                 '1'
