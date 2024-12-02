@@ -94,7 +94,7 @@ class OrderSyncCron
                         'ac_order_sync_status',
                         ['eq' => 0]
                     )
-                    ->setPageSize($OrderSyncNum);
+                    ->setPageSize($OrderSyncNum)->setOrder('main_table.entity_id',"desc");
 
                 foreach ($orderCollection as $order) {
                     try {
