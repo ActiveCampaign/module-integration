@@ -8,17 +8,14 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
-
+use ActiveCampaign\SyncLog\Helper\Data;
 class DeleteSyncLog
 {
 
     const SYNCLOG_TABLE = "sync_log";
-    const XML_PATH_ACTIVE_CAMPAIGN_SYNCLOG_ENABLE = "active_campaign/synclog/synclog_delete";
 
-    /**
-     * @var ScopeConfigInterface
-     */
-    protected $scopeConfig;
+
+
 
     /** @var ResourceConnection  */
     private  $connection;
@@ -26,15 +23,17 @@ class DeleteSyncLog
     /** @var DateTime  */
     private  $dateTime;
 
+    private $helper;
+
     public function __construct(
-        ScopeConfigInterface $scopeConfig,
         ResourceConnection $connection,
-        DateTime $dateTime
+        DateTime $dateTime,
+        Data $helper
     )
     {
-        $this->scopeConfig = $scopeConfig;
         $this->connection = $connection;
         $this->dateTime = $dateTime;
+        $this->helper = $helper;
     }
 
     /**
@@ -44,27 +43,18 @@ class DeleteSyncLog
      */
     public function execute()
     {
-        if($this->isDeletingEnabled()) {
+
+        if($this->helper->isDeletingEnabled()) {
             $connection = $this->connection->getConnection();
             $tableName = $connection->getTableName(self::SYNCLOG_TABLE);
-            $currentDate = $this->dateTime->gmtDate("Y-m-d", strtotime('-7 days'));
+            $currentDate = $this->dateTime->gmtDate("Y-m-d", strtotime('-'.$this->helper->removeAfterDays().' days'));
             $whereConditions = [
-                  $connection->quoteInto("creation_date < ?", $currentDate)
+                  $connection->quoteInto("Date(creation_date) <= ?", $currentDate)
             ];
+
             $connection->delete($tableName, $whereConditions);
         }
     }
 
-    /**
-     * @param null $scopeCode
-     * @return bool
-     */
-    public function isDeletingEnabled($scopeCode = null): bool
-    {
-        return $this->scopeConfig->isSetFlag(
-            self::XML_PATH_ACTIVE_CAMPAIGN_SYNCLOG_ENABLE,
-            ScopeInterface::SCOPE_STORES,
-            $scopeCode
-        );
-    }
+
 }

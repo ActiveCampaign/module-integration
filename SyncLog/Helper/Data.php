@@ -9,8 +9,8 @@ use Magento\Store\Model\ScopeInterface;
 class Data extends AbstractHelper
 {
     const ACTIVE_CAMPAIGN_SYNCLOG_MODE = "active_campaign/synclog/synclog_mode";
-
-
+    const ACTIVE_CAMPAIGN_REMOVE_AFTER_DAYS = "active_campaign/synclog/remove_after_days";
+    const XML_PATH_ACTIVE_CAMPAIGN_SYNCLOG_ENABLE = "active_campaign/synclog/synclog_delete";
     /**
      * @var \Magento\Framework\App\State *
      */
@@ -29,6 +29,13 @@ class Data extends AbstractHelper
         $this->state = $state;
     }
 
+    public function removeAfterDays($scopeCode = null){
+        return $this->scopeConfig->getValue(
+         self::ACTIVE_CAMPAIGN_REMOVE_AFTER_DAYS,
+            ScopeInterface::SCOPE_STORES,
+            $scopeCode
+      );
+    }
     /**
      * @param null $scopeCode
      * @return bool
@@ -42,4 +49,16 @@ class Data extends AbstractHelper
         );
     }
 
+    /**
+     * @param null $scopeCode
+     * @return bool
+     */
+    public function isDeletingEnabled($scopeCode = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_ACTIVE_CAMPAIGN_SYNCLOG_ENABLE,
+            ScopeInterface::SCOPE_STORES,
+            $scopeCode
+        );
+    }
 }

@@ -244,7 +244,7 @@ class AbandonedCartSendData extends AbstractModel
         if ($quoteId) {
             $abandonedCarts->addFieldToFilter('entity_id', ['eq' => $quoteId]);
         }
-        $abandonedCarts->setPageSize($numberOfAbandonedCart);
+        $abandonedCarts->setPageSize($numberOfAbandonedCart)->setOrder('main_table.updated_at',"desc");
         $abandonedCarts->getSelect()->join(array('address' => $abandonedCarts->getResource()->getTable('quote_address')), 'main_table.entity_id = address.quote_id')
             ->where("address.address_type='billing' and (main_table.customer_email is not null or  address.email is not null)");
         foreach ($abandonedCarts as $abandonedCart) {
@@ -288,7 +288,7 @@ class AbandonedCartSendData extends AbstractModel
                     "orderDiscounts" => [
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
-                    "orderUrl" => $this->urlBuilder->getDirectUrl('checkout/cart'),
+                    "orderUrl" => $this->urlBuilder->setScope($abandonedCart->getStoreId())->getDirectUrl('checkout/cart'),
                     "abandonedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
                     "externalCreatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getCreatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
                     "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
@@ -361,17 +361,26 @@ class AbandonedCartSendData extends AbstractModel
      */
     private function getQuoteItemsData($entityId, $storeId): array
     {
+
         $quoteItemsData = [];
+        $this->appEmulation->startEnvironmentEmulation($storeId, Area::AREA_FRONTEND, true);
         $quoteItems = $this->getQuoteItems($entityId);
         foreach ($quoteItems as $quoteItem) {
-            $this->appEmulation->startEnvironmentEmulation($storeId, Area::AREA_FRONTEND, true);
+
 
             $product = $this->_productRepositoryFactory->create()
-                ->getById($quoteItem->getProductId());
+                ->getById($quoteItem->getProductId(),false,$storeId);
 
             $imageUrl = $this->imageHelperFactory->create()
                 ->init($product, 'product_page_image_medium')->getUrl();
             $this->appEmulation->stopEnvironmentEmulation();
+            $categories = $product->getCategoryCollection()->addAttributeToSelect('name');
+            $categoriesName = [];
+            foreach($categories as $category)
+            {
+                $categoriesName[] = $category->getName();
+            }
+            $categoriesName = implode(', ', $categoriesName);
             $quoteItemsData[] = [
                 "externalid" => $quoteItem->getItemId(),
                 "name" => $quoteItem->getName(),
@@ -380,7 +389,8 @@ class AbandonedCartSendData extends AbstractModel
                 "sku" => $quoteItem->getSku(),
                 "description" => $product->getDescription(),
                 "imageUrl" => $imageUrl,
-                "productUrl" => $product->getProductUrl()
+                "productUrl" => $product->getProductUrl(),
+                "category" => $categoriesName
             ];
         }
         return $quoteItemsData;
