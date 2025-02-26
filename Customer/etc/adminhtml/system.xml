@@ -49,6 +49,11 @@
                         <field id="sync">1</field>
                     </depends>
                 </field>
+                <field id="map_custom_fields" translate="Map custom fields" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Mapping Customer Custom Fields</label>
+                    <frontend_model>ActiveCampaign\Customer\Block\Adminhtml\System\Config\Form\Field\CustomerCustomFields</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                </field>
                 <field id="number_of_customers" translate="label comment" type="text" sortOrder="30" showInDefault="1">
                     <label>Number of customers</label>
                     <validate>required-entry validate-number validate-greater-than-zero validate-integer</validate>
