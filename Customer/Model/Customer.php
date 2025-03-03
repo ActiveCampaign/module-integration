@@ -195,12 +195,27 @@ class Customer
     public function getFieldValues($customer)
     {
         $fieldValues = [];
-        $customAttributes = $customer->getCustomAttributes();
+        $customAttributes = $this->customerHelper->getMapCustomFields();
         if (!empty($customAttributes)) {
-            foreach ($customAttributes as $attribute) {
-                $attributeId = $this->eavAttribute->getIdByCode(MageCustomer::ENTITY, $attribute->getAttributeCode());
-                $attributeValues['field'] = $attributeId;
-                $attributeValues['value'] = $attribute->getValue();
+            foreach (json_decode($customAttributes) as $attribute) {
+                $attributeValues=[];
+                $attributeValues['field'] = $attribute->ac_customer_field_id;
+                $attributeValues['value'] ='';
+                if(strncmp($attribute->customer_field_id,'shipping__',10) === 0 ){
+                    if($customer->getDefaultShippingAddress()){
+                        $attributeValues['value'] = $customer->getDefaultShippingAddress()->getData(substr($attribute->customer_field_id,10));
+                    }
+                }elseif (strncmp($attribute->customer_field_id,'billing__',9) === 0){
+                    if($customer->getDefaultBillingAddress()){
+                     $attributeValues['value'] = $customer->getDefaultBillingAddress()->getData(substr($attribute->customer_field_id,9));
+                    }
+                }else{
+                    if($attr = $customer->getResource()->getAttribute($attribute->customer_field_id)){
+                        $attributeValues['value'] = $attr->getFrontend()->getValue($customer);
+                    }else {
+                        $attributeValues['value'] = $customer->getData($attribute->customer_field_id);
+                    }
+                }
                 $fieldValues[] = $attributeValues;
             }
         }

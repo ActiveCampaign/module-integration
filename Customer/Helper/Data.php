@@ -11,6 +11,7 @@ class Data extends AbstractHelper
     const ACTIVE_CAMPAIGN_CUSTOMER_SYNC = "active_campaign/customer/sync";
     const ACTIVE_CAMPAIGN_CUSTOMER_NUMBER_OF_CUSTOMERS = "active_campaign/customer/number_of_customers";
     const ACTIVE_CAMPAIGN_CUSTOMER_UPDATE_LAST_SYNC = "active_campaign/customer/last_customers_updated";
+    const ACTIVE_CAMPAIGN_CUSTOMER_MAP_CUSTOM_FIELDS = "active_campaign/customer/map_custom_fields";
 
     /**
      * @var \Magento\Framework\App\Config\ConfigResource\ConfigInterface
@@ -73,6 +74,15 @@ class Data extends AbstractHelper
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_CUSTOMER_UPDATE_LAST_SYNC,
+            ScopeInterface::SCOPE_STORES,
+            $scopeCode
+        );
+    }
+
+    public function getMapCustomFields($scopeCode = null)
+    {
+        return $this->scopeConfig->getValue(
+            self::ACTIVE_CAMPAIGN_CUSTOMER_MAP_CUSTOM_FIELDS,
             ScopeInterface::SCOPE_STORES,
             $scopeCode
         );

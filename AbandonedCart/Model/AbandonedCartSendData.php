@@ -253,7 +253,7 @@ class AbandonedCartSendData extends AbstractModel
 
             $quote = $this->quoteRepository->get($abandonedCart->getEntityId());
             $AcCustomer = NULL;
-            if ($this->isGuest($quote) || ($abandonedCart->getCustomerId() && !$this->getCustomer($abandonedCart->getCustomerId())->getId())) {
+            if ($this->isGuest($quote) || ($abandonedCart->getCustomerId() && (!$this->getCustomer($abandonedCart->getCustomerId())->getId() || !$this->getCustomer($abandonedCart->getCustomerId())->getEmail() ))) {
                 $customerEmail = $quote->getBillingAddress()->getEmail();
                 if (!$customerEmail) {
                     $result['error'] = __('Customer Email does not exist.');
