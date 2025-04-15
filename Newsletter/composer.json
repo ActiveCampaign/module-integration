@@ -9,9 +9,9 @@
     "config": {
         "sort-packages": true
     },
-    "version": "1.0.6",
+    "version": "1.0.7",
     "require": {
-        "php": "~7.3.0||~7.4.0||~8.0||~8.1||~8.2",
+        "php": "~7.3.0||~7.4.0||~8.0||~8.1||~8.2||~8.3",
         "activecampaign/core": "2.1.*"
     },
     "autoload": {
