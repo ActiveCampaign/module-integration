@@ -226,7 +226,7 @@ class OrderDataSend
                 foreach ($order->getAllVisibleItems() as $item) {
 
                     $imageUrl = $this->imageHelperFactory->create()
-                                ->init($item->getProduct(), 'product_thumbnail_image')->getUrl();
+                                ->init($item->getProduct(), 'product_page_image_medium')->getUrl();
                     $categories = $item->getProduct()->getCategoryCollection()->addAttributeToSelect('name');
                     $categoriesName = [];
                     foreach($categories as $category)

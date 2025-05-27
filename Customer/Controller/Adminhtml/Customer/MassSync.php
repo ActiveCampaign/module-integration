@@ -39,6 +39,7 @@ class MassSync extends AbstractMassAction implements HttpPostActionInterface
      */
     protected $curl;
 
+    protected $logger;
     /**
      * MassSync constructor.
      * @param Context $context
