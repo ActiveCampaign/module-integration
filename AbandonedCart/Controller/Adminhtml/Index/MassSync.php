@@ -69,9 +69,9 @@ class MassSync extends \Magento\Backend\App\Action implements HttpPostActionInte
 
         foreach ($collection as $quote) {
             $ac_sync_status = $quote->getData('ac_sync_status');
-            if ($ac_sync_status) {
-                $countAlreadySync++;
-            } else {
+ //           if ($ac_sync_status) {
+  //              $countAlreadySync++;
+   //         } else {
                 $quoteId = $quote->getEntityId();
                 $result = $this->abandonedCartSendData->sendAbandonedCartData($quoteId);
                 if (array_key_exists('success', $result)) {
@@ -79,7 +79,7 @@ class MassSync extends \Magento\Backend\App\Action implements HttpPostActionInte
                 } else if (array_key_exists('error', $result)) {
                     $countFailSync++;
                 }
-            }
+     //       }
         }
 
         if ($countSync || $countFailSync) {

@@ -226,8 +226,16 @@ class OrderDataSend
                 foreach ($order->getAllVisibleItems() as $item) {
 
                     $imageUrl = $this->imageHelperFactory->create()
-                                ->init($item->getProduct(), 'product_thumbnail_image')->getUrl();
+                                ->init($item->getProduct(), 'product_page_image_medium')->getUrl();
+
+                    if(str_contains($imageUrl, 'images/product/placeholder') && $item->getProduct()->getImage()){
+                        $store = $this->storeManager->getStore($storeId);
+                        $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
+                        $imageUrl = $baseUrl . $item->getProduct()->getImage();
+                    }
+                    
                     $categories = $item->getProduct()->getCategoryCollection()->addAttributeToSelect('name');
+
                     $categoriesName = [];
                     foreach($categories as $category)
                     {
