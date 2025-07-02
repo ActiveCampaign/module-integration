@@ -17,6 +17,8 @@ use Psr\Log\LoggerInterface;
 use Magento\Customer\Model\Customer as MageCustomer;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\StoreManagerInterface;
+use function Aws\map;
+
 class Customer
 {
     const AC_CUSTOMER_ID = 'ac_customer_id';
@@ -211,7 +213,14 @@ class Customer
                     }
                 }else{
                     if($attr = $customer->getResource()->getAttribute($attribute->customer_field_id)){
+                        $options = $attr->getOptions();
                         $attributeValues['value'] = $attr->getFrontend()->getValue($customer);
+                        if(!$attributeValues['value'] && is_Array($options) && count($options)> 0){
+                            $option = current(array_filter($options, fn($o) => $o->getValue() === $customer->getData($attribute->customer_field_id)));
+                            if($option) {
+                                $attributeValues['value'] = $option->getLabel();
+                            }
+                        }
                     }else {
                         $attributeValues['value'] = $customer->getData($attribute->customer_field_id);
                     }

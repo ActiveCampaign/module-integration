@@ -15,6 +15,7 @@ use ActiveCampaign\Customer\Model\Customer;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 use function Safe\strtotime;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 class NewsletterSyncCron
 {
@@ -72,6 +73,7 @@ class NewsletterSyncCron
 
     protected $orderCollectionFactory;
 
+    protected $dateTime;
     /**
      * NewsletterSyncCron constructor.
      * @param Collection $newsletterCollection
@@ -84,6 +86,7 @@ class NewsletterSyncCron
      * @param CustomerFactory $customerFactory
      * @param CustomerResource $customerResource
      * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
+     * @param TimezoneInterface $dateTime
      */
     public function __construct(
         Collection $newsletterCollection,
@@ -95,7 +98,8 @@ class NewsletterSyncCron
         Customer $custoner,
         CustomerFactory $customerFactory,
         CustomerResource $customerResource,
-        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
+        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
+        TimezoneInterface $dateTime
     )
     {
         $this->orderCollectionFactory = $orderCollectionFactory;
@@ -108,6 +112,7 @@ class NewsletterSyncCron
         $this->customer = $custoner;
         $this->customerFactory = $customerFactory;
         $this->customerResource = $customerResource;
+        $this->dateTime = $dateTime;
     }
 
     /**
@@ -158,7 +163,8 @@ class NewsletterSyncCron
                         $this->logger->error('MODULE Order: ' . $e->getMessage());
                     }
                 }
-                $this->activeCampaignHelper->setLastSync(strtotime(date('Y-m-d H:i:s')));
+                $this->activeCampaignHelper->setLastSync($this->dateTime->date()->getTimestamp());
+                // $this->activeCampaignHelper->setLastSync(strtotime(date('Y-m-d H:i:s')));
             }
         } catch (\Exception $e) {
             $this->logger->error('MODULE Order: ' . $e->getMessage());
