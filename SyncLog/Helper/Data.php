@@ -29,7 +29,7 @@ class Data extends AbstractHelper
         $this->state = $state;
     }
 
-    public function removeAfterDays($scopeCode = null){
+    public function removeAfterDays(?string $scopeCode = null){
         return $this->scopeConfig->getValue(
          self::ACTIVE_CAMPAIGN_REMOVE_AFTER_DAYS,
             ScopeInterface::SCOPE_STORES,
@@ -40,7 +40,7 @@ class Data extends AbstractHelper
      * @param null $scopeCode
      * @return bool
      */
-    public function isLogError($scopeCode = null)
+    public function isLogError(?string $scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_SYNCLOG_MODE,
