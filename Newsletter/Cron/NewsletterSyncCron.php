@@ -164,7 +164,6 @@ class NewsletterSyncCron
                     }
                 }
                 $this->activeCampaignHelper->setLastSync($this->dateTime->date()->getTimestamp());
-                // $this->activeCampaignHelper->setLastSync(strtotime(date('Y-m-d H:i:s')));
             }
         } catch (\Exception $e) {
             $this->logger->error('MODULE Order: ' . $e->getMessage());

@@ -17,7 +17,6 @@ use Psr\Log\LoggerInterface;
 use Magento\Customer\Model\Customer as MageCustomer;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\StoreManagerInterface;
-use function Aws\map;
 
 class Customer
 {
