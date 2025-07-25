@@ -46,7 +46,7 @@ class Index extends AbstractHelper
      */
     public function aroundExecute($subject, callable $proceed)
     {
-        if((empty($this->cart->getItems()) || $this->cart->getItems()->count() == 0) && !$this->customerSession->isLoggedIn()){
+        if($this->_getRequest()->getParam('ac_redirect') &&  (empty($this->cart->getItems()) || $this->cart->getItems()->count() == 0) && !$this->customerSession->isLoggedIn()){
             $this->customerSession->setAfterAuthUrl($this->urlInterface->getCurrentUrl());
             $this->customerSession->authenticate();
         }else{

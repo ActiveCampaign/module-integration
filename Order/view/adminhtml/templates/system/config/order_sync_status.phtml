@@ -1,8 +1,10 @@
 <?php
 use ActiveCampaign\Order\Block\Adminhtml\System\Config\OrderSyncStatus;
+use Magento\Framework\Escaper;
 
 /**
  * @var OrderSyncStatus $block
+ * @var Escaper $escaper
  */
 ?>
 <table cellspacing="0" class="form-list">
@@ -13,32 +15,32 @@ use ActiveCampaign\Order\Block\Adminhtml\System\Config\OrderSyncStatus;
             <div class="messages">
                 <div class="message message-notice" >
                     <div>
-                        <?= $block->escapeHtml(__("Total Orders :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getTotalOrder())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Total Orders :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getTotalOrder())) ?></strong>
                     </div>
                 </div>
             </div>
             <div class="messages">
                 <div class="message message-notice" >
                     <div>
-                        <?= $block->escapeHtml(__("Synced Orders :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getSyncOrder())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Synced Orders :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getSyncOrder())) ?></strong>
                     </div>
                 </div>
             </div>
             <div class="messages">
                 <div class="message message-notice" >
                     <div>
-                        <?= $block->escapeHtml(__("Not Synced Orders :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getNotSyncOrder())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Not Synced Orders :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getNotSyncOrder())) ?></strong>
                     </div>
                 </div>
             </div>
             <div class="messages">
                 <div class="message message-notice" >
                     <div>
-                        <?= $block->escapeHtml(__("Fail Synced Orders :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getFailedSync())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Fail Synced Orders :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getFailedSync())) ?></strong>
                     </div>
                 </div>
             </div>

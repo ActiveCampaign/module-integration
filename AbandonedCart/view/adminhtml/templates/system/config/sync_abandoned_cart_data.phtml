@@ -3,7 +3,11 @@
  * Copyright © Wagento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-/* @var $block \ActiveCampaign\AbandonedCart\Block\System\Config\SyncAbandonedCartData */
+use Magento\Framework\Escaper;
+
+/* @var $block \ActiveCampaign\AbandonedCart\Block\System\Config\SyncAbandonedCartData
+ * @var Escaper $escaper */
+
 ?>
 <script>
 require([
@@ -13,7 +17,7 @@ require([
     var collectSpan = jQuery('#collect_span_field');
     jQuery('#ac_sync_abandoned_cart_button').click(function () {
         var params = {};
-        new Ajax.Request('<?= $block->escapeUrl($block->getAjaxUrl()) ?>', {
+        new Ajax.Request('<?= $escaper->escapeUrl($block->getAjaxUrl()) ?>', {
             parameters: params,
             asynchronous: true,
             onCreate: function() {
@@ -46,15 +50,15 @@ require([
 <span class="collect-indicator" id="collect_span_field">
     <img class="processing-icon" hidden
         alt="Processing"
-        src="<?= $block->escapeUrl($block->getViewFileUrl('images/process_spinner.gif')) ?>"
+        src="<?= $escaper->escapeUrl($block->getViewFileUrl('images/process_spinner.gif')) ?>"
     />
     <img class="success-icon" hidden
         alt="Success"
-        src="<?= $block->escapeUrl($block->getViewFileUrl('images/rule_component_apply.gif')) ?>"
+        src="<?= $escaper->escapeUrl($block->getViewFileUrl('images/rule_component_apply.gif')) ?>"
     />
     <img class="error-icon" hidden
         alt="Error"
-        src="<?= $block->escapeUrl($block->getViewFileUrl('images/rule_component_remove.gif')) ?>"
+        src="<?= $escaper->escapeUrl($block->getViewFileUrl('images/rule_component_remove.gif')) ?>"
     />
     <span id="ajax_message_field_span"></span>
 </span>
@@ -64,32 +68,32 @@ require([
 <div class="messages">
     <div class="message message-notice" >
         <div>
-            <?= $block->escapeHtml(__("Total Abandoned Cart :")) ?>
-            <strong><?= $block->escapeHtml(__($block->getTotalAbandonedCart())) ?></strong>
+            <?= $escaper->escapeHtml(__("Total Abandoned Cart :")) ?>
+            <strong><?= $escaper->escapeHtml(__($block->getTotalAbandonedCart())) ?></strong>
         </div>
     </div>
 </div>
 <div class="messages">
     <div class="message message-notice" >
         <div>
-            <?= $block->escapeHtml(__("Synced Abandoned Cart :")) ?>
-            <strong><?= $block->escapeHtml(__($block->getSyncAbandonedCart())) ?></strong>
+            <?= $escaper->escapeHtml(__("Synced Abandoned Cart :")) ?>
+            <strong><?= $escaper->escapeHtml(__($block->getSyncAbandonedCart())) ?></strong>
         </div>
     </div>
 </div>
 <div class="messages">
     <div class="message message-notice" >
         <div>
-            <?= $block->escapeHtml(__("Not Synced Abandoned Cart :")) ?>
-            <strong><?= $block->escapeHtml(__($block->getNotSyncAbandonedCart())) ?></strong>
+            <?= $escaper->escapeHtml(__("Not Synced Abandoned Cart :")) ?>
+            <strong><?= $escaper->escapeHtml(__($block->getNotSyncAbandonedCart())) ?></strong>
         </div>
     </div>
 </div>
 <div class="messages">
     <div class="message message-notice" >
         <div>
-            <?= $block->escapeHtml(__("Fail Synced Abandoned Cart :")) ?>
-            <strong><?= $block->escapeHtml(__($block->getFailedSync())) ?></strong>
+            <?= $escaper->escapeHtml(__("Fail Synced Abandoned Cart :")) ?>
+            <strong><?= $escaper->escapeHtml(__($block->getFailedSync())) ?></strong>
         </div>
     </div>
 </div>

@@ -15,7 +15,7 @@ class Data extends AbstractHelper
      * @param null $scopeCode
      * @return bool
      */
-    public function isAbandonedCartSyncingEnabled($scopeCode = null): bool
+    public function isAbandonedCartSyncingEnabled(?string $scopeCode = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_ABANDONED_CART_SYNC,
@@ -28,7 +28,7 @@ class Data extends AbstractHelper
      * @param null $scopeCode
      * @return mixed
      */
-    public function getCronTime($scopeCode = null)
+    public function getCronTime(?string $scopeCode = null)
     {
         return $this->scopeConfig->getValue(
             CronConfig::CRON_MODEL_PATH,
@@ -41,7 +41,7 @@ class Data extends AbstractHelper
      * @param null $scopeCode
      * @return mixed
      */
-    public function getNumberOfAbandonedCart($scopeCode = null)
+    public function getNumberOfAbandonedCart(?string $scopeCode = null)
     {
         return $this->scopeConfig->getValue(
             self::ABANDONED_CART_NUMBER_OF_ABANDONED_CART,
@@ -54,7 +54,7 @@ class Data extends AbstractHelper
      * @param null $scopeCode
      * @return mixed
      */
-    public function getMinInactiveTime($scopeCode = null)
+    public function getMinInactiveTime(?string $scopeCode = null)
     {
         return $this->scopeConfig->getValue(
             self::ABANDONED_CART_MIN_INACTIVE_TIME,

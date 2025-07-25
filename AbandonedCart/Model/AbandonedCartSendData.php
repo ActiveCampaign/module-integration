@@ -213,12 +213,12 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param $quoteId
+     * @param int|null $quoteId
      * @return array
-     * @throws NoSuchEntityException|LocalizedException
-     * @throws GuzzleException|GuzzleException
+     * @throws AlreadyExistsException
+     * @throws NoSuchEntityException
      */
-    public function sendAbandonedCartData($quoteId = null): array
+    public function sendAbandonedCartData(?int $quoteId = null): array
     {
         $result = [];
         $numberOfAbandonedCart = (int)$this->abandonedCartHelper->getNumberOfAbandonedCart();
@@ -288,7 +288,7 @@ class AbandonedCartSendData extends AbstractModel
                     "orderDiscounts" => [
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
-                    "orderUrl" => $this->urlBuilder->setScope($abandonedCart->getStoreId())->getDirectUrl('checkout/cart'),
+                    "orderUrl" => $this->urlBuilder->setScope($abandonedCart->getStoreId())->getDirectUrl('checkout/cart') .'?ac_redirect=true',
                     "abandonedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
                     "externalCreatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getCreatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
                     "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
@@ -371,13 +371,7 @@ class AbandonedCartSendData extends AbstractModel
             $product = $this->_productRepositoryFactory->create()
                 ->getById($quoteItem->getProductId(),false,$storeId);
 
-            $imageUrl = $this->imageHelperFactory->create()
-                ->init($product, 'product_page_image_medium')->getUrl();
-            if(str_contains($imageUrl, 'images/product/placeholder') && $product->getImage()){
-                $store = $this->storeManager->getStore($storeId);
-                $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
-                $imageUrl = $baseUrl . $product->getImage();
-            }
+            $imageUrl = $this->imageUrl($quoteItem, $product, $storeId);
             $this->appEmulation->stopEnvironmentEmulation();
             $categories = $product->getCategoryCollection()->addAttributeToSelect('name');
             $categoriesName = [];
@@ -401,6 +395,23 @@ class AbandonedCartSendData extends AbstractModel
         return $quoteItemsData;
     }
 
+    public function imageUrl($quoteItem, $product, $storeId){
+
+        $imageUrl = $this->imageHelperFactory->create()
+            ->init($product, 'product_page_image_medium')->getUrl();
+        if(str_contains($imageUrl, 'images/product/placeholder')){
+            $store = $this->storeManager->getStore($storeId);
+            $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
+            if (count($product->getMediaGalleryImages()->getItems()) > 0){
+                $imageUrl = $baseUrl . $product->getImage();
+            }elseif (($quoteItem->getProductType() !== 'simple') &&  $quoteItem->getOptionByCode('product_type') && ($quoteItem->getOptionByCode('product_type')->getProductId())){
+                $product = $this->_productRepositoryFactory->create()
+                    ->getById($quoteItem->getOptionByCode('product_type')->getProductId(),false,$storeId);
+                $imageUrl = $baseUrl . $product->getImage();
+            }
+        }
+        return $imageUrl;
+    }
     /**
      * @param $quoteId
      * @return Collection
@@ -437,7 +448,7 @@ class AbandonedCartSendData extends AbstractModel
      * @return string|null
      * @throws LocalizedException
      */
-    private function getTelephone($billingId = null): ?string
+    private function getTelephone(?string $billingId = null): ?string
     {
         if ($billingId) {
             return $this->addressRepository->getById($billingId)->getTelephone();
