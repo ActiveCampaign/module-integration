@@ -53,8 +53,8 @@ class Sync extends \Magento\Backend\App\Action
                 // init model and sync
                 $model = $this->quoteModel;
                 $model->load($id);
-                $quoteId[] = $model->getEntityId();
-                $result = $this->abandonedCartSendData->sendAbandonedCartData($quoteId);
+
+                $result = $this->abandonedCartSendData->sendAbandonedCartData($model->getEntityId());
                 if(isset($result['error'])){
                     $this->messageManager->addErrorMessage($result['error']);
                 }else{

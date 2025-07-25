@@ -225,15 +225,8 @@ class OrderDataSend
                 $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $order->getStoreId());
                 foreach ($order->getAllVisibleItems() as $item) {
 
-                    $imageUrl = $this->imageHelperFactory->create()
-                                ->init($item->getProduct(), 'product_page_image_medium')->getUrl();
+                    $imageUrl = $this->imageUrl($item, $item->getProduct(), $order->getStoreId());
 
-                    if(str_contains($imageUrl, 'images/product/placeholder') && $item->getProduct()->getImage()){
-                        $store = $this->storeManager->getStore($storeId);
-                        $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
-                        $imageUrl = $baseUrl . $item->getProduct()->getImage();
-                    }
-                    
                     $categories = $item->getProduct()->getCategoryCollection()->addAttributeToSelect('name');
 
                     $categoriesName = [];
@@ -336,7 +329,25 @@ class OrderDataSend
         return $return;
     }
 
+    public function imageUrl($item, $product, $storeId){
 
+        $imageUrl = $this->imageHelperFactory->create()
+            ->init($product, 'product_page_image_medium')->getUrl();
+        if(str_contains($imageUrl, 'images/product/placeholder') ){
+
+            $store = $this->storeManager->getStore($storeId);
+            $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
+
+            if (count($product->getMediaGalleryImages()->getItems()) > 0){
+                $imageUrl = $baseUrl . $product->getImage();
+            }elseif (($item->getProductType() !== 'simple') &&  $item->getProductOptionByCode('super_product_config') && (isset($item->getProductOptionByCode('super_product_config')['product_id']))){
+                $product = $this->_productRepositoryFactory->create()
+                    ->getById($item->getProductOptionByCode('super_product_config')['product_id'],false,$storeId);
+                $imageUrl = $baseUrl . $product->getImage();
+            }
+        }
+        return $imageUrl;
+    }
     /**
      * @param $customerId
      * @return object

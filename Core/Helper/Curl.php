@@ -47,23 +47,25 @@ class Curl extends AbstractHelper
     private $syncLog;
 
     private $syncLogHelper;
+
     /**
      * Curl constructor.
      * @param Context $context
-     * @param Client $client
      * @param JsonHelper $jsonHelper
      * @param Logger $logger
      * @param Data $activeCampaignHelper
      * @param SyncLog $syncLog
+     * @param SyncLogHelper $syncLogHelper
+     * @param Client|null $client
      */
     public function __construct(
         Context              $context,
-        Client               $client = null,
         JsonHelper           $jsonHelper,
         Logger               $logger,
         ActiveCampaignHelper $activeCampaignHelper,
         SyncLog              $syncLog,
-        SyncLogHelper           $syncLogHelper
+        SyncLogHelper           $syncLogHelper,
+        ?Client               $client = null
     ) {
         $this->client = $client ?: new Client();
         $this->jsonHelper = $jsonHelper;

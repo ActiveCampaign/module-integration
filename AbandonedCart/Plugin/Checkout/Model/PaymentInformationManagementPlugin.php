@@ -42,7 +42,7 @@ class PaymentInformationManagementPlugin
         $result,
         $cartId,
         \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
-        \Magento\Quote\Api\Data\AddressInterface $billingAddress = null
+        ?\Magento\Quote\Api\Data\AddressInterface $billingAddress = null
     ) {
         $quoteRepository = $this->getCartRepository();
         /** @var \Magento\Quote\Model\Quote $quote */
