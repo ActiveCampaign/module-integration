@@ -2,7 +2,7 @@
   "name": "activecampaign/module-integration",
   "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
   "type": "metapackage",
-  "version": "2.1.27",
+  "version": "2.1.26",
   "license": [
     "OSL-3.0"
   ],
