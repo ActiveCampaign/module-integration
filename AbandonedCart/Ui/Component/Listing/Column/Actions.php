@@ -22,9 +22,9 @@ class Actions extends Column
     protected $urlBuilder;
  
     /**
-     * @param ContextInterface $context
+     * @param ContextInterface   $context
      * @param UiComponentFactory $uiComponentFactory
-     * @param UrlInterface $urlBuilder
+     * @param UrlInterface       $urlBuilder
      */
     public function __construct(
         ContextInterface $context,

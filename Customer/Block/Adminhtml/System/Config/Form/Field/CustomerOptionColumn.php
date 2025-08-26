@@ -17,7 +17,7 @@ class CustomerOptionColumn extends Select
         \Magento\Customer\Model\ResourceModel\Attribute\CollectionFactory $collectionFactory,
         array $data = []
     ) {
-        parent::__construct($context,$data);
+        parent::__construct($context, $data);
         $this->attrCollection = $collectionFactory;
     }
     public function setInputName($value)
@@ -28,7 +28,6 @@ class CustomerOptionColumn extends Select
     public function setInputId($value)
     {
         return $this->setId($value);
-
     }
     public function _toHtml(): string
     {
@@ -53,7 +52,6 @@ class CustomerOptionColumn extends Select
             ['label' => 'Default Billing Company', 'value' => 'billing__company'],
         ];
         return  array_merge($addressFields, $this->getCustomerAtt());
-
     }
 
     protected function getCustomerAtt()

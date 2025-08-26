@@ -21,7 +21,8 @@ class AbandonedCartSync
 
     /**
      * Abandoned cart sync constructor.
-     * @param AbandonedCartHelper $abandonedCartHelper
+     *
+     * @param AbandonedCartHelper   $abandonedCartHelper
      * @param AbandonedCartSendData $abandonedCartSendData
      */
     public function __construct(

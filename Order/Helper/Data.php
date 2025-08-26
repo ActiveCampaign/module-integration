@@ -18,6 +18,7 @@ class Data extends AbstractHelper
 
     /**
      * Data constructor.
+     *
      * @param Context $context
      */
     public function __construct(
@@ -29,7 +30,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function isOrderSyncEnabled(?string $scopeCode = null)
@@ -42,7 +43,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function isOrderSyncInRealTime(?string $scopeCode = null)
@@ -55,7 +56,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return mixed
      */
     public function getOrderSyncNum(?string $scopeCode = null)

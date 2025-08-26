@@ -31,8 +31,8 @@ class AddCustomerAttributeAcContactId implements DataPatchInterface, PatchRevert
      * Constructor
      *
      * @param ModuleDataSetupInterface $moduleDataSetup
-     * @param CustomerSetupFactory $customerSetupFactory
-     * @param SetFactory $attributeSetFactory
+     * @param CustomerSetupFactory     $customerSetupFactory
+     * @param SetFactory               $attributeSetFactory
      */
     public function __construct(
         ModuleDataSetupInterface $moduleDataSetup,
@@ -50,12 +50,16 @@ class AddCustomerAttributeAcContactId implements DataPatchInterface, PatchRevert
     public function apply()
     {
         $this->moduleDataSetup->getConnection()->startSetup();
-        /** @var CustomerSetup $customerSetup */
+        /**
+ * @var CustomerSetup $customerSetup
+*/
         $customerSetup = $this->customerSetupFactory->create(['setup' => $this->moduleDataSetup]);
         $customerEntity = $customerSetup->getEavConfig()->getEntityType(Customer::ENTITY);
         $attributeSetId = $customerEntity->getDefaultAttributeSetId();
 
-        /** @var $attributeSet Set */
+        /**
+ * @var $attributeSet Set
+*/
         $attributeSet = $this->attributeSetFactory->create();
         $attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
         if (!$customerSetup->getAttributeId(Customer::ENTITY, 'ac_contact_id')) {
@@ -80,10 +84,12 @@ class AddCustomerAttributeAcContactId implements DataPatchInterface, PatchRevert
             );
 
             $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'ac_contact_id');
-            $attribute->addData([
+            $attribute->addData(
+                [
                 'attribute_set_id' => $attributeSetId,
                 'attribute_group_id' => $attributeGroupId
-            ]);
+                ]
+            );
             $attribute->save();
         }
 
@@ -93,7 +99,9 @@ class AddCustomerAttributeAcContactId implements DataPatchInterface, PatchRevert
     public function revert()
     {
         $this->moduleDataSetup->getConnection()->startSetup();
-        /** @var CustomerSetup $customerSetup */
+        /**
+ * @var CustomerSetup $customerSetup
+*/
         $customerSetup = $this->customerSetupFactory->create(['setup' => $this->moduleDataSetup]);
         $customerSetup->removeAttribute(\Magento\Customer\Model\Customer::ENTITY, 'ac_contact_id');
 

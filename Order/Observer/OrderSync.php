@@ -46,12 +46,13 @@ class OrderSync implements ObserverInterface
 
     /**
      * OrderSync constructor.
-     * @param OrderDataSend $orderdataSend
-     * @param Curl $curl
+     *
+     * @param OrderDataSend             $orderdataSend
+     * @param Curl                      $curl
      * @param ActiveCampaignOrderHelper $activeCampaignHelper
-     * @param OrderModel $orderModel
-     * @param CartRepositoryInterface $quoteRepository
-     * @param LoggerInterface $logger
+     * @param OrderModel                $orderModel
+     * @param CartRepositoryInterface   $quoteRepository
+     * @param LoggerInterface           $logger
      */
     public function __construct(
         OrderDataSend $orderdataSend,
@@ -70,7 +71,7 @@ class OrderSync implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
+     * @param  Observer $observer
      * @return void
      */
     public function execute(Observer $observer)

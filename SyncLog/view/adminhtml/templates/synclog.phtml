@@ -1,5 +1,6 @@
 <?php
 use Magento\Framework\Escaper;
+
 /** @var \ActiveCampaign\SyncLog\Block\Adminhtml\View\Log $block
   * @var Escaper $escaper
  */
@@ -17,34 +18,34 @@ $collection = call_user_func_array('array_merge', $block->getLogCollection());
 <?php /** @var $block \Magento\Sales\Block\Adminhtml\Order\View\Tab\Info */ ?>
 <section class="admin__page-section log-view-information">
     <div class="admin__page-section-title">
-        <span class="title"><?= $escaper->escapeHtml( __('Logs') ) ?></span>
+        <span class="title"><?= $escaper->escapeHtml(__('Logs')) ?></span>
     </div>
     <div class="admin__page-section-content">
         <div class="admin__page-section-item log-information">
             <div class="admin__page-section-item-content">
                 <table class="admin__table-secondary log-information-table">
                     <tr>
-                        <th><?= $escaper->escapeHtml( __('Type: ') ) ?></th>
+                        <th><?= $escaper->escapeHtml(__('Type: ')) ?></th>
                         <td><?= $escaper->escapeHtml($collection['type']) ?></td>
                     </tr>
                     <tr>
-                        <th><?= $escaper->escapeHtml( __('Method: ') ) ?></th>
+                        <th><?= $escaper->escapeHtml(__('Method: ')) ?></th>
                         <td><?= $escaper->escapeHtml($collection['method']) ?></td>
                     </tr>
                     <tr>
-                        <th><?= $escaper->escapeHtml( __('Status: ') ) ?></th>
+                        <th><?= $escaper->escapeHtml(__('Status: ')) ?></th>
                         <td><?= $escaper->escapeHtml($collection['status']) ?></td>
                     </tr>
                     <tr>
-                        <th><?= $escaper->escapeHtml( __('Endpoint: ')) ?></th>
+                        <th><?= $escaper->escapeHtml(__('Endpoint: ')) ?></th>
                         <td><?= $escaper->escapeHtml($collection['endpoint']) ?></td>
                     </tr>
                     <tr>
-                        <th><?= $escaper->escapeHtml( __('Request: ') ) ?></th>
+                        <th><?= $escaper->escapeHtml(__('Request: ')) ?></th>
                         <td><?= $escaper->escapeHtml($collection['request']) ?></td>
                     </tr>
                     <tr>
-                        <th><?= $escaper->escapeHtml( __('Response: ') ) ?></th>
+                        <th><?= $escaper->escapeHtml(__('Response: ')) ?></th>
                         <td><?= $escaper->escapeHtml($collection['response']) ?></td>
                     </tr>
                     <tr>

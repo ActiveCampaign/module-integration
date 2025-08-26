@@ -15,7 +15,6 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Ui\Component\MassAction\Filter;
 use Psr\Log\LoggerInterface;
 
-
 class MassSync extends AbstractMassAction implements HttpPostActionInterface
 {
     const CONTACT_ENDPOINT = "contact/sync";
@@ -42,12 +41,13 @@ class MassSync extends AbstractMassAction implements HttpPostActionInterface
     protected $logger;
     /**
      * MassSync constructor.
-     * @param Context $context
-     * @param Filter $filter
-     * @param CollectionFactory $collectionFactory
-     * @param Customer $customer
-     * @param Curl $curl
-     * @param LoggerInterface $logger
+     *
+     * @param Context                     $context
+     * @param Filter                      $filter
+     * @param CollectionFactory           $collectionFactory
+     * @param Customer                    $customer
+     * @param Curl                        $curl
+     * @param LoggerInterface             $logger
      * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
@@ -67,7 +67,7 @@ class MassSync extends AbstractMassAction implements HttpPostActionInterface
     }
 
     /**
-     * @param AbstractCollection $collection
+     * @param  AbstractCollection $collection
      * @return \Magento\Backend\Model\View\Result\Redirect
      */
     public function massAction(AbstractCollection $collection)
@@ -92,7 +92,9 @@ class MassSync extends AbstractMassAction implements HttpPostActionInterface
         if ($customersSynced) {
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) were synced in the ActiveCampaign.', $customersSynced));
         }
-        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        /**
+ * @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect
+*/
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $resultRedirect->setPath('customer/index');
 

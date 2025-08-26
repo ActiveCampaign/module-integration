@@ -38,10 +38,11 @@ class Masssync extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassAct
 
     /**
      * MassSync constructor.
-     * @param Context $context
-     * @param Filter $filter
-     * @param OrderDataSend $orderdataSend
-     * @param CollectionFactory $collectionFactory
+     *
+     * @param Context                  $context
+     * @param Filter                   $filter
+     * @param OrderDataSend            $orderdataSend
+     * @param CollectionFactory        $collectionFactory
      * @param OrderManagementInterface $orderManagement
      */
     public function __construct(
@@ -82,11 +83,13 @@ class Masssync extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassAct
         }
         $countNonUpdateOrder = $collection->count() - $countUpdateOrder - $countAlreadySync;
         if ($countUpdateOrder || $countNonUpdateOrder) {
-            $this->messageManager->addNoticeMessage(__(
-                'Orders synced: %1 Orders failed: %2',
-                $countUpdateOrder,
-                $countNonUpdateOrder
-            ));
+            $this->messageManager->addNoticeMessage(
+                __(
+                    'Orders synced: %1 Orders failed: %2',
+                    $countUpdateOrder,
+                    $countNonUpdateOrder
+                )
+            );
         }
         if ($countAlreadySync) {
             $this->messageManager->addNoticeMessage(__('%1 order(s) had already been synced.', $countAlreadySync));

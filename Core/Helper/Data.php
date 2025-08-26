@@ -30,10 +30,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Construct
      *
-     * @param \Magento\Store\Api\StoreRepositoryInterface $storeRepository
+     * @param \Magento\Store\Api\StoreRepositoryInterface                  $storeRepository
      * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Theme\Block\Html\Header\Logo $logo
+     * @param \Magento\Framework\App\Helper\Context                        $context
+     * @param \Magento\Theme\Block\Html\Header\Logo                        $logo
      */
     public function __construct(
         \Magento\Store\Api\StoreRepositoryInterface $storeRepository,
@@ -180,9 +180,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $activeConnectionIds = [];
 
             foreach ($allConnections['data']['connections'] as $connection) {
-                try{
+                try {
                     $store = $this->storeRepository->get($connection['externalid']);
-                }catch (\Exception $e){
+                } catch (\Exception $e) {
                     continue;
                 }
                 $connectionId = $this->getConnectionId($store->getId());
@@ -223,7 +223,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param string $path
      * @param string $value
-     * @param int $scopeId
+     * @param int    $scopeId
      *
      * @return void
      */

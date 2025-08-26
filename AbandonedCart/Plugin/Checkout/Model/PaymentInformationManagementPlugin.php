@@ -23,7 +23,7 @@ class PaymentInformationManagementPlugin
     private $cartRepository;
 
     /**
-     * @param AbandonedCartHelper $abandonedCartHelper
+     * @param AbandonedCartHelper   $abandonedCartHelper
      * @param AbandonedCartSendData $abandonedCartSendData
      */
     public function __construct(
@@ -45,11 +45,13 @@ class PaymentInformationManagementPlugin
         ?\Magento\Quote\Api\Data\AddressInterface $billingAddress = null
     ) {
         $quoteRepository = $this->getCartRepository();
-        /** @var \Magento\Quote\Model\Quote $quote */
+        /**
+ * @var \Magento\Quote\Model\Quote $quote
+*/
         $quote = $quoteRepository->getActive($cartId);
 
         if ($this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
-            try{
+            try {
                 $response = $this->abandonedCartSendData->sendAbandonedCartData($quote->getId());
             } catch (\Exception $e) {
 
@@ -60,7 +62,7 @@ class PaymentInformationManagementPlugin
     /**
      * Get Cart repository
      *
-     * @return \Magento\Quote\Api\CartRepositoryInterface
+     * @return     \Magento\Quote\Api\CartRepositoryInterface
      * @deprecated 100.2.0
      */
     private function getCartRepository()

@@ -26,7 +26,7 @@ class OrderStatus extends Column
     }
 
     /**
-     * @param array $dataSource
+     * @param  array $dataSource
      * @return array
      */
     public function prepareDataSource(array $dataSource)

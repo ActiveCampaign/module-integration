@@ -13,32 +13,32 @@ use ActiveCampaign\Customer\Block\Adminhtml\System\Config\CustomerSyncStatus;
                     <div class="messages">
                         <div class="message message-notice" >
                             <div>
-                                <?= $block->escapeHtml(__("Total Customer :")) ?>
-                                <strong><?= $block->escapeHtml(__($block->totalCustomer)) ?></strong>
+                                <?= $escaper->escapeHtml(__("Total Customer :")) ?>
+                                <strong><?= $escaper->escapeHtml(__($block->totalCustomer)) ?></strong>
                             </div>
                         </div>
                     </div>
                     <div class="messages">
                         <div class="message message-notice" >
                             <div>
-                                <?= $block->escapeHtml(__("Synced Customer :")) ?>
-                                <strong><?= $block->escapeHtml(__($block->syncedCustomer)) ?></strong>
+                                <?= $escaper->escapeHtml(__("Synced Customer :")) ?>
+                                <strong><?= $escaper->escapeHtml(__($block->syncedCustomer)) ?></strong>
                             </div>
                         </div>
                     </div>
                     <div class="messages">
                         <div class="message message-notice" >
                             <div>
-                                <?= $block->escapeHtml(__("Not Synced Customer :")) ?>
-                                <strong><?= $block->escapeHtml(__($block->notSyncedCustomer)) ?></strong>
+                                <?= $escaper->escapeHtml(__("Not Synced Customer :")) ?>
+                                <strong><?= $escaper->escapeHtml(__($block->notSyncedCustomer)) ?></strong>
                             </div>
                         </div>
                     </div>
                     <div class="messages">
                         <div class="message message-notice" >
                             <div>
-                                <?= $block->escapeHtml(__("Fail Synced Customer :")) ?>
-                                <strong><?= $block->escapeHtml(__($block->failSyncedCustomer)) ?></strong>
+                                <?= $escaper->escapeHtml(__("Fail Synced Customer :")) ?>
+                                <strong><?= $escaper->escapeHtml(__($block->failSyncedCustomer)) ?></strong>
                             </div>
                         </div>
                     </div>

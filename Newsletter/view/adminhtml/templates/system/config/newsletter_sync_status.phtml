@@ -15,32 +15,32 @@ use ActiveCampaign\Newsletter\Block\Adminhtml\System\Config\NewsletterSyncStatus
             <div class="messages">
                 <div class="message message-notice">
                     <div>
-                        <?= $block->escapeHtml(__("Total Newsletters :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getTotalNewsletter())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Total Newsletters :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getTotalNewsletter())) ?></strong>
                     </div>
                 </div>
             </div>
             <div class="messages">
                 <div class="message message-notice">
                     <div>
-                        <?= $block->escapeHtml(__("Synced Newsletter :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getSyncNewsletter())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Synced Newsletter :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getSyncNewsletter())) ?></strong>
                     </div>
                 </div>
             </div>
             <div class="messages">
                 <div class="message message-notice">
                     <div>
-                        <?= $block->escapeHtml(__("Not Synced Newsletter :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getNotSyncNewsletter())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Not Synced Newsletter :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getNotSyncNewsletter())) ?></strong>
                     </div>
                 </div>
             </div>
             <div class="messages">
                 <div class="message message-notice">
                     <div>
-                        <?= $block->escapeHtml(__("Fail Synced Newsletter :")) ?>
-                        <strong><?= $block->escapeHtml(__($block->getFailedSync())) ?></strong>
+                        <?= $escaper->escapeHtml(__("Fail Synced Newsletter :")) ?>
+                        <strong><?= $escaper->escapeHtml(__($block->getFailedSync())) ?></strong>
                     </div>
                 </div>
             </div>

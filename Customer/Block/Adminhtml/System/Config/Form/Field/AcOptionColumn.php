@@ -16,7 +16,7 @@ class AcOptionColumn extends Select
         \ActiveCampaign\Core\Helper\Data $acHelper,
         array $data = []
     ) {
-        parent::__construct($context,$data);
+        parent::__construct($context, $data);
         $this->curl = $curl;
         $this->acHelper = $acHelper;
     }
@@ -28,7 +28,6 @@ class AcOptionColumn extends Select
     public function setInputId($value)
     {
         return $this->setId($value);
-
     }
     public function _toHtml(): string
     {
@@ -42,15 +41,15 @@ class AcOptionColumn extends Select
     {
         $data = [];
         $fields=[];
-        if($this->acHelper->isEnabled() && $this->acHelper->getConnectionId()){
+        if ($this->acHelper->isEnabled() && $this->acHelper->getConnectionId()) {
             $count =0;
             $total = self::AC_LIMIT ;
             while ($count < $total) {
-                $data = $this->curl->createConnection('GET','/fields?limit='. self::AC_LIMIT .'&offset='.$count,[],[]);    
-                if(count($data) && isset($data['data']) && isset($data['data']['fields']) && count($data['data']['fields'])){
+                $data = $this->curl->createConnection('GET', '/fields?limit='. self::AC_LIMIT .'&offset='.$count, [], []);
+                if (count($data) && isset($data['data']) && isset($data['data']['fields']) && count($data['data']['fields'])) {
 
                     $data = $data['data'];
-                    foreach ($data['fields'] as $opt){
+                    foreach ($data['fields'] as $opt) {
                         $fields[]=['label' => $opt['title'], 'value'=> $opt['id']];
                     }
                 }
@@ -61,7 +60,6 @@ class AcOptionColumn extends Select
         }
 
         return  $fields;
-
     }
 
     protected function getCustomerAtt()

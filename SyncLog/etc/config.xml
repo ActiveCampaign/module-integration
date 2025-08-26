@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
-	<default>
-		<active_campaign>
-			<synclog>
+    <default>
+        <active_campaign>
+            <synclog>
                 <synclog_delete>0</synclog_delete>
                 <synclog_mode>1</synclog_mode>
                 <remove_after_days>7</remove_after_days>
@@ -12,8 +12,8 @@
                 <cron_month>*</cron_month>
                 <cron_weekday>*</cron_weekday>
 
-			</synclog>
-		</active_campaign>
+            </synclog>
+        </active_campaign>
         <crontab>
             <default>
                 <jobs>
@@ -25,5 +25,5 @@
                 </jobs>
             </default>
         </crontab>
-	</default>
+    </default>
 </config>

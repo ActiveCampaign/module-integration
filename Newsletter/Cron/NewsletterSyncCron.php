@@ -76,17 +76,18 @@ class NewsletterSyncCron
     protected $dateTime;
     /**
      * NewsletterSyncCron constructor.
-     * @param Collection $newsletterCollection
-     * @param ActiveCampaignNewsletterHelper $activeCampaignHelper
-     * @param State $state
-     * @param Curl $curl
-     * @param CartRepositoryInterface $quoteRepository
-     * @param LoggerInterface $logger
-     * @param Customer $custoner
-     * @param CustomerFactory $customerFactory
-     * @param CustomerResource $customerResource
+     *
+     * @param Collection                                                 $newsletterCollection
+     * @param ActiveCampaignNewsletterHelper                             $activeCampaignHelper
+     * @param State                                                      $state
+     * @param Curl                                                       $curl
+     * @param CartRepositoryInterface                                    $quoteRepository
+     * @param LoggerInterface                                            $logger
+     * @param Customer                                                   $custoner
+     * @param CustomerFactory                                            $customerFactory
+     * @param CustomerResource                                           $customerResource
      * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
-     * @param TimezoneInterface $dateTime
+     * @param TimezoneInterface                                          $dateTime
      */
     public function __construct(
         Collection $newsletterCollection,
@@ -100,8 +101,7 @@ class NewsletterSyncCron
         CustomerResource $customerResource,
         \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
         TimezoneInterface $dateTime
-    )
-    {
+    ) {
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->newsletterCollection = $newsletterCollection;
         $this->activeCampaignHelper = $activeCampaignHelper;
@@ -141,17 +141,17 @@ class NewsletterSyncCron
                     ->setPageSize($newsletterSyncNum)
                     ->setCurPage(1);
                 foreach ($newsletterCollection as $news) {
-                    $acContact=NULL;
+                    $acContact=null;
                     try {
                         $contactData = [
                                 'email' => $news->getSubscriberEmail()
                         ];
-                        if($news->getCustomerId()){
+                        if ($news->getCustomerId()) {
                             $result = $this->customer->updateCustomer($this->getCustomer($news->getCustomerId()));
                             $acContact = $result['ac_contact_id'];
-                        }else{
+                        } else {
                              //   $acContact = $this->customer->createGuestContact($contactData);
-                                 $this->customer->createGuestCustomer($contactData,$news->getStoreId());
+                                 $this->customer->createGuestCustomer($contactData, $news->getStoreId());
                         }
 
                         if ($acContact) {
@@ -168,10 +168,9 @@ class NewsletterSyncCron
         } catch (\Exception $e) {
             $this->logger->error('MODULE Order: ' . $e->getMessage());
         }
-
     }
     /**
-     * @param $customerId
+     * @param  $customerId
      * @return CustomerModel
      */
     private function getCustomer($customerId): CustomerModel

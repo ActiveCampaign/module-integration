@@ -14,19 +14,19 @@ class Collection extends SyncLogCollection implements SearchResultInterface
     protected $aggregations;
 
     /**
-     * @param \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory
-     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Framework\Data\Collection\EntityFactoryInterface    $entityFactory
+     * @param \Psr\Log\LoggerInterface                                     $logger
      * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
-     * @param \Magento\Framework\Event\ManagerInterface $eventManager
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\EntityManager\MetadataPool $metadataPool
-     * @param mixed|null $mainTable
-     * @param string $eventPrefix
-     * @param mixed $eventObject
-     * @param mixed $resourceModel
-     * @param string $model
-     * @param null $connection
-     * @param \Magento\Framework\Model\ResourceModel\Db\AbstractDb|null $resource
+     * @param \Magento\Framework\Event\ManagerInterface                    $eventManager
+     * @param \Magento\Store\Model\StoreManagerInterface                   $storeManager
+     * @param \Magento\Framework\EntityManager\MetadataPool                $metadataPool
+     * @param mixed|null                                                   $mainTable
+     * @param string                                                       $eventPrefix
+     * @param mixed                                                        $eventObject
+     * @param mixed                                                        $resourceModel
+     * @param string                                                       $model
+     * @param null                                                         $connection
+     * @param \Magento\Framework\Model\ResourceModel\Db\AbstractDb|null    $resource
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -66,7 +66,7 @@ class Collection extends SyncLogCollection implements SearchResultInterface
     }
 
     /**
-     * @param AggregationInterface $aggregations
+     * @param  AggregationInterface $aggregations
      * @return $this
      */
     public function setAggregations($aggregations)
@@ -88,8 +88,8 @@ class Collection extends SyncLogCollection implements SearchResultInterface
     /**
      * Set search criteria.
      *
-     * @param \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
-     * @return $this
+     * @param                                         \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
+     * @return                                        $this
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function setSearchCriteria(?\Magento\Framework\Api\SearchCriteriaInterface $searchCriteria = null)
@@ -110,8 +110,8 @@ class Collection extends SyncLogCollection implements SearchResultInterface
     /**
      * Set total count.
      *
-     * @param int $totalCount
-     * @return $this
+     * @param                                         int $totalCount
+     * @return                                        $this
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function setTotalCount($totalCount)
@@ -122,8 +122,8 @@ class Collection extends SyncLogCollection implements SearchResultInterface
     /**
      * Set items list.
      *
-     * @param \Magento\Framework\Api\ExtensibleDataInterface[] $items
-     * @return $this
+     * @param                                         \Magento\Framework\Api\ExtensibleDataInterface[] $items
+     * @return                                        $this
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function setItems(?array $items = null)

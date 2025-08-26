@@ -36,9 +36,9 @@ class Syncaccart extends Action
     protected $connectActiveCampaign;
 
     /**
-     * @param Context $context
-     * @param JsonFactory $resultJsonFactory
-     * @param AbandonedCartHelper $abandonedCartHelper
+     * @param Context               $context
+     * @param JsonFactory           $resultJsonFactory
+     * @param AbandonedCartHelper   $abandonedCartHelper
      * @param AbandonedCartSendData $abandonedCartSendData
      * @param ConnectActiveCampaign $connectActiveCampaign
      */
@@ -61,14 +61,16 @@ class Syncaccart extends Action
      */
     public function execute()
     {
-        /** @var Json $result */
+        /**
+ * @var Json $result
+*/
         $result = $this->resultJsonFactory->create();
 
         if (!$this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
             $response['error'] = __("Activecampaign status is disabled.");
-        }elseif (!$this->connectActiveCampaign->isConnected()) {
+        } elseif (!$this->connectActiveCampaign->isConnected()) {
             $response['error'] = __("Activecampaign is disconnected.");
-        }else{
+        } else {
             $response = $this->abandonedCartSendData->sendAbandonedCartData();
         }
         return $result->setData($response);
