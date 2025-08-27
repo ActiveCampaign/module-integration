@@ -18,26 +18,27 @@ class Data extends AbstractHelper
 
     /**
      * Data constructor.
+     *
      * @param Context $context
      */
     public function __construct(
         Context $context,
         \Magento\Framework\App\State $state
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->state = $state;
     }
 
-    public function removeAfterDays(?string $scopeCode = null){
+    public function removeAfterDays(?string $scopeCode = null)
+    {
         return $this->scopeConfig->getValue(
-         self::ACTIVE_CAMPAIGN_REMOVE_AFTER_DAYS,
+            self::ACTIVE_CAMPAIGN_REMOVE_AFTER_DAYS,
             ScopeInterface::SCOPE_STORES,
             $scopeCode
-      );
+        );
     }
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function isLogError(?string $scopeCode = null)
@@ -50,7 +51,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function isDeletingEnabled($scopeCode = null): bool

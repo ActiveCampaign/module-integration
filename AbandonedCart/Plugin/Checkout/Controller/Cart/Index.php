@@ -24,8 +24,9 @@ class Index extends AbstractHelper
 
     /**
      * Index constructor.
-     * @param Context $context
-     * @param \Magento\Checkout\Model\Cart $cart
+     *
+     * @param Context                         $context
+     * @param \Magento\Checkout\Model\Cart    $cart
      * @param \Magento\Customer\Model\Session $customerSession
      */
     public function __construct(
@@ -46,14 +47,12 @@ class Index extends AbstractHelper
      */
     public function aroundExecute($subject, callable $proceed)
     {
-        if($this->_getRequest()->getParam('ac_redirect') &&  (empty($this->cart->getItems()) || $this->cart->getItems()->count() == 0) && !$this->customerSession->isLoggedIn()){
+        if ($this->_getRequest()->getParam('ac_redirect') && (empty($this->cart->getItems()) || $this->cart->getItems()->count() == 0) && !$this->customerSession->isLoggedIn()) {
             $this->customerSession->setAfterAuthUrl($this->urlInterface->getCurrentUrl());
             $this->customerSession->authenticate();
-        }else{
+        } else {
             $resultPage = $proceed();
             return $resultPage;
         }
-
-
     }
 }

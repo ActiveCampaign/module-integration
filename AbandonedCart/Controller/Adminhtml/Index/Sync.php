@@ -23,8 +23,8 @@ class Sync extends \Magento\Backend\App\Action
 
     /**
      * @param \Magento\Backend\App\Action $context
-     * @param \Magento\Quote\Model\Quote $quoteModel
-     * @param AbandonedCartSendData $abandonedCartSendData
+     * @param \Magento\Quote\Model\Quote  $quoteModel
+     * @param AbandonedCartSendData       $abandonedCartSendData
      */
     public function __construct(
         Action\Context $context,
@@ -45,7 +45,9 @@ class Sync extends \Magento\Backend\App\Action
     {
         // check if we know what should be synced
         $id = $this->getRequest()->getParam('entity_id');
-        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        /**
+ * @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect
+*/
         $resultRedirect = $this->resultRedirectFactory->create();
         if ($id) {
             $title = "";
@@ -55,9 +57,9 @@ class Sync extends \Magento\Backend\App\Action
                 $model->load($id);
 
                 $result = $this->abandonedCartSendData->sendAbandonedCartData($model->getEntityId());
-                if(isset($result['error'])){
+                if (isset($result['error'])) {
                     $this->messageManager->addErrorMessage($result['error']);
-                }else{
+                } else {
                     $this->messageManager->addSuccessMessage(__('The data has been synced.'));
                 }
 

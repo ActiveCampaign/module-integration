@@ -23,8 +23,8 @@ class GuestPaymentInformationManagementPlugin
     protected $quoteIdMaskFactory;
 
     /**
-     * @param AbandonedCartHelper $abandonedCartHelper
-     * @param AbandonedCartSendData $abandonedCartSendData
+     * @param AbandonedCartHelper                     $abandonedCartHelper
+     * @param AbandonedCartSendData                   $abandonedCartSendData
      * @param \Magento\Quote\Model\QuoteIdMaskFactory $quoteIdMaskFactory
      */
     public function __construct(
@@ -38,13 +38,13 @@ class GuestPaymentInformationManagementPlugin
     }
 
     /**
-    * @param \Magento\Checkout\Model\ShippingInformationManagement $subject
-    * @param $result
-    * @param $cartId
-    * @param $email
-    * @param \Magento\Quote\Api\Data\PaymentInterface $paymentMethod
-    * @param \Magento\Quote\Api\Data\AddressInterface $billingAddress
-    */
+     * @param \Magento\Checkout\Model\ShippingInformationManagement $subject
+     * @param $result
+     * @param $cartId
+     * @param $email
+     * @param \Magento\Quote\Api\Data\PaymentInterface              $paymentMethod
+     * @param \Magento\Quote\Api\Data\AddressInterface              $billingAddress
+     */
     public function afterSavePaymentInformation(
         \Magento\Checkout\Model\GuestPaymentInformationManagement $subject,
         $result,
@@ -55,7 +55,7 @@ class GuestPaymentInformationManagementPlugin
     ) {
         $quoteIdMask = $this->quoteIdMaskFactory->create()->load($cartId, 'masked_id');
         if ($this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
-            try{
+            try {
                 $response = $this->abandonedCartSendData->sendAbandonedCartData($quoteIdMask->getQuoteId());
             } catch (\Exception $e) {
 

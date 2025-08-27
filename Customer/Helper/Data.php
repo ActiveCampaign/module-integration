@@ -6,6 +6,7 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
 use ActiveCampaign\Customer\Model\Config\CronConfig;
 use \Magento\Framework\App\Config\ConfigResource\ConfigInterface;
+
 class Data extends AbstractHelper
 {
     const ACTIVE_CAMPAIGN_CUSTOMER_SYNC = "active_campaign/customer/sync";
@@ -19,10 +20,9 @@ class Data extends AbstractHelper
     private $configInterface;
     /**
      * Data constructor.
+     *
      * @param Context $context
      */
-
-
     public function __construct(
         Context $context,
         ConfigInterface $configInterface
@@ -32,7 +32,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function isCustomerSyncingEnabled($scopeCode = null)
@@ -45,7 +45,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return mixed
      */
     public function getCronTime($scopeCode = null)
@@ -58,7 +58,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return mixed
      */
     public function getNumberOfCustomers($scopeCode = null)

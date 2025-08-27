@@ -51,14 +51,15 @@ class Connect extends \Magento\Backend\App\Action
 
     /**
      * Connect constructor.
-     * @param \Magento\Backend\App\Action\Context $context
-     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
+     *
+     * @param \Magento\Backend\App\Action\Context                          $context
+     * @param \Magento\Framework\Controller\Result\JsonFactory             $resultJsonFactory
      * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface
-     * @param \Magento\Store\Api\StoreRepositoryInterface $storeRepository
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \ActiveCampaign\Core\Helper\Data $activeCampaignHelper
-     * @param \ActiveCampaign\Core\Helper\Curl $curl
-     * @param \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
+     * @param \Magento\Store\Api\StoreRepositoryInterface                  $storeRepository
+     * @param \Magento\Store\Model\StoreManagerInterface                   $storeManager
+     * @param \ActiveCampaign\Core\Helper\Data                             $activeCampaignHelper
+     * @param \ActiveCampaign\Core\Helper\Curl                             $curl
+     * @param \Magento\Framework\App\Cache\TypeListInterface               $cacheTypeList
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -78,7 +79,6 @@ class Connect extends \Magento\Backend\App\Action
         $this->activeCampaignHelper = $activeCampaignHelper;
         $this->curl = $curl;
         $this->cacheTypeList = $cacheTypeList;
-
     }
 
     /**
@@ -201,7 +201,7 @@ class Connect extends \Magento\Backend\App\Action
      *
      * @param string $path
      * @param string $value
-     * @param int $scopeId
+     * @param int    $scopeId
      *
      * @return void
      */

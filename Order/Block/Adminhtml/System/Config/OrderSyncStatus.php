@@ -30,11 +30,11 @@ class OrderSyncStatus extends \Magento\Backend\Block\Template
     /**
      * Construct
      *
-     * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+     * @param \Magento\Backend\Block\Template\Context      $context
+     * @param \Magento\Sales\Api\OrderRepositoryInterface  $orderRepository
      * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param \Magento\Framework\Api\FilterBuilder $filterBuilder
-     * @param array $data
+     * @param \Magento\Framework\Api\FilterBuilder         $filterBuilder
+     * @param array                                        $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -53,7 +53,7 @@ class OrderSyncStatus extends \Magento\Backend\Block\Template
     /**
      * Get order count helper
      *
-     * @param \Magento\Framework\Api\Filter[] $filter
+     * @param  \Magento\Framework\Api\Filter[] $filter
      * @return int
      */
     public function getOrderCountHelper(array $filter = []): int
@@ -89,13 +89,15 @@ class OrderSyncStatus extends \Magento\Backend\Block\Template
      */
     public function getSyncOrder(): int
     {
-        return $this->getOrderCountHelper([
+        return $this->getOrderCountHelper(
+            [
             $this->filterBuilder
                 ->setField(self::AC_SYNC_STATUS)
                 ->setValue(\ActiveCampaign\Order\Model\Config\CronConfig::SYNCED)
                 ->setConditionType('eq')
                 ->create()
-        ]);
+            ]
+        );
     }
 
     /**
@@ -128,12 +130,14 @@ class OrderSyncStatus extends \Magento\Backend\Block\Template
      */
     public function getFailedSync(): int
     {
-        return $this->getOrderCountHelper([
+        return $this->getOrderCountHelper(
+            [
             $this->filterBuilder
                 ->setField(self::AC_SYNC_STATUS)
                 ->setValue(\ActiveCampaign\Order\Model\Config\CronConfig::FAIL_SYNCED)
                 ->setConditionType('eq')
                 ->create()
-        ]);
+            ]
+        );
     }
 }

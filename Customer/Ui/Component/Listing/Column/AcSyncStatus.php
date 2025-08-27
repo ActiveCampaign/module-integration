@@ -24,7 +24,7 @@ class AcSyncStatus extends Column
     /**
      * Retrieve field label
      *
-     * @param array $item
+     * @param  array $item
      * @return string
      */
     private function getFieldLabel(array $item)
@@ -39,5 +39,4 @@ class AcSyncStatus extends Column
         }
         return __('Something Wrong');
     }
-
 }

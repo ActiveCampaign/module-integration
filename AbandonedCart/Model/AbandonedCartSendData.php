@@ -137,29 +137,30 @@ class AbandonedCartSendData extends AbstractModel
 
     /**
      * AbandonedCartSendData constructor.
-     * @param CustomerRepositoryInterface $customerRepository
-     * @param AddressRepositoryInterface $addressRepository
+     *
+     * @param CustomerRepositoryInterface       $customerRepository
+     * @param AddressRepositoryInterface        $addressRepository
      * @param CustomerResourceCollectionFactory $customerResourceCollectionFactory
-     * @param CustomerFactory $customerFactory
-     * @param CustomerResource $customerResource
-     * @param Attribute $eavAttribute
-     * @param AbandonedCartHelper $abandonedCartHelper
-     * @param QuoteResourceCollectionFactory $quoteResourceCollectionFactory
-     * @param Curl $curl
-     * @param LoggerInterface $logger
-     * @param CartRepositoryInterface $cartRepositoryInterface
-     * @param CoreHelper $coreHelper
-     * @param QuoteItemCollectionFactory $quoteItemCollectionFactory
+     * @param CustomerFactory                   $customerFactory
+     * @param CustomerResource                  $customerResource
+     * @param Attribute                         $eavAttribute
+     * @param AbandonedCartHelper               $abandonedCartHelper
+     * @param QuoteResourceCollectionFactory    $quoteResourceCollectionFactory
+     * @param Curl                              $curl
+     * @param LoggerInterface                   $logger
+     * @param CartRepositoryInterface           $cartRepositoryInterface
+     * @param CoreHelper                        $coreHelper
+     * @param QuoteItemCollectionFactory        $quoteItemCollectionFactory
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
-     * @param ImageFactory $imageHelperFactory
-     * @param QuoteFactory $quoteFactory
-     * @param AppEmulation $appEmulation
-     * @param StoreManagerInterface $storeManager
-     * @param CustomerModel $customerModel
-     * @param TimezoneInterface $dateTime
-     * @param CartRepositoryInterface $quoteRepository
-     * @param UrlInterface $urlBuilder
-     * @param Customer $customer
+     * @param ImageFactory                      $imageHelperFactory
+     * @param QuoteFactory                      $quoteFactory
+     * @param AppEmulation                      $appEmulation
+     * @param StoreManagerInterface             $storeManager
+     * @param CustomerModel                     $customerModel
+     * @param TimezoneInterface                 $dateTime
+     * @param CartRepositoryInterface           $quoteRepository
+     * @param UrlInterface                      $urlBuilder
+     * @param Customer                          $customer
      */
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
@@ -185,8 +186,7 @@ class AbandonedCartSendData extends AbstractModel
         CartRepositoryInterface $quoteRepository,
         UrlInterface $urlBuilder,
         Customer $customer
-    )
-    {
+    ) {
         $this->urlBuilder = $urlBuilder;
         $this->customerRepository = $customerRepository;
         $this->addressRepository = $addressRepository;
@@ -213,7 +213,7 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param int|null $quoteId
+     * @param  int|null $quoteId
      * @return array
      * @throws AlreadyExistsException
      * @throws NoSuchEntityException
@@ -225,11 +225,15 @@ class AbandonedCartSendData extends AbstractModel
         $minInactiveTime = (int) $this->abandonedCartHelper->getMinInactiveTime();
         $abandonedCarts = $this->quoteResourceCollectionFactory->create()
             ->addFieldToSelect('*')
-            ->addFieldToFilter('ac_synced_date', [
+            ->addFieldToFilter(
+                'ac_synced_date',
+                [
                 ['lt' => new \Zend_Db_Expr('main_table.updated_at')],
                 ['null' =>  true]
-            ])
-            ->addFieldToFilter('main_table.updated_at',
+                ]
+            )
+            ->addFieldToFilter(
+                'main_table.updated_at',
                 ['eq' => new \Zend_Db_Expr('IF( ac_synced_date is not null or main_table.updated_at < DATE_SUB(NOW(), INTERVAL '.$minInactiveTime.' minute), main_table.updated_at,-1)')]
             )
             ->addFieldToFilter(
@@ -244,15 +248,15 @@ class AbandonedCartSendData extends AbstractModel
         if ($quoteId) {
             $abandonedCarts->addFieldToFilter('entity_id', ['eq' => $quoteId]);
         }
-        $abandonedCarts->setPageSize($numberOfAbandonedCart)->setOrder('main_table.updated_at',"desc");
-        $abandonedCarts->getSelect()->join(array('address' => $abandonedCarts->getResource()->getTable('quote_address')), 'main_table.entity_id = address.quote_id')
+        $abandonedCarts->setPageSize($numberOfAbandonedCart)->setOrder('main_table.updated_at', "desc");
+        $abandonedCarts->getSelect()->join(['address' => $abandonedCarts->getResource()->getTable('quote_address')], 'main_table.entity_id = address.quote_id')
             ->where("address.address_type='billing' and (main_table.customer_email is not null or  address.email is not null)");
         foreach ($abandonedCarts as $abandonedCart) {
 
             $connectionId = $this->coreHelper->getConnectionId($abandonedCart->getStoreId());
 
             $quote = $this->quoteRepository->get($abandonedCart->getEntityId());
-            $AcCustomer = NULL;
+            $AcCustomer = null;
             if ($this->isGuest($quote) || ($abandonedCart->getCustomerId() && (!$this->getCustomer($abandonedCart->getCustomerId())->getId() || !$this->getCustomer($abandonedCart->getCustomerId())->getEmail() ))) {
                 $customerEmail = $quote->getBillingAddress()->getEmail();
                 if (!$customerEmail) {
@@ -264,18 +268,18 @@ class AbandonedCartSendData extends AbstractModel
                 $contact['lastName'] = $quote->getBillingAddress()->getLastname();
                 $contact['phone'] = $quote->getBillingAddress()->getTelephone();
                 $contact['fieldValues'] = [];
-                $AcCustomer = $this->customer->createGuestCustomer($contact,$quote->getStoreId());
+                $AcCustomer = $this->customer->createGuestCustomer($contact, $quote->getStoreId());
             } else {
                 $AcCustomer = $this->customer->updateCustomer($this->getCustomer($abandonedCart->getCustomerId()));
             }
             $this->customerId = $AcCustomer['ac_customer_id'];
-            $this->saveCustomerResultQuote($quote,$this->customerId);
+            $this->saveCustomerResultQuote($quote, $this->customerId);
 
             $abandonedCart->collectTotals();
             $quoteItemsData = $this->getQuoteItemsData($abandonedCart->getEntityId(), $abandonedCart->getStoreId());
             $abandonedCartRepository = $this->quoteRepository->get($abandonedCart->getId());
             $abandonedUpdateDate = $abandonedCartRepository->getUpdatedAt();
-            if(is_null($abandonedUpdateDate)){
+            if (is_null($abandonedUpdateDate)) {
                 $abandonedUpdateDate = $abandonedCartRepository->getCreatedAt();
             }
             $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $abandonedCart->getStoreId());
@@ -289,9 +293,9 @@ class AbandonedCartSendData extends AbstractModel
                         "discountAmount" => $this->coreHelper->priceToCents($abandonedCart->getDiscountAmount())
                     ],
                     "orderUrl" => $this->urlBuilder->setScope($abandonedCart->getStoreId())->getDirectUrl('checkout/cart') .'?ac_redirect=true',
-                    "abandonedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
-                    "externalCreatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getCreatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
-                    "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
+                    "abandonedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate), null, $timezone)->format('Y-m-d\TH:i:sP'),
+                    "externalCreatedDate" => $this->dateTime->date(strtotime($abandonedCartRepository->getCreatedAt()), null, $timezone)->format('Y-m-d\TH:i:sP'),
+                    "externalUpdatedDate" => $this->dateTime->date(strtotime($abandonedUpdateDate), null, $timezone)->format('Y-m-d\TH:i:sP'),
                     "shippingMethod" => $abandonedCart->getShippingAddress()->getShippingMethod(),
                     "totalPrice" => $this->coreHelper->priceToCents($abandonedCart->getGrandTotal()),
                     "shippingAmount" => $this->coreHelper->priceToCents($abandonedCart->getShippingAmount()),
@@ -322,7 +326,7 @@ class AbandonedCartSendData extends AbstractModel
                 if ($abandonedCartResult['success']) {
                     $syncStatus = CronConfig::SYNCED;
                 } else {
-                    if(!$abandonedCartResult['success'] && $abandonedCartResult['status'] == "404"){
+                    if (!$abandonedCartResult['success'] && $abandonedCartResult['status'] == "404") {
                         $abandonedCartResult = $this->curl->sendRequestAbandonedCart(
                             self::UPDATE_METHOD,
                             self::ABANDONED_CART_URL_ENDPOINT . "/" . (int)$abandonedCart->getAcOrderSyncId(),
@@ -331,7 +335,7 @@ class AbandonedCartSendData extends AbstractModel
                     }
                     if ($abandonedCartResult['success']) {
                         $syncStatus = CronConfig::SYNCED;
-                    }else{
+                    } else {
                         $syncStatus = CronConfig::FAIL_SYNCED;
                     }
                 }
@@ -369,14 +373,13 @@ class AbandonedCartSendData extends AbstractModel
 
 
             $product = $this->_productRepositoryFactory->create()
-                ->getById($quoteItem->getProductId(),false,$storeId);
+                ->getById($quoteItem->getProductId(), false, $storeId);
 
             $imageUrl = $this->imageUrl($quoteItem, $product, $storeId);
             $this->appEmulation->stopEnvironmentEmulation();
             $categories = $product->getCategoryCollection()->addAttributeToSelect('name');
             $categoriesName = [];
-            foreach($categories as $category)
-            {
+            foreach ($categories as $category) {
                 $categoriesName[] = $category->getName();
             }
             $categoriesName = implode(', ', $categoriesName);
@@ -395,25 +398,26 @@ class AbandonedCartSendData extends AbstractModel
         return $quoteItemsData;
     }
 
-    public function imageUrl($quoteItem, $product, $storeId){
+    public function imageUrl($quoteItem, $product, $storeId)
+    {
 
         $imageUrl = $this->imageHelperFactory->create()
             ->init($product, 'product_page_image_medium')->getUrl();
-        if(str_contains($imageUrl, 'images/product/placeholder')){
+        if (str_contains($imageUrl, 'images/product/placeholder')) {
             $store = $this->storeManager->getStore($storeId);
             $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
-            if (count($product->getMediaGalleryImages()->getItems()) > 0){
+            if (count($product->getMediaGalleryImages()->getItems()) > 0) {
                 $imageUrl = $baseUrl . $product->getImage();
-            }elseif (($quoteItem->getProductType() !== 'simple') &&  $quoteItem->getOptionByCode('product_type') && ($quoteItem->getOptionByCode('product_type')->getProductId())){
+            } elseif (($quoteItem->getProductType() !== 'simple') && $quoteItem->getOptionByCode('product_type') && ($quoteItem->getOptionByCode('product_type')->getProductId())) {
                 $product = $this->_productRepositoryFactory->create()
-                    ->getById($quoteItem->getOptionByCode('product_type')->getProductId(),false,$storeId);
+                    ->getById($quoteItem->getOptionByCode('product_type')->getProductId(), false, $storeId);
                 $imageUrl = $baseUrl . $product->getImage();
             }
         }
         return $imageUrl;
     }
     /**
-     * @param $quoteId
+     * @param  $quoteId
      * @return Collection
      */
     private function getQuoteItems($quoteId): Collection
@@ -426,9 +430,9 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param $quoteId
-     * @param $acOrderId
-     * @param $syncStatus
+     * @param  $quoteId
+     * @param  $acOrderId
+     * @param  $syncStatus
      * @throws AlreadyExistsException|NoSuchEntityException
      */
     private function saveResult($quoteId, $acOrderId, $syncStatus): void
@@ -444,7 +448,7 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param null $billingId
+     * @param  null $billingId
      * @return string|null
      * @throws LocalizedException
      */
@@ -463,8 +467,8 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param $quote
-     * @param $ecomCustomerId
+     * @param  $quote
+     * @param  $ecomCustomerId
      * @throws AlreadyExistsException
      */
     private function saveCustomerResultQuote($quote, $ecomCustomerId): void
@@ -476,7 +480,7 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param $customerId
+     * @param  $customerId
      * @return CustomerModel
      */
     private function getCustomer($customerId): CustomerModel

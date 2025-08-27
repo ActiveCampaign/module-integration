@@ -4,7 +4,7 @@ namespace ActiveCampaign\Customer\Model;
 
 use ActiveCampaign\Customer\Model\Config\CronConfig;
 
-class AcSyncStatus extends  \Magento\Eav\Model\Entity\Attribute\Source\AbstractSource implements \Magento\Framework\Data\OptionSourceInterface
+class AcSyncStatus extends \Magento\Eav\Model\Entity\Attribute\Source\AbstractSource implements \Magento\Framework\Data\OptionSourceInterface
 {
     /**
      * {@inheritdoc}
@@ -36,6 +36,5 @@ class AcSyncStatus extends  \Magento\Eav\Model\Entity\Attribute\Source\AbstractS
     public function getAllOptions($withEmpty = true, $defaultValues = false)
     {
         return  $this->toOptionArray();
-
     }
 }

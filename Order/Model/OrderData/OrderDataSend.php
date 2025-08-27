@@ -108,12 +108,12 @@ class OrderDataSend
     /**
      * @var CustomerModel
      */
-    protected  $customerModel;
+    protected $customerModel;
 
     /**
      * @var CustomerModel
      */
-    protected  $coreHelper;
+    protected $coreHelper;
 
     /**
      * @var Customer
@@ -127,24 +127,25 @@ class OrderDataSend
 
     /**
      * OrderDataSend constructor.
+     *
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
-     * @param ImageFactory $imageHelperFactory
-     * @param ActiveCampaignOrderHelper $activeCampaignOrderHelper
-     * @param CoreHelper $activeCampaignHelper
-     * @param ConfigInterface $configInterface
-     * @param Curl $curl
-     * @param CustomerRepositoryInterface $customerRepositoryInterface
-     * @param StoreRepositoryInterface $storeRepository
-     * @param CustomerFactory $customerFactory
-     * @param StoreManagerInterface $storeManager
-     * @param CustomerModel $customerModel
-     * @param AddressRepositoryInterface $addressRepository
-     * @param Attribute $eavAttribute
-     * @param CoreHelper $coreHelper
-     * @param CustomerResource $customerResource
-     * @param CartRepositoryInterface $quoteRepository
-     * @param Customer $customer
-     * @param TimezoneInterface $dateTime
+     * @param ImageFactory                      $imageHelperFactory
+     * @param ActiveCampaignOrderHelper         $activeCampaignOrderHelper
+     * @param CoreHelper                        $activeCampaignHelper
+     * @param ConfigInterface                   $configInterface
+     * @param Curl                              $curl
+     * @param CustomerRepositoryInterface       $customerRepositoryInterface
+     * @param StoreRepositoryInterface          $storeRepository
+     * @param CustomerFactory                   $customerFactory
+     * @param StoreManagerInterface             $storeManager
+     * @param CustomerModel                     $customerModel
+     * @param AddressRepositoryInterface        $addressRepository
+     * @param Attribute                         $eavAttribute
+     * @param CoreHelper                        $coreHelper
+     * @param CustomerResource                  $customerResource
+     * @param CartRepositoryInterface           $quoteRepository
+     * @param Customer                          $customer
+     * @param TimezoneInterface                 $dateTime
      */
     public function __construct(
         ProductRepositoryInterfaceFactory $productRepositoryFactory,
@@ -187,7 +188,7 @@ class OrderDataSend
     }
 
     /**
-     * @param $order
+     * @param  $order
      * @return array
      * @throws GuzzleException
      */
@@ -200,26 +201,26 @@ class OrderDataSend
                 $connectionId = $this->activeCampaignHelper->getConnectionId($order->getStoreId());
                 $customerId = $order->getCustomerId();
                 $quoteModel = null;
-                try{
-                $quoteModel = $this->quoteRepository->get($order->getQuoteId());
+                try {
+                    $quoteModel = $this->quoteRepository->get($order->getQuoteId());
                     $quote = $quoteModel;
-                }catch (\Exception $e){
+                } catch (\Exception $e) {
                     $quote = $order;
                 }
 
                 if ($customerId) {
                     $AcCustomer = $this->customer->updateCustomer($this->getCustomer($customerId));
-                }else{
+                } else {
                     $customerEmail = $quote->getBillingAddress()->getEmail();
                     $contact['email'] = $customerEmail;
                     $contact['firstName'] = $quote->getBillingAddress()->getFirstname();
                     $contact['lastName'] = $quote->getBillingAddress()->getLastname();
                     $contact['phone'] = $quote->getBillingAddress()->getTelephone();
                     $contact['fieldValues'] = [];
-                    $AcCustomer = $this->customer->createGuestCustomer($contact,$order->getStoreId());
+                    $AcCustomer = $this->customer->createGuestCustomer($contact, $order->getStoreId());
                 }
                 $customerAcId = $AcCustomer['ac_customer_id'];
-                if($quoteModel) {
+                if ($quoteModel) {
                     $this->saveCustomerResultQuote($quote, $customerAcId);
                 }
                 $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $order->getStoreId());
@@ -230,8 +231,7 @@ class OrderDataSend
                     $categories = $item->getProduct()->getCategoryCollection()->addAttributeToSelect('name');
 
                     $categoriesName = [];
-                    foreach($categories as $category)
-                    {
+                    foreach ($categories as $category) {
                         $categoriesName[] = $category->getName();
                     }
                     $categoriesName = implode(', ', $categoriesName);
@@ -257,8 +257,8 @@ class OrderDataSend
                                 "orderDiscounts" => [
                                     "discountAmount" => $this->activeCampaignHelper->priceToCents($order->getDiscountAmount())
                                 ],
-                                "externalCreatedDate" => $this->dateTime->date(strtotime($order->getCreatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
-                                "externalUpdatedDate" => $this->dateTime->date(strtotime($order->getUpdatedAt()),NULL,$timezone)->format('Y-m-d\TH:i:sP'),
+                                "externalCreatedDate" => $this->dateTime->date(strtotime($order->getCreatedAt()), null, $timezone)->format('Y-m-d\TH:i:sP'),
+                                "externalUpdatedDate" => $this->dateTime->date(strtotime($order->getUpdatedAt()), null, $timezone)->format('Y-m-d\TH:i:sP'),
                                 "shippingMethod" => $order->getShippingMethod(),
                                 "totalPrice" => $this->activeCampaignHelper->priceToCents($order->getGrandTotal()),
                                 "shippingAmount" => $this->activeCampaignHelper->priceToCents($order->getShippingAmount()),
@@ -273,16 +273,16 @@ class OrderDataSend
 
                 if (!$order->getAcOrderSyncId()) {
                     $AcOrderId=0;
-                    if($quoteModel){
+                    if ($quoteModel) {
                         $AcOrderId = $quote->getAcOrderSyncId();
                     }
-                    if($AcOrderId > 0){
+                    if ($AcOrderId > 0) {
                         $result = $this->curl->orderDataSend(
                             self::UPDATE_METHOD,
                             self::URL_ENDPOINT . '/' . (int) $AcOrderId,
                             $data
                         );
-                    }else{
+                    } else {
                         $result = $this->curl->orderDataSend(
                             self::METHOD,
                             self::URL_ENDPOINT,
@@ -315,8 +315,8 @@ class OrderDataSend
                 }
 
                 $order->setData("ac_order_sync_status", $syncStatus)
-                        ->setData("ac_order_sync_id", $acOrderId)
-                        ->save();
+                    ->setData("ac_order_sync_id", $acOrderId)
+                    ->save();
 
                 if (isset($result['success'])) {
                     $return['success'] = __("Order data successfully synced!!");
@@ -329,27 +329,28 @@ class OrderDataSend
         return $return;
     }
 
-    public function imageUrl($item, $product, $storeId){
+    public function imageUrl($item, $product, $storeId)
+    {
 
         $imageUrl = $this->imageHelperFactory->create()
             ->init($product, 'product_page_image_medium')->getUrl();
-        if(str_contains($imageUrl, 'images/product/placeholder') ){
+        if (str_contains($imageUrl, 'images/product/placeholder')) {
 
             $store = $this->storeManager->getStore($storeId);
             $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
 
-            if (count($product->getMediaGalleryImages()->getItems()) > 0){
+            if (count($product->getMediaGalleryImages()->getItems()) > 0) {
                 $imageUrl = $baseUrl . $product->getImage();
-            }elseif (($item->getProductType() !== 'simple') &&  $item->getProductOptionByCode('super_product_config') && (isset($item->getProductOptionByCode('super_product_config')['product_id']))){
+            } elseif (($item->getProductType() !== 'simple') && $item->getProductOptionByCode('super_product_config') && (isset($item->getProductOptionByCode('super_product_config')['product_id']))) {
                 $product = $this->_productRepositoryFactory->create()
-                    ->getById($item->getProductOptionByCode('super_product_config')['product_id'],false,$storeId);
+                    ->getById($item->getProductOptionByCode('super_product_config')['product_id'], false, $storeId);
                 $imageUrl = $baseUrl . $product->getImage();
             }
         }
         return $imageUrl;
     }
     /**
-     * @param $customerId
+     * @param  $customerId
      * @return object
      */
     private function getCustomer($customerId): object
@@ -361,8 +362,8 @@ class OrderDataSend
 
 
     /**
-     * @param $quote
-     * @param $ecomCustomerId
+     * @param  $quote
+     * @param  $ecomCustomerId
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      */
     private function saveCustomerResultQuote($quote, $ecomCustomerId)

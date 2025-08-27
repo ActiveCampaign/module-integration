@@ -17,7 +17,7 @@ class Widget extends \Magento\Config\Block\System\Config\Form\Fieldset
     }
 
     /**
-     * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
+     * @param  \Magento\Framework\Data\Form\Element\AbstractElement $element
      * @return string
      */
     public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)

@@ -11,7 +11,7 @@ class CustomerCustomFields extends \Magento\Config\Block\System\Config\Form\Fiel
 
     protected function _prepareArrayRow(\Magento\Framework\DataObject $row): void
     {
-       $options = [];
+        $options = [];
 
         $row->setData('option_extra_attrs', $options);
     }
@@ -34,7 +34,8 @@ class CustomerCustomFields extends \Magento\Config\Block\System\Config\Form\Fiel
         $this->_addButtonLabel = __('Add');
     }
 
-    private function getCustomerField(){
+    private function getCustomerField()
+    {
         if (!$this->customerOptions) {
             $this->customerOptions = $this->getLayout()->createBlock(
                 CustomerOptionColumn::class,
@@ -45,15 +46,15 @@ class CustomerCustomFields extends \Magento\Config\Block\System\Config\Form\Fiel
         return $this->customerOptions;
     }
 
-    private function getAcField(){
+    private function getAcField()
+    {
         if (!$this->acOptions) {
             $this->acOptions = $this->getLayout()->createBlock(
                 AcOptionColumn::class,
-                            '',
-                            ['data' => ['is_render_to_js_template' => true]]
-                        );
+                '',
+                ['data' => ['is_render_to_js_template' => true]]
+            );
         }
         return $this->acOptions;
-
     }
 }

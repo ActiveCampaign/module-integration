@@ -28,7 +28,9 @@ class Index extends \Magento\Backend\App\Action
      */
     public function execute()
     {
-        /** @var \Magento\Backend\Model\View\Result\Page $resultPage */
+        /**
+ * @var \Magento\Backend\Model\View\Result\Page $resultPage
+*/
         $resultPage = $this->resultPageFactory->create();
         $resultPage->setActiveMenu('ActiveCampaign_SyncLog::logs');
         $resultPage->getConfig()->getTitle()->prepend(__('ActiveCampaign Sync Logs'));

@@ -8,6 +8,7 @@ class Status implements OptionSourceInterface
 {
     /**
      * Get Grid row status type labels array.
+     *
      * @return array
      */
     public function getOptionArray()
@@ -30,6 +31,7 @@ class Status implements OptionSourceInterface
 
     /**
      * Get Grid row type array for option element.
+     *
      * @return array
      */
     public function getOptions()

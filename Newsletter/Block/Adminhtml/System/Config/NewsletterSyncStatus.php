@@ -20,16 +20,15 @@ class NewsletterSyncStatus extends \Magento\Backend\Block\Template
     /**
      * Construct
      *
-     * @param \Magento\Backend\Block\Template\Context $context
+     * @param \Magento\Backend\Block\Template\Context                       $context
      * @param \Magento\Newsletter\Model\ResourceModel\Subscriber\Collection $newsletterCollection
-     * @param array $data
+     * @param array                                                         $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
         \Magento\Newsletter\Model\ResourceModel\Subscriber\Collection $newsletterCollection,
         array $data = []
-    )
-    {
+    ) {
         $this->newsletterCollection = $newsletterCollection;
 
         parent::__construct($context, $data);
@@ -37,7 +36,8 @@ class NewsletterSyncStatus extends \Magento\Backend\Block\Template
 
     /**
      * Get order count helper
-     * @param array $filter
+     *
+     * @param  array $filter
      * @return int
      */
     public function getNewsletterCountHelper(array $filter = []): int
@@ -58,6 +58,7 @@ class NewsletterSyncStatus extends \Magento\Backend\Block\Template
 
     /**
      * Get total order
+     *
      * @return int
      */
     public function getTotalNewsletter(): int
@@ -91,7 +92,8 @@ class NewsletterSyncStatus extends \Magento\Backend\Block\Template
     public function getNotSyncNewsletter(): int
     {
 
-        return $this->getNewsletterCountHelper([
+        return $this->getNewsletterCountHelper(
+            [
                 [
                     'field' => self::AC_SYNC_STATUS,
                     'value' => ['neq' => \ActiveCampaign\Order\Model\Config\CronConfig::SYNCED]
@@ -108,13 +110,13 @@ class NewsletterSyncStatus extends \Magento\Backend\Block\Template
     public function getFailedSync(): int
     {
 
-        return $this->getNewsletterCountHelper([
+        return $this->getNewsletterCountHelper(
+            [
                 [
                     'field' => self::AC_SYNC_STATUS,
                     'value' => ['eq' => \ActiveCampaign\Order\Model\Config\CronConfig::FAIL_SYNCED]
                 ]
             ]
         );
-
     }
 }

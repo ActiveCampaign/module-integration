@@ -102,18 +102,19 @@ class Customer
 
     /**
      * Customer constructor.
+     *
      * @param CustomerResourceCollectionFactory $customerResourceCollectionFactory
-     * @param CustomerRepositoryInterface $customerRepositoryInterface
-     * @param CustomerFactory $customerFactory
-     * @param CustomerResource $customerResource
-     * @param CustomerHelper $customerHelper
-     * @param CoreHelper $coreHelper
-     * @param Curl $curl
-     * @param Attribute $eavAttribute
-     * @param TypeListInterface $cacheTypeList
-     * @param LoggerInterface $logger
-     * @param SubscriberFactory $subscriberFactory
-     * @param AddressRepositoryInterface $addressRepository
+     * @param CustomerRepositoryInterface       $customerRepositoryInterface
+     * @param CustomerFactory                   $customerFactory
+     * @param CustomerResource                  $customerResource
+     * @param CustomerHelper                    $customerHelper
+     * @param CoreHelper                        $coreHelper
+     * @param Curl                              $curl
+     * @param Attribute                         $eavAttribute
+     * @param TypeListInterface                 $cacheTypeList
+     * @param LoggerInterface                   $logger
+     * @param SubscriberFactory                 $subscriberFactory
+     * @param AddressRepositoryInterface        $addressRepository
      */
     public function __construct(
         CustomerResourceCollectionFactory $customerResourceCollectionFactory,
@@ -147,10 +148,11 @@ class Customer
     }
 
     /**
-     * @param $customerId
+     * @param  $customerId
      * @return MageCustomer
      */
-    public function getCustomerById($customerId){
+    public function getCustomerById($customerId)
+    {
         $customerModel = $this->customerFactory->create();
         $this->customerResource->load($customerModel, $customerId);
 
@@ -159,7 +161,7 @@ class Customer
 
 
     /**
-     * @param $customer
+     * @param  $customer
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -177,18 +179,18 @@ class Customer
     }
 
     /**
-     * @param null $billingId
+     * @param  null $billingId
      * @return string|null
      */
     private function getTelephone($billingId = null)
     {
         if ($billingId) {
-           try{
-              $address = $this->addressRepository->getById($billingId);
-              return $address->getTelephone();
-          }catch (\Exception $exception){
+            try {
+                $address = $this->addressRepository->getById($billingId);
+                return $address->getTelephone();
+            } catch (\Exception $exception) {
 
-           }
+            }
         }
         return null;
     }
@@ -202,25 +204,25 @@ class Customer
                 $attributeValues=[];
                 $attributeValues['field'] = $attribute->ac_customer_field_id;
                 $attributeValues['value'] ='';
-                if(strncmp($attribute->customer_field_id,'shipping__',10) === 0 ){
-                    if($customer->getDefaultShippingAddress()){
-                        $attributeValues['value'] = $customer->getDefaultShippingAddress()->getData(substr($attribute->customer_field_id,10));
+                if (strncmp($attribute->customer_field_id, 'shipping__', 10) === 0) {
+                    if ($customer->getDefaultShippingAddress()) {
+                        $attributeValues['value'] = $customer->getDefaultShippingAddress()->getData(substr($attribute->customer_field_id, 10));
                     }
-                }elseif (strncmp($attribute->customer_field_id,'billing__',9) === 0){
-                    if($customer->getDefaultBillingAddress()){
-                     $attributeValues['value'] = $customer->getDefaultBillingAddress()->getData(substr($attribute->customer_field_id,9));
+                } elseif (strncmp($attribute->customer_field_id, 'billing__', 9) === 0) {
+                    if ($customer->getDefaultBillingAddress()) {
+                        $attributeValues['value'] = $customer->getDefaultBillingAddress()->getData(substr($attribute->customer_field_id, 9));
                     }
-                }else{
-                    if($attr = $customer->getResource()->getAttribute($attribute->customer_field_id)){
+                } else {
+                    if ($attr = $customer->getResource()->getAttribute($attribute->customer_field_id)) {
                         $options = $attr->getOptions();
                         $attributeValues['value'] = $attr->getFrontend()->getValue($customer);
-                        if(!$attributeValues['value'] && is_Array($options) && count($options)> 0){
+                        if (!$attributeValues['value'] && is_Array($options) && count($options)> 0) {
                             $option = current(array_filter($options, fn($o) => $o->getValue() === $customer->getData($attribute->customer_field_id)));
-                            if($option) {
+                            if ($option) {
                                 $attributeValues['value'] = $option->getLabel();
                             }
                         }
-                    }else {
+                    } else {
                         $attributeValues['value'] = $customer->getData($attribute->customer_field_id);
                     }
                 }
@@ -231,10 +233,10 @@ class Customer
     }
 
     /**
-     * @param $customerId
-     * @param $syncStatus
-     * @param $contactId
-     * @param $ecomCustomerId
+     * @param  $customerId
+     * @param  $syncStatus
+     * @param  $contactId
+     * @param  $ecomCustomerId
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      */
     public function saveResult($customerId, $syncStatus, $contactId, $ecomCustomerId)
@@ -255,7 +257,8 @@ class Customer
     }
 
 
-    public  function contactBody($customer){
+    public function contactBody($customer)
+    {
         $contact['email'] = $customer->getEmail();
         $contact['firstName'] = $customer->getFirstname();
         $contact['lastName'] = $customer->getLastname();
@@ -289,17 +292,18 @@ class Customer
         }
     }
 
-    public function createGuestContact($data){
-        $acContact = NULL;
-        if($data['email']){
-            $acContact = $this->searchContact($data['email'] );
-            if(!$acContact){
+    public function createGuestContact($data)
+    {
+        $acContact = null;
+        if ($data['email']) {
+            $acContact = $this->searchContact($data['email']);
+            if (!$acContact) {
                 $contactData['contact'] = $data;
-                $result = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT , $contactData);
-                if(!$result['success'] && $result['status'] == "404"){
-                    $acContact = NULL;
+                $result = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
+                if (!$result['success'] && $result['status'] == "404") {
+                    $acContact = null;
                 }
-                if(count($result['data']['contact'])>0){
+                if (count($result['data']['contact'])>0) {
                     $acContact = $result['data']['contact']['id'];
                 }
             }
@@ -307,27 +311,28 @@ class Customer
         return $acContact;
     }
 
-    public function createGuestCustomer($data, $storeId){
-        $acCustomer = NULL;
-        $acContact = NUll;
+    public function createGuestCustomer($data, $storeId)
+    {
+        $acCustomer = null;
+        $acContact = null;
 
-        if($data['email']) {
+        if ($data['email']) {
             $acContact = $this->createGuestContact($data);
 
             $acCustomer = $this->searchCustomer($data['email'], $this->coreHelper->getConnectionId($storeId));
             $ecomCustomerData=[];
             $data['connectionid'] = $this->coreHelper->getConnectionId($storeId);
             $data['externalid'] = $data['email'];
-            $data['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($data['email'],$this->storeManager->getStore($storeId)->getWebsiteId())->isSubscribed();
+            $data['acceptsMarketing'] = (int)$this->subscriberFactory->create()->loadBySubscriberEmail($data['email'], $this->storeManager->getStore($storeId)->getWebsiteId())->isSubscribed();
             $ecomCustomerData['ecomCustomer'] = $data;
             if (!$acCustomer) {
                 $result = $this->curl->createContacts(self::METHOD, self::ECOM_CUSTOMER_ENDPOINT, $ecomCustomerData);
-            }else{
+            } else {
                 $result = $this->curl->createContacts(self::METHOD_PUT, self::ECOM_CUSTOMER_ENDPOINT. '/' . $acCustomer, $ecomCustomerData);
 
             }
             if (!$result['success'] && $result['status'] == "404") {
-                $acCustomer = NULL;
+                $acCustomer = null;
             }
             if ($result['success'] && isset($result['data']['ecomCustomer']['id'])) {
                 $acCustomer = $result['data']['ecomCustomer']['id'];
@@ -336,49 +341,50 @@ class Customer
         return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
     }
 
-    public function updateCustomer($customer){
+    public function updateCustomer($customer)
+    {
         $contactData = $this->contactBody($customer);
-        $acContact = NULL;
-        $acCustomer = NULL;
+        $acContact = null;
+        $acCustomer = null;
         try {
             $acContact =$customer->getAcContactId();
-            if($acContact){
+            if ($acContact) {
                 $result = $this->curl->createContacts(self::METHOD_PUT, self::CONTACT_ENDPOINT . '/' . $acContact, $contactData);
-                if(!$result['success'] && $result['status'] == "404"){
-                    $acContact = NULL;
+                if (!$result['success'] && $result['status'] == "404") {
+                    $acContact = null;
                 }
-            }else{
-                $acContact = $this->searchContact($customer->getEmail() );
-                if(!$acContact){
-                    $result = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT , $contactData);
+            } else {
+                $acContact = $this->searchContact($customer->getEmail());
+                if (!$acContact) {
+                    $result = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
                     $acContact = $result['data']['contact']['id'];
                 }
             }
-            if($acContact){
+            if ($acContact) {
                 $customerData = $this->getEcomCustomerData($customer);
                 $acCustomer = $customer->getAcCustomerId();
-                if($acCustomer){
+                if ($acCustomer) {
                     $result = $this->curl->createContacts(self::METHOD_PUT, self::ECOM_CUSTOMER_ENDPOINT . '/' . $customer->getAcCustomerId(), $customerData);
-                    if(!$result['success'] && $result['status'] == "404"){
-                        $acCustomer = NULL;
+                    if (!$result['success'] && $result['status'] == "404") {
+                        $acCustomer = null;
                     }
-                }else{
-                    $acCustomer = $this->searchCustomer($customer->getEmail(),$this->coreHelper->getConnectionId($customer->getStoreId()) );
-                    if(!$acCustomer){
+                } else {
+                    $acCustomer = $this->searchCustomer($customer->getEmail(), $this->coreHelper->getConnectionId($customer->getStoreId()));
+                    if (!$acCustomer) {
                         $result = $this->curl->createContacts(self::METHOD, self::ECOM_CUSTOMER_ENDPOINT, $customerData);
                         $acCustomer = $result['data']['ecomCustomer']['id'];
-                        if(!$result['success'] && $result['status'] == "404") {
-                            $acCustomer = NULL;
+                        if (!$result['success'] && $result['status'] == "404") {
+                            $acCustomer = null;
                         }
-                        if($result['success']  && isset($result['data']['ecomCustomer']['id'])){
+                        if ($result['success'] && isset($result['data']['ecomCustomer']['id'])) {
                             $acCustomer = $result['data']['ecomCustomer']['id'];
                         }
                     }
 
                 }
-                if($acCustomer && $acContact){
+                if ($acCustomer && $acContact) {
                     $this->saveResult($customer->getId(), CronConfig::SYNCED, $acContact, $acCustomer);
-                }else{
+                } else {
                     $this->saveResult($customer->getId(), CronConfig::NOT_SYNCED, $acContact, $acCustomer);
                 }
             }
@@ -388,7 +394,8 @@ class Customer
         return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
     }
 
-    public function searchCustomer($email, $connectionId){
+    public function searchCustomer($email, $connectionId)
+    {
         $result = 0;
         $AcCustomer = $this->curl->listAllCustomers(
             self::GET_METHOD,
@@ -403,29 +410,33 @@ class Customer
         return $result;
     }
 
-    public function searchContact($email){
+    public function searchContact($email)
+    {
         $result = 0;
         $AcCustomer = $this->curl->listAllCustomers(
             self::GET_METHOD,
             self::CONTACT_ENDPOINT,
             $email
         );
-        if($AcCustomer['status'] == 200 && count($AcCustomer['data']['contacts']) > 0){
+        if ($AcCustomer['status'] == 200 && count($AcCustomer['data']['contacts']) > 0) {
             $result = $AcCustomer['data']['contacts'][0]['id'];
         }
         return $result;
     }
 
-    public function syncCustomers(){
+    public function syncCustomers()
+    {
         if ($this->customerHelper->isCustomerSyncingEnabled()) {
             $this->updateCustomers();
             $numberOfCustomers = (int)$this->customerHelper->getNumberOfCustomers();
 
             $customers = $this->customerResourceCollectionFactory->create()
-                ->addAttributeToFilter([
+                ->addAttributeToFilter(
+                    [
                     ['attribute' => self::AC_SYNC_STATUS,'null' => true ],
                     ['attribute' => self::AC_SYNC_STATUS,'neq' => CronConfig::SYNCED ]
-                ])
+                    ]
+                )
                 ->setPageSize($numberOfCustomers);
 
             foreach ($customers as $customer) {
@@ -437,6 +448,4 @@ class Customer
             }
         }
     }
-
 }
-

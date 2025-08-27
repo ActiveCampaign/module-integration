@@ -54,14 +54,14 @@ class Disconnect extends \Magento\Backend\App\Action
     /**
      * Construct
      *
-     * @param \Magento\Backend\App\Action\Context $context
-     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-     * @param \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
+     * @param \Magento\Backend\App\Action\Context                          $context
+     * @param \Magento\Framework\Controller\Result\JsonFactory             $resultJsonFactory
+     * @param \Magento\Framework\App\Cache\TypeListInterface               $cacheTypeList
      * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface
-     * @param \Magento\Store\Api\StoreRepositoryInterface $storeRepository
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \ActiveCampaign\Core\Helper\Data $activeCampaignHelper
-     * @param \ActiveCampaign\Core\Helper\Curl $curl
+     * @param \Magento\Store\Api\StoreRepositoryInterface                  $storeRepository
+     * @param \Magento\Store\Model\StoreManagerInterface                   $storeManager
+     * @param \ActiveCampaign\Core\Helper\Data                             $activeCampaignHelper
+     * @param \ActiveCampaign\Core\Helper\Curl                             $curl
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -109,7 +109,7 @@ class Disconnect extends \Magento\Backend\App\Action
                     $urlEndpoint = self::URL_ENDPOINT . '/' . $connectionId;
                     $result = $this->curl->deleteConnection(self::METHOD, $urlEndpoint);
 
-                    if ($result['success'] || str_contains($result['message'],'403 Forbidden')) {
+                    if ($result['success'] || str_contains($result['message'], '403 Forbidden')) {
                         $this->configInterface->deleteConfig(
                             \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
@@ -128,13 +128,13 @@ class Disconnect extends \Magento\Backend\App\Action
                             $urlEndpoint = self::URL_ENDPOINT . '/' . $connectionId;
                             $result = $this->curl->deleteConnection(self::METHOD, $urlEndpoint);
 
-                            if ($result['success'] || str_contains($result['message'],'403 Forbidden')) {
+                            if ($result['success'] || str_contains($result['message'], '403 Forbidden')) {
                                 $this->configInterface->deleteConfig(
                                     \ActiveCampaign\Core\Helper\Data::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
                                     \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
                                     $store->getId()
                                 );
-                            }else{
+                            } else {
                                 $return['success'] = false;
                                 $return['errorMessage'] = $result['message'];
                             }
@@ -155,11 +155,13 @@ class Disconnect extends \Magento\Backend\App\Action
             }
         }
 
-       // if ($return['success'] === true) {
-            $this->cacheTypeList->invalidate([
+        // if ($return['success'] === true) {
+            $this->cacheTypeList->invalidate(
+                [
                 \Magento\Framework\App\Cache\Type\Config::TYPE_IDENTIFIER,
                 \Magento\PageCache\Model\Cache\Type::TYPE_IDENTIFIER
-            ]);
+                ]
+            );
             $this->cacheTypeList->cleanType(\Magento\Framework\App\Cache\Type\Config::TYPE_IDENTIFIER);
         //}
 

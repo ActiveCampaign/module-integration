@@ -53,13 +53,14 @@ class OrderSyncCron
 
     /**
      * OrderSyncCron constructor.
-     * @param OrderDataSend $orderdataSend
-     * @param CollectionFactory $orderCollectionFactory
+     *
+     * @param OrderDataSend             $orderdataSend
+     * @param CollectionFactory         $orderCollectionFactory
      * @param ActiveCampaignOrderHelper $activeCampaignHelper
-     * @param State $state
-     * @param Curl $curl
-     * @param CartRepositoryInterface $quoteRepository
-     * @param LoggerInterface $logger
+     * @param State                     $state
+     * @param Curl                      $curl
+     * @param CartRepositoryInterface   $quoteRepository
+     * @param LoggerInterface           $logger
      */
     public function __construct(
         OrderDataSend $orderdataSend,
@@ -94,7 +95,7 @@ class OrderSyncCron
                         'ac_order_sync_status',
                         ['eq' => 0]
                     )
-                    ->setPageSize($OrderSyncNum)->setOrder('main_table.entity_id',"desc");
+                    ->setPageSize($OrderSyncNum)->setOrder('main_table.entity_id', "desc");
 
                 foreach ($orderCollection as $order) {
                     try {

@@ -12,7 +12,7 @@ class Data extends AbstractHelper
     const ABANDONED_CART_NUMBER_OF_ABANDONED_CART = "active_campaign/abandoned_cart/number_of_abandoned_cart";
     const ABANDONED_CART_MIN_INACTIVE_TIME = "active_campaign/abandoned_cart/min_inactive_time";
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function isAbandonedCartSyncingEnabled(?string $scopeCode = null): bool
@@ -25,7 +25,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return mixed
      */
     public function getCronTime(?string $scopeCode = null)
@@ -38,7 +38,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return mixed
      */
     public function getNumberOfAbandonedCart(?string $scopeCode = null)
@@ -51,7 +51,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return mixed
      */
     public function getMinInactiveTime(?string $scopeCode = null)
@@ -62,5 +62,4 @@ class Data extends AbstractHelper
             $scopeCode
         );
     }
-
 }

@@ -31,9 +31,9 @@ class SyncAbandonedCartData extends Field
     /**
      * Construct
      *
-     * @param Context $context
+     * @param Context                        $context
      * @param QuoteResourceCollectionFactory $quoteResourceCollectionFactory
-     * @param array $data
+     * @param array                          $data
      */
     public function __construct(
         Context $context,
@@ -47,7 +47,7 @@ class SyncAbandonedCartData extends Field
     /**
      * Remove scope label
      *
-     * @param AbstractElement $element
+     * @param  AbstractElement $element
      * @return string
      */
     public function render(AbstractElement $element)
@@ -59,7 +59,7 @@ class SyncAbandonedCartData extends Field
     /**
      * Return element html
      *
-     * @param AbstractElement $element
+     * @param  AbstractElement $element
      * @return string
      */
     protected function _getElementHtml(AbstractElement $element)
@@ -87,10 +87,12 @@ class SyncAbandonedCartData extends Field
     {
         $button = $this->getLayout()->createBlock(
             Button::class
-        )->setData([
+        )->setData(
+            [
             'id'    => 'ac_sync_abandoned_cart_button',
             'label' => __('Sync Abandoned Cart Data'),
-        ]);
+            ]
+        );
 
         return $button->toHtml();
     }
@@ -145,7 +147,7 @@ class SyncAbandonedCartData extends Field
                 ['eq' => CronConfig::FAIL_SYNCED]
             ]
         )
-        ->addFieldToFilter('items_count',['gt' => 0]);
+            ->addFieldToFilter('items_count', ['gt' => 0]);
 
         return $collection->getSize();
     }
@@ -164,7 +166,7 @@ class SyncAbandonedCartData extends Field
                 ['eq' => CronConfig::NOT_SYNCED]
             ]
         )
-            ->addFieldToFilter('items_count',['gt' => 0]);
+            ->addFieldToFilter('items_count', ['gt' => 0]);
 
         return $collection->getSize();
     }
@@ -183,7 +185,7 @@ class SyncAbandonedCartData extends Field
                 ['eq' => CronConfig::FAIL_SYNCED]
             ]
         )
-            ->addFieldToFilter('items_count',['gt' => 0]);
+            ->addFieldToFilter('items_count', ['gt' => 0]);
 
         return $collection->getSize();
     }

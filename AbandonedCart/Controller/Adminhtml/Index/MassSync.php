@@ -37,9 +37,9 @@ class MassSync extends \Magento\Backend\App\Action implements HttpPostActionInte
     protected $abandonedCartSendData;
 
     /**
-     * @param Context $context
-     * @param Filter $filter
-     * @param CollectionFactory $collectionFactory
+     * @param Context               $context
+     * @param Filter                $filter
+     * @param CollectionFactory     $collectionFactory
      * @param AbandonedCartSendData $abandonedCartSendData
      */
     public function __construct(
@@ -69,31 +69,35 @@ class MassSync extends \Magento\Backend\App\Action implements HttpPostActionInte
 
         foreach ($collection as $quote) {
             $ac_sync_status = $quote->getData('ac_sync_status');
- //           if ($ac_sync_status) {
-  //              $countAlreadySync++;
-   //         } else {
+            //           if ($ac_sync_status) {
+            //              $countAlreadySync++;
+            //         } else {
                 $quoteId = $quote->getEntityId();
                 $result = $this->abandonedCartSendData->sendAbandonedCartData($quoteId);
-                if (array_key_exists('success', $result)) {
-                    $countSync++;
-                } else if (array_key_exists('error', $result)) {
-                    $countFailSync++;
-                }
-     //       }
+            if (array_key_exists('success', $result)) {
+                $countSync++;
+            } elseif (array_key_exists('error', $result)) {
+                $countFailSync++;
+            }
+            //       }
         }
 
         if ($countSync || $countFailSync) {
-            $this->messageManager->addNoticeMessage(__(
-                'Orders synced: %1 Orders failed: %2',
-                $countSync,
-                $countFailSync
-            ));
+            $this->messageManager->addNoticeMessage(
+                __(
+                    'Orders synced: %1 Orders failed: %2',
+                    $countSync,
+                    $countFailSync
+                )
+            );
         }
         if ($countAlreadySync) {
             $this->messageManager->addNoticeMessage(__('%1 order(s) had already been synced.', $countAlreadySync));
         }
 
-        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        /**
+ * @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect
+*/
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 
         return $resultRedirect->setPath('*/*/');

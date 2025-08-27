@@ -50,11 +50,11 @@ class CustomerSyncStatus extends \Magento\Backend\Block\Template
     /**
      * Construct
      *
-     * @param \Magento\Backend\Block\Template\Context $context
+     * @param \Magento\Backend\Block\Template\Context           $context
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
-     * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param \Magento\Framework\Api\FilterBuilder $filterBuilder
-     * @param array $data
+     * @param \Magento\Framework\Api\SearchCriteriaBuilder      $searchCriteriaBuilder
+     * @param \Magento\Framework\Api\FilterBuilder              $filterBuilder
+     * @param array                                             $data
      *
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -132,13 +132,15 @@ class CustomerSyncStatus extends \Magento\Backend\Block\Template
      */
     private function getSyncedCustomerCount(): int
     {
-        return $this->getCustomerCountHelper([
+        return $this->getCustomerCountHelper(
+            [
             $this->filterBuilder
                 ->setField(self::AC_SYNC_STATUS)
                 ->setValue(\ActiveCampaign\Customer\Model\Config\CronConfig::SYNCED)
                 ->setConditionType('eq')
                 ->create()
-        ]);
+            ]
+        );
     }
 
     /**
@@ -173,12 +175,14 @@ class CustomerSyncStatus extends \Magento\Backend\Block\Template
      */
     private function getFailSyncedCustomerCount(): int
     {
-        return $this->getCustomerCountHelper([
+        return $this->getCustomerCountHelper(
+            [
             $this->filterBuilder
                 ->setField(self::AC_SYNC_STATUS)
                 ->setValue(\ActiveCampaign\Customer\Model\Config\CronConfig::FAIL_SYNCED)
                 ->setConditionType('eq')
                 ->create()
-        ]);
+            ]
+        );
     }
 }

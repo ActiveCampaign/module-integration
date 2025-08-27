@@ -9,7 +9,9 @@ use Magento\Ui\Component\Listing\Columns\Column;
 
 class Action extends Column
 {
-    /** Url path */
+    /**
+     * Url path
+     */
     public const ROW_VIEW_URL = 'synclog/index/view';
 
     /**

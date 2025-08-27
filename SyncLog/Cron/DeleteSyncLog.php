@@ -9,6 +9,7 @@ use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use ActiveCampaign\SyncLog\Helper\Data;
+
 class DeleteSyncLog
 {
 
@@ -17,11 +18,15 @@ class DeleteSyncLog
 
 
 
-    /** @var ResourceConnection  */
-    private  $connection;
+    /**
+     * @var ResourceConnection
+     */
+    private $connection;
 
-    /** @var DateTime  */
-    private  $dateTime;
+    /**
+     * @var DateTime
+     */
+    private $dateTime;
 
     private $helper;
 
@@ -29,8 +34,7 @@ class DeleteSyncLog
         ResourceConnection $connection,
         DateTime $dateTime,
         Data $helper
-    )
-    {
+    ) {
         $this->connection = $connection;
         $this->dateTime = $dateTime;
         $this->helper = $helper;
@@ -44,7 +48,7 @@ class DeleteSyncLog
     public function execute()
     {
 
-        if($this->helper->isDeletingEnabled()) {
+        if ($this->helper->isDeletingEnabled()) {
             $connection = $this->connection->getConnection();
             $tableName = $connection->getTableName(self::SYNCLOG_TABLE);
             $currentDate = $this->dateTime->gmtDate("Y-m-d", strtotime('-'.$this->helper->removeAfterDays().' days'));
@@ -55,6 +59,4 @@ class DeleteSyncLog
             $connection->delete($tableName, $whereConditions);
         }
     }
-
-
 }

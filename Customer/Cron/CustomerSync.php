@@ -4,7 +4,6 @@ namespace ActiveCampaign\Customer\Cron;
 
 use ActiveCampaign\Customer\Model\Customer;
 
-
 class CustomerSync
 {
 
@@ -16,12 +15,12 @@ class CustomerSync
 
     /**
      * CustomerSync constructor.
+     *
      * @param Customer $customer
      */
     public function __construct(
         Customer $customer
-    )
-    {
+    ) {
         $this->customer = $customer;
     }
 
@@ -29,5 +28,4 @@ class CustomerSync
     {
         $this->customer->syncCustomers();
     }
-
 }

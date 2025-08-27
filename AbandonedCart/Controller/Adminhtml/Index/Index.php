@@ -18,7 +18,7 @@ class Index extends Action
     protected $resultPageFactory;
 
     /**
-     * @param Context $context
+     * @param Context     $context
      * @param PageFactory $resultJsonFactory
      */
     public function __construct(

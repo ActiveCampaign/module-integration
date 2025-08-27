@@ -30,9 +30,10 @@ class Data extends AbstractHelper
 
     /**
      * Data constructor.
-     * @param Context $context
-     * @param \Magento\Framework\App\State $state
-     * @param ConfigInterface $configInterface
+     *
+     * @param Context                                        $context
+     * @param \Magento\Framework\App\State                   $state
+     * @param ConfigInterface                                $configInterface
      * @param \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
      */
     public function __construct(
@@ -40,8 +41,7 @@ class Data extends AbstractHelper
         \Magento\Framework\App\State $state,
         ConfigInterface $configInterface,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->configInterface = $configInterface;
         $this->cacheTypeList = $cacheTypeList;
@@ -49,7 +49,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function isNewslettersSyncEnabled($scopeCode = null)
@@ -62,7 +62,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return bool
      */
     public function getLastSync($scopeCode = null)
@@ -82,7 +82,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param null $scopeCode
+     * @param  null $scopeCode
      * @return mixed
      */
     public function getNewsletterSyncNum($scopeCode = null)

@@ -50,13 +50,14 @@ class Curl extends AbstractHelper
 
     /**
      * Curl constructor.
-     * @param Context $context
-     * @param JsonHelper $jsonHelper
-     * @param Logger $logger
-     * @param Data $activeCampaignHelper
-     * @param SyncLog $syncLog
+     *
+     * @param Context       $context
+     * @param JsonHelper    $jsonHelper
+     * @param Logger        $logger
+     * @param Data          $activeCampaignHelper
+     * @param SyncLog       $syncLog
      * @param SyncLogHelper $syncLogHelper
-     * @param Client|null $client
+     * @param Client|null   $client
      */
     public function __construct(
         Context              $context,
@@ -81,8 +82,8 @@ class Curl extends AbstractHelper
      *
      * @param string $method
      * @param string $urlEndpoint
-     * @param array $request
-     * @param array $data
+     * @param array  $request
+     * @param array  $data
      *
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -111,7 +112,7 @@ class Curl extends AbstractHelper
      *
      * @param string $method
      * @param string $urlEndpoint
-     * @param array $data
+     * @param array  $data
      *
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -136,7 +137,7 @@ class Curl extends AbstractHelper
      *
      * @param string $method
      * @param string $urlEndpoint
-     * @param array $data
+     * @param array  $data
      *
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -159,8 +160,8 @@ class Curl extends AbstractHelper
     /**
      * Delete order data
      *
-     * @param string $method
-     * @param string $urlEndpoint
+     * @param string     $method
+     * @param string     $urlEndpoint
      * @param int|string $orderId
      *
      * @return array
@@ -169,7 +170,7 @@ class Curl extends AbstractHelper
     public function orderDataDelete(
         string $method,
         string $urlEndpoint,
-         $orderId
+        $orderId
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
@@ -207,7 +208,7 @@ class Curl extends AbstractHelper
      *
      * @param string $method
      * @param string $urlEndpoint
-     * @param array $data
+     * @param array  $data
      *
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -254,7 +255,7 @@ class Curl extends AbstractHelper
      *
      * @param string $method
      * @param string $urlEndpoint
-     * @param array $data
+     * @param array  $data
      *
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -319,7 +320,7 @@ class Curl extends AbstractHelper
      * @param string $urlEndpoint
      * @param string $method
      * @param string $url
-     * @param array $headers
+     * @param array  $headers
      * @param string $bodyData
      *
      * @return array
@@ -352,7 +353,7 @@ class Curl extends AbstractHelper
             $synclog->setMethod($method);
             $synclog->setRequest($this->jsonHelper->serialize($request));
 
-            if($this->activeCampaignHelper->isDebugEnabled()){
+            if ($this->activeCampaignHelper->isDebugEnabled()) {
                 $this->logger->info('REQUEST', $request);
             }
 
@@ -368,7 +369,7 @@ class Curl extends AbstractHelper
             $body = $resultCurl->getBody()->getContents();
             $response = $this->jsonHelper->unserialize($body);
 
-            if($this->activeCampaignHelper->isDebugEnabled()){
+            if ($this->activeCampaignHelper->isDebugEnabled()) {
                 $this->logger->info('RESPONSE', $response);
             }
 
@@ -406,7 +407,7 @@ class Curl extends AbstractHelper
         /**
          * @todo Replace with repository service contract
          */
-        if(!$this->syncLogHelper->isLogError() || $synclog->getStatus()==0){
+        if (!$this->syncLogHelper->isLogError() || $synclog->getStatus()==0) {
             $synclog->save();
         }
         $synclog->unsetData();
