@@ -54,7 +54,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return bool
      */
-    public function isEnabled(?string $scopeCode = null): bool
+    public function isEnabled($scopeCode = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_GENERAL_STATUS,
@@ -70,7 +70,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return string|null
      */
-    public function getApiUrl(?string $scopeCode = null): ?string
+    public function getApiUrl( $scopeCode = null): ?string
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_GENERAL_API_URL,
@@ -86,7 +86,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return string|null
      */
-    public function getApiKey(?string $scopeCode = null): ?string
+    public function getApiKey($scopeCode = null): ?string
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_GENERAL_API_KEY,
@@ -102,7 +102,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return string|null
      */
-    public function getConnectionId(?string $scopeCode = null): ?string
+    public function getConnectionId($scopeCode = null): ?string
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID,
@@ -118,7 +118,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return string
      */
-    public function getStoreLogo(?string $scopeCode = null): string
+    public function getStoreLogo( $scopeCode = null): string
     {
         $folderName = \Magento\Config\Model\Config\Backend\Image\Logo::UPLOAD_DIR;
         $storeLogoPath = $this->scopeConfig->getValue(
@@ -144,7 +144,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return bool
      */
-    public function isDebugEnabled(?string $scopeCode = null)
+    public function isDebugEnabled( $scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_SYNLOG_DEBUG,

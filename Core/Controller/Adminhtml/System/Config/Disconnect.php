@@ -99,7 +99,8 @@ class Disconnect extends \Magento\Backend\App\Action
         $return = [];
         $return['success'] = false;
 
-        if ($request['status']
+        if (isset($request['status'])
+            && $request['status']
             && !empty($request['api_url'])
             && !empty($request['api_key'])
         ) {

@@ -96,7 +96,8 @@ class Connect extends \Magento\Backend\App\Action
 
         $return = [];
 
-        if ($request['status']
+        if (isset($request['status'])
+            && $request['status']
             && !empty($request['api_url'])
             && !empty($request['api_key'])
         ) {
