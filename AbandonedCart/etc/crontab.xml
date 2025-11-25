@@ -1,6 +1,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="default">
         <job name="ac_abandoned_cart_sync_cron_job" instance="ActiveCampaign\AbandonedCart\Cron\AbandonedCartSync" method="execute">
+            <schedule>* * * * *</schedule>
             <config_path>crontab/default/jobs/ac_abandoned_cart_sync_cron_job/schedule/cron_expr</config_path>
         </job>
     </group>
