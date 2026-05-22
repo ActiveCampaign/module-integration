@@ -43,7 +43,7 @@ class NewsletterSyncStatus extends \Magento\Backend\Block\Template
     public function getNewsletterCountHelper(array $filter = []): int
     {
 
-        $this->newsletterCollection->clear()->getSelect()->reset(\Magento\Framework\Db\Select::WHERE);
+        $this->newsletterCollection->clear()->getSelect()->reset(\Magento\Framework\DB\Select::WHERE);
         $this->newsletterCollection->addFieldToFilter('customer_id', null);
         if (count($filter)) {
             foreach ($filter as $fil) {

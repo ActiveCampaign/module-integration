@@ -113,6 +113,37 @@ class AbandonedCartSendData extends AbstractModel
      * @var StoreManagerInterface
      */
     protected $storeManager;
+
+    /**
+     * @var AbandonedCartHelper
+     */
+    private $abandonedCartHelper;
+
+    /**
+     * @var QuoteResourceCollectionFactory
+     */
+    private $quoteResourceCollectionFactory;
+
+    /**
+     * @var CartRepositoryInterface
+     */
+    private $cartRepositoryInterface;
+
+    /**
+     * @var CoreHelper
+     */
+    private $coreHelper;
+
+    /**
+     * @var QuoteItemCollectionFactory
+     */
+    private $quoteItemCollectionFactory;
+
+    /**
+     * @var CustomerModel
+     */
+    private $customerModel;
+
     /**
      * @var DateTime
      */
@@ -408,10 +439,29 @@ class AbandonedCartSendData extends AbstractModel
             $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
             if (count($product->getMediaGalleryImages()->getItems()) > 0) {
                 $imageUrl = $baseUrl . $product->getImage();
-            } elseif (($quoteItem->getProductType() !== 'simple') && $quoteItem->getOptionByCode('product_type') && ($quoteItem->getOptionByCode('product_type')->getProductId())) {
-                $product = $this->_productRepositoryFactory->create()
-                    ->getById($quoteItem->getOptionByCode('product_type')->getProductId(), false, $storeId);
-                $imageUrl = $baseUrl . $product->getImage();
+            } else {
+                $parentProductId = null;
+                if ($quoteItem->getParentItem()) {
+                    $parentProductId = (int)$quoteItem->getParentItem()->getProductId();
+                }
+                if (!$parentProductId && $quoteItem->getOptionByCode('super_product_config')) {
+                    $cfg = $quoteItem->getOptionByCode('super_product_config')->getValue();
+                    if ($cfg) {
+                        $data = json_decode($cfg, true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($data) && !empty($data['product_id'])) {
+                            $parentProductId = (int) $data['product_id'];
+                        }
+                    }
+                }
+                if (!$parentProductId && $quoteItem->getOptionByCode('product_type') && $quoteItem->getOptionByCode('product_type')->getProductId()) {
+                    $parentProductId = (int)$quoteItem->getOptionByCode('product_type')->getProductId();
+                }
+                if ($parentProductId) {
+                    $parentProduct = $this->_productRepositoryFactory->create()->getById($parentProductId, false, $storeId);
+                    if ($parentProduct && $parentProduct->getImage()) {
+                        $imageUrl = $baseUrl . $parentProduct->getImage();
+                    }
+                }
             }
         }
         return $imageUrl;

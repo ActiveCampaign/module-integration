@@ -96,10 +96,12 @@ class Curl extends AbstractHelper
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiUrl = empty($apiUrl) ? $request['api_url'] : $apiUrl;
+        $apiUrl = rtrim((string)$apiUrl, '/');
 
         $apiKey = $this->activeCampaignHelper->getApiKey();
         $apiKey = empty($apiKey) ? $request['api_key'] : $apiKey;
 
+        $urlEndpoint = ltrim($urlEndpoint, '/');
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
         $headers = $this->getHeaders($apiKey);
@@ -124,7 +126,9 @@ class Curl extends AbstractHelper
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
+        $apiUrl = rtrim((string)$apiUrl, '/');
 
+        $urlEndpoint = ltrim($urlEndpoint, '/');
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
         $headers = $this->getHeaders($apiKey);
@@ -149,7 +153,9 @@ class Curl extends AbstractHelper
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
+        $apiUrl = rtrim((string)$apiUrl, '/');
 
+        $urlEndpoint = ltrim($urlEndpoint, '/');
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $bodyData = (!empty($data)) ? $this->jsonHelper->serialize($data) : '';
         $headers = $this->getHeaders($apiKey);
@@ -174,7 +180,9 @@ class Curl extends AbstractHelper
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
+        $apiUrl = rtrim((string)$apiUrl, '/');
 
+        $urlEndpoint = ltrim($urlEndpoint, '/');
         $url = $apiUrl . self::API_VERSION . $urlEndpoint . $orderId;
         $headers = $this->getHeaders($apiKey);
 
@@ -196,7 +204,9 @@ class Curl extends AbstractHelper
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
+        $apiUrl = rtrim((string)$apiUrl, '/');
 
+        $urlEndpoint = ltrim($urlEndpoint, '/');
         $url = $apiUrl . self::API_VERSION . $urlEndpoint;
         $headers = $this->getHeaders($apiKey);
 
@@ -275,6 +285,28 @@ class Curl extends AbstractHelper
         return $this->sendRequest('ecomAbandonedCarts', $method, $url, $headers, $bodyData);
     }
 
+    public function graphql(
+        string $query,
+        array $variables = [],
+        ?string $operationName = null
+    ): array {
+        $apiUrl = $this->activeCampaignHelper->getApiUrl();
+        $apiKey = $this->activeCampaignHelper->getApiKey();
+
+        $url = $apiUrl . '/api/3/ecom/graphql';
+        $payload = [
+            'query' => $query,
+            'variables' => $variables
+        ];
+        if ($operationName !== null) {
+            $payload['operationName'] = $operationName;
+        }
+        $bodyData = $this->jsonHelper->serialize($payload);
+        $headers = $this->getHeaders($apiKey);
+        
+        return $this->sendRequest('graphql', 'POST', $url, $headers, $bodyData);
+    }
+
     /**
      * List all customers
      *
@@ -335,7 +367,7 @@ class Curl extends AbstractHelper
     ): array {
         $result = [];
         $synclog = $this->syncLog;
-
+        
         try {
             $request = [
                 'METHOD'        => $method,

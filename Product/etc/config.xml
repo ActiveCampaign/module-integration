@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <active_campaign>
+            <product_sync>
+                <product_sync_enable>0</product_sync_enable>
+                <product_sync_num>100</product_sync_num>
+            </product_sync>
+        </active_campaign>
+    </default>
+    <crontab>
+        <default>
+            <jobs>
+                <ac_product_sync_cron_job>
+                    <schedule>
+                        <cron_expr>* * * * *</cron_expr>
+                    </schedule>
+                    <run>
+                        <model>ActiveCampaign\Product\Cron\ProductSyncCron::execute</model>
+                    </run>
+                </ac_product_sync_cron_job>
+            </jobs>
+        </default>
+    </crontab>
+</config>

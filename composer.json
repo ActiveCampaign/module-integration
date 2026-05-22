@@ -2,7 +2,7 @@
     "name": "activecampaign/module-integration",
     "description": "ActiveCampaign extension for Magento 2.3 and 2.4",
     "type": "magento2-component",
-    "version": "2.1.27",
+    "version": "2.1.28",
     "license": "OSL-3.0",
     "require": {
         "php": "~7.3.0||~7.4.0||~8.0||~8.1||~8.2||~8.3||~8.4"
@@ -13,7 +13,8 @@
         "activecampaign/abandoned-cart": "self.version",
         "activecampaign/order": "self.version",
         "activecampaign/sync-log": "self.version",
-        "activecampaign/newsletter": "self.version"
+        "activecampaign/newsletter": "self.version",
+        "activecampaign/product": "self.version"
     },
     "autoload": {
         "files": [
@@ -22,7 +23,8 @@
             "AbandonedCart/registration.php",
             "Order/registration.php",
             "SyncLog/registration.php",
-            "Newsletter/registration.php"
+            "Newsletter/registration.php",
+            "Product/registration.php"
         ],
         "psr-4": {
             "ActiveCampaign\\Core\\": "Core",
@@ -30,7 +32,8 @@
             "ActiveCampaign\\AbandonedCart\\": "AbandonedCart",
             "ActiveCampaign\\Order\\": "Order",
             "ActiveCampaign\\SyncLog\\": "SyncLog",
-            "ActiveCampaign\\Newsletter\\": "Newsletter"
+            "ActiveCampaign\\Newsletter\\": "Newsletter",
+            "ActiveCampaign\\Product\\": "Product"
         }
     },
     "minimum-stability": "dev",

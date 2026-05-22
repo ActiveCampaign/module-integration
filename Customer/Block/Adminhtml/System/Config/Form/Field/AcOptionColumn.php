@@ -10,6 +10,7 @@ class AcOptionColumn extends Select
     private $curl;
     private $acHelper;
     const AC_LIMIT = 20;
+
     public function __construct(
         \Magento\Framework\View\Element\Context $context,
         \ActiveCampaign\Core\Helper\Curl $curl,
@@ -39,39 +40,29 @@ class AcOptionColumn extends Select
 
     private function getSourceOptions(): array
     {
-        $data = [];
-        $fields=[];
+        $fields = [];
         if ($this->acHelper->isEnabled() && $this->acHelper->getConnectionId()) {
-            $count =0;
-            $total = self::AC_LIMIT ;
+            $count = 0;
+            $total = self::AC_LIMIT;
             while ($count < $total) {
-                $data = $this->curl->createConnection('GET', '/fields?limit='. self::AC_LIMIT .'&offset='.$count, [], []);
-                if (count($data) && isset($data['data']) && isset($data['data']['fields']) && count($data['data']['fields'])) {
-
-                    $data = $data['data'];
-                    foreach ($data['fields'] as $opt) {
-                        $fields[]=['label' => $opt['title'], 'value'=> $opt['id']];
+                $resp = $this->curl->createConnection('GET', 'fields?limit=' . self::AC_LIMIT . '&offset=' . $count, [], []);
+                if (!empty($resp['success']) && !empty($resp['data']['fields']) && is_array($resp['data']['fields'])) {
+                    foreach ($resp['data']['fields'] as $opt) {
+                        if (isset($opt['title'], $opt['id'])) {
+                            $fields[] = ['label' => $opt['title'], 'value' => $opt['id']];
+                        }
                     }
                 }
-                $total = $data['meta']['total'];
-                $count +=  self::AC_LIMIT;
+                if (!empty($resp['data']['meta']['total'])) {
+                    $total = (int)$resp['data']['meta']['total'];
+                } else {
+                    break;
+                }
+                $count += self::AC_LIMIT;
             }
             
         }
 
         return  $fields;
-    }
-
-    protected function getCustomerAtt()
-    {
-        $ret = [];
-        $collection = $this->attrCollection->create();
-
-        foreach ($collection as $item) {
-            $ret[] = ['label' => $item->getFrontendLabel(), 'value' => $item->getId() ];
-        }
-
-
-        return $ret;
     }
 }

@@ -14,7 +14,6 @@ use Psr\Log\LoggerInterface;
 use ActiveCampaign\Customer\Model\Customer;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
-use function Safe\strtotime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 class NewsletterSyncCron

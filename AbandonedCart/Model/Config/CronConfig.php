@@ -1,7 +1,16 @@
 <?php
-
+/**
+ * @category  ActiveCampaign
+ * @package   ActiveCampaign_AbandonedCart
+ * @author    ActiveCampaign
+ * @license   OSL-3.0, AFL-3.0
+ * @link      https://www.activecampaign.com
+ */
 namespace ActiveCampaign\AbandonedCart\Model\Config;
 
+/**
+ * Cron config backend model.
+ */
 class CronConfig extends \Magento\Framework\App\Config\Value
 {
     const SYNCED = 1;
@@ -9,31 +18,37 @@ class CronConfig extends \Magento\Framework\App\Config\Value
     const FAIL_SYNCED = 2;
 
     /**
-     * Cron string path
+     * Cron string path.
      */
     const CRON_STRING_PATH = 'crontab/default/jobs/ac_abandoned_cart_sync_cron_job/schedule/cron_expr';
 
     /**
-     * Cron model path
+     * Cron model path.
      */
     const CRON_MODEL_PATH = 'crontab/default/jobs/ac_abandoned_cart_sync_cron_job/run/model';
 
     /**
-     * @var \Magento\Framework\App\Config\ValueFactory
+     * Config resource writer.
+     *
+     * @var \Magento\Framework\App\Config\ConfigResource\ConfigInterface
      */
-    protected $_configValueFactory;
+    protected $configWriter;
 
     /**
+     * Run model path.
+     *
      * @var string
      */
-    protected $_runModelPath = '';
+    protected $runModelPath = '';
 
     /**
+     * Constructor.
+     *
      * @param \Magento\Framework\Model\Context                        $context
      * @param \Magento\Framework\Registry                             $registry
      * @param \Magento\Framework\App\Config\ScopeConfigInterface      $config
+     * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configWriter
      * @param \Magento\Framework\App\Cache\TypeListInterface          $cacheTypeList
-     * @param \Magento\Framework\App\Config\ValueFactory              $configValueFactory
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb           $resourceCollection
      * @param string                                                  $runModelPath
@@ -43,21 +58,20 @@ class CronConfig extends \Magento\Framework\App\Config\Value
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
+        \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configWriter,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
-        \Magento\Framework\App\Config\ValueFactory $configValueFactory,
         ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
-        ?string  $runModelPath = '',
+        ?string $runModelPath = '',
         ?array $data = []
     ) {
-        $this->_runModelPath = $runModelPath;
-        $this->_configValueFactory = $configValueFactory;
+        $this->runModelPath = $runModelPath;
+        $this->configWriter = $configWriter;
         parent::__construct($context, $registry, $config, $cacheTypeList, $resource, $resourceCollection, $data);
     }
 
     /**
-     * @inheritdoc
-     *
+     * {@inheritdoc}
      * @return $this
      * @throws \Exception
      */
@@ -86,22 +100,8 @@ class CronConfig extends \Magento\Framework\App\Config\Value
         $cronExprString = join(' ', $cronExprArray);
 
         try {
-            $this->_configValueFactory->create()->load(
-                self::CRON_STRING_PATH,
-                'path'
-            )->setValue(
-                $cronExprString
-            )->setPath(
-                self::CRON_STRING_PATH
-            )->save();
-            $this->_configValueFactory->create()->load(
-                self::CRON_MODEL_PATH,
-                'path'
-            )->setValue(
-                $this->_runModelPath
-            )->setPath(
-                self::CRON_MODEL_PATH
-            )->save();
+            $this->configWriter->saveConfig(self::CRON_STRING_PATH, $cronExprString);
+            $this->configWriter->saveConfig(self::CRON_MODEL_PATH, $this->runModelPath);
         } catch (\Exception $e) {
             throw new \Magento\Framework\Exception\LocalizedException(__('We can\'t save the cron expression.'));
         }

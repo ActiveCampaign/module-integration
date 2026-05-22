@@ -94,6 +94,8 @@ class AddCustomerAttributeAcContactId implements DataPatchInterface, PatchRevert
         }
 
         $this->moduleDataSetup->getConnection()->endSetup();
+
+        return $this;
     }
 
     public function revert()

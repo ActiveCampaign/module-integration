@@ -13,4 +13,9 @@
             </argument>
         </arguments>
     </type>
+    <type name="ActiveCampaign\Core\Helper\Data">
+        <arguments>
+            <argument name="logo" xsi:type="object">Magento\Theme\Block\Html\Header\Logo\Proxy</argument>
+        </arguments>
+    </type>
 </config>

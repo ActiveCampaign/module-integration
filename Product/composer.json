@@ -1,6 +1,6 @@
 {
-    "name": "activecampaign/core",
-    "description": "ActiveCampaign Core",
+    "name": "activecampaign/product",
+    "description": "ActiveCampaign Products integration",
     "type": "magento2-module",
     "license": [
         "OSL-3.0",
@@ -9,7 +9,7 @@
     "config": {
         "sort-packages": true
     },
-    "version": "2.1.30",
+    "version": "1.0.3",
     "require": {
         "php": "~7.3.0||~7.4.0||~8.0||~8.1||~8.2||~8.3||~8.4"
     },
@@ -18,7 +18,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "ActiveCampaign\\Core\\": ""
+            "ActiveCampaign\\Product\\": ""
         }
     }
 }

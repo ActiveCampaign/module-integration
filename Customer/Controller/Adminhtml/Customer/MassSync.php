@@ -95,7 +95,7 @@ class MassSync extends AbstractMassAction implements HttpPostActionInterface
         /**
  * @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect
 */
-        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+        $resultRedirect = $this->resultFactory->create('redirect');
         $resultRedirect->setPath('customer/index');
 
         return $resultRedirect;

@@ -98,7 +98,7 @@ class MassSync extends \Magento\Backend\App\Action implements HttpPostActionInte
         /**
  * @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect
 */
-        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+        $resultRedirect = $this->resultFactory->create('redirect');
 
         return $resultRedirect->setPath('*/*/');
     }

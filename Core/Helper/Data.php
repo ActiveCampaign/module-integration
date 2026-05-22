@@ -11,7 +11,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public const ACTIVE_CAMPAIGN_GENERAL_CONNECTION_ID = 'active_campaign/general/connection_id';
     public const ACTIVE_CAMPAIGN_SYNLOG_DEBUG = 'active_campaign/synclog/debug_enabled';
 
-
     /**
      * @var \Magento\Store\Api\StoreRepositoryInterface
      */
@@ -70,7 +69,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return string|null
      */
-    public function getApiUrl( $scopeCode = null): ?string
+    public function getApiUrl($scopeCode = null): ?string
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_GENERAL_API_URL,
@@ -118,7 +117,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return string
      */
-    public function getStoreLogo( $scopeCode = null): string
+    public function getStoreLogo($scopeCode = null): string
     {
         $folderName = \Magento\Config\Model\Config\Backend\Image\Logo::UPLOAD_DIR;
         $storeLogoPath = $this->scopeConfig->getValue(
@@ -144,7 +143,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return bool
      */
-    public function isDebugEnabled( $scopeCode = null)
+    public function isDebugEnabled($scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_SYNLOG_DEBUG,
@@ -162,7 +161,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function priceToCents(?float $price = 0.0): int
     {
-        $price = (is_null($price)) ? $price = 0.0 : $price;
+        $price = $price ?? 0.0;
         return (int) (round($price, 2) * 100);
     }
 

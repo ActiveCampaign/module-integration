@@ -94,6 +94,8 @@ class AddCustomerAttributeAcSyncStatus implements DataPatchInterface, PatchRever
         }
 
         $this->moduleDataSetup->getConnection()->endSetup();
+
+        return $this;
     }
 
     public function revert()
