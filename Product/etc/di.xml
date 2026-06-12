@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Framework\Console\CommandList">
+    <type name="ActiveCampaign\Product\Model\Config\CronConfig">
         <arguments>
-            <argument name="commands" xsi:type="array">
-                <item name="activecampaign_product_bulk_upsert" xsi:type="object">ActiveCampaign\Product\Console\Command\BulkUpsertCommand</item>
-            </argument>
+            <argument name="resource" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data</argument>
+            <argument name="resourceCollection" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data\Collection\Proxy</argument>
+            <argument name="runModelPath" xsi:type="string">ActiveCampaign\Product\Cron\ProductSyncCron::execute</argument>
         </arguments>
     </type>
     <type name="ActiveCampaign\Product\Cron\ProductSyncCron">

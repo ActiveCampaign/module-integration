@@ -4,6 +4,11 @@
         <active_campaign>
             <product_sync>
                 <product_sync_enable>0</product_sync_enable>
+                <cron_minute>*/10</cron_minute>
+                <cron_hour>*</cron_hour>
+                <cron_day>*</cron_day>
+                <cron_month>*</cron_month>
+                <cron_weekday>*</cron_weekday>
                 <product_sync_num>100</product_sync_num>
             </product_sync>
         </active_campaign>
@@ -13,7 +18,7 @@
             <jobs>
                 <ac_product_sync_cron_job>
                     <schedule>
-                        <cron_expr>* * * * *</cron_expr>
+                        <cron_expr>*/10 * * * *</cron_expr>
                     </schedule>
                     <run>
                         <model>ActiveCampaign\Product\Cron\ProductSyncCron::execute</model>
