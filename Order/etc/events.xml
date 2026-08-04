@@ -3,4 +3,10 @@
     <event name="checkout_onepage_controller_success_action">
         <observer instance="ActiveCampaign\Order\Observer\OrderSync" name="ac_order_sync_sales_order_save_after"/>
     </event>
+    <event name="sales_order_save_before">
+        <observer instance="ActiveCampaign\Order\Observer\OrderCancelFlag" name="ac_order_cancel_flag"/>
+    </event>
+    <event name="sales_order_save_after">
+        <observer instance="ActiveCampaign\Order\Observer\OrderCancelSync" name="ac_order_cancel_sync"/>
+    </event>
 </config>

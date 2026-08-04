@@ -88,11 +88,6 @@ class OrderSync implements ObserverInterface
                 if ($acOrderStatus == 0) {
                     $this->orderdataSend->orderDataSend($orderData);
                 }
-
-                if ($orderData->getStatus() == 'canceled') {
-                    $orderSyncId = $orderData->getAcOrderSyncId();
-                    $this->curl->orderDataDelete(self::DELETE_METHOD, self::URL_ENDPOINT, $orderSyncId);
-                }
             }
         }
     }

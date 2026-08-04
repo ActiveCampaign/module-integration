@@ -16,6 +16,7 @@ use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -126,6 +127,11 @@ class OrderDataSend
     private $dateTime;
 
     /**
+     * @var ResourceConnection
+     */
+    private $resourceConnection;
+
+    /**
      * OrderDataSend constructor.
      *
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
@@ -146,6 +152,7 @@ class OrderDataSend
      * @param CartRepositoryInterface           $quoteRepository
      * @param Customer                          $customer
      * @param TimezoneInterface                 $dateTime
+     * @param ResourceConnection                $resourceConnection
      */
     public function __construct(
         ProductRepositoryInterfaceFactory $productRepositoryFactory,
@@ -165,7 +172,8 @@ class OrderDataSend
         CustomerResource $customerResource,
         CartRepositoryInterface $quoteRepository,
         Customer $customer,
-        TimezoneInterface $dateTime
+        TimezoneInterface $dateTime,
+        ResourceConnection $resourceConnection
     ) {
         $this->_productRepositoryFactory = $productRepositoryFactory;
         $this->imageHelperFactory = $imageHelperFactory;
@@ -185,6 +193,7 @@ class OrderDataSend
         $this->quoteRepository = $quoteRepository;
         $this->customer =  $customer;
         $this->dateTime = $dateTime;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -197,6 +206,9 @@ class OrderDataSend
         $return = [];
         $isEnabled = $this->activeCampaignOrderHelper->isOrderSyncEnabled();
         if ($isEnabled) {
+            if ($order->getStatus() === 'canceled') {
+                return $this->sendCancelledOrder($order);
+            }
             try {
                 $connectionId = $this->activeCampaignHelper->getConnectionId($order->getStoreId());
                 $customerId = $order->getCustomerId();
@@ -224,17 +236,12 @@ class OrderDataSend
                     $this->saveCustomerResultQuote($quote, $customerAcId);
                 }
                 $timezone = $this->dateTime->getConfigTimezone(\Magento\Store\Model\ScopeInterface::SCOPE_STORES, $order->getStoreId());
+                $items = [];
                 foreach ($order->getAllVisibleItems() as $item) {
+                    $product = $this->resolveProduct($item, (int)$order->getStoreId());
 
-                    $imageUrl = $this->imageUrl($item, $item->getProduct(), $order->getStoreId());
-
-                    $categories = $item->getProduct()->getCategoryCollection()->addAttributeToSelect('name');
-
-                    $categoriesName = [];
-                    foreach ($categories as $category) {
-                        $categoriesName[] = $category->getName();
-                    }
-                    $categoriesName = implode(', ', $categoriesName);
+                    $imageUrl = $this->imageUrl($item, $product, $order->getStoreId());
+                    $categoriesName = $this->getProductCategoriesName($product);
 
                     $items[] = [
                                 "externalid" => $item->getProductId(),
@@ -245,7 +252,7 @@ class OrderDataSend
                                 "sku" => $item->getSku(),
                                 "description" => $item->getDescription(),
                                 "imageUrl" => $imageUrl,
-                                "productUrl" => $item->getProduct()->getProductUrl()
+                                "productUrl" => $product ? (string)$product->getProductUrl() : ''
                             ];
                 }
                 $data = [
@@ -289,18 +296,19 @@ class OrderDataSend
                             $data
                         );
                     }
-                    if ($result['status'] == '422' || $result['status'] == '400') {
-                        $ecomAlreadyExistOrderData = [];
-                        $ecomAlreadyExistOrderResult = $this->curl->createContacts(
-                            self::GET_METHOD,
-                            self::URL_ENDPOINT,
-                            $ecomAlreadyExistOrderData
-                        );
-                        $ecomOrders = $ecomAlreadyExistOrderResult['data']['ecomOrders'];
-                        foreach ($ecomOrders as $ecomKey => $customers) {
-                            $ecomOrderArray[$ecomOrders[$ecomKey]['email']] = $ecomOrders[$ecomKey]['id'];
+                    $resultStatus = (string)($result['status'] ?? '');
+                    if ($resultStatus === '422' || $resultStatus === '400') {
+                        $acOrderId = $this->fetchExistingOrderId($order, $quote);
+                        if ($acOrderId) {
+                            $updateResult = $this->curl->orderDataSend(
+                                self::UPDATE_METHOD,
+                                self::URL_ENDPOINT . '/' . (int)$acOrderId,
+                                $data
+                            );
+                            if (!empty($updateResult)) {
+                                $result = $updateResult;
+                            }
                         }
-                        $acOrderId = $ecomOrderArray[$quote->getBillingAddress()->getEmail()];
                     } else {
                         $acOrderId = isset($result['data']['ecomOrder']['id']) ? $result['data']['ecomOrder']['id'] : null;
                     }
@@ -329,8 +337,109 @@ class OrderDataSend
         return $return;
     }
 
+    private function sendCancelledOrder($order): array
+    {
+        $return = [];
+
+        try {
+            $connectionId = (int)$this->activeCampaignHelper->getConnectionId($order->getStoreId());
+            if ($connectionId <= 0) {
+                throw new LocalizedException(__('Invalid ActiveCampaign connection ID.'));
+            }
+
+            $createdAt = $this->formatIso8601($order->getCreatedAt());
+            $updatedAt = $this->formatIso8601($order->getUpdatedAt());
+
+            $query = <<<'GQL'
+mutation upsertOrder($order: OrderInput!) {
+  upsertOrder(order: $order) {
+    storeOrderId
+    connectionId
+    normalizedStatus
+  }
+}
+GQL;
+
+            $variables = [
+                'order' => [
+                    'email' => (string)$order->getCustomerEmail(),
+                    'legacyConnectionId' => $connectionId,
+                    'storeOrderId' => (string)$order->getId(),
+                    'orderNumber' => (string)$order->getIncrementId(),
+                    'creationSource' => 'REAL_TIME',
+                    'storeCreatedDate' => $createdAt,
+                    'storeModifiedDate' => $updatedAt,
+                    'storeStatus' => (string)$order->getStatus(),
+                    'normalizedStatus' => 'CANCELLED',
+                    'currency' => (string)$order->getOrderCurrencyCode(),
+                    'finalAmount' => (float)$order->getGrandTotal()
+                ]
+            ];
+
+            $result = $this->curl->graphql($query, $variables, 'upsertOrder');
+
+            $hasGraphQlErrors = !empty($result['data']['errors']);
+            $isSuccess = !empty($result['success']) && !$hasGraphQlErrors;
+
+            $syncStatus = $isSuccess ? CronConfig::SYNCED : CronConfig::NOT_SYNCED;
+
+            $this->persistOrderSyncStatus((int)$order->getId(), $syncStatus);
+            $order->setData('ac_order_sync_status', $syncStatus);
+
+            if ($isSuccess) {
+                $return['success'] = __('Order cancellation successfully synced.');
+            } else {
+                $return['success'] = false;
+                if ($hasGraphQlErrors) {
+                    $messages = [];
+                    foreach ((array)$result['data']['errors'] as $err) {
+                        if (is_array($err) && isset($err['message'])) {
+                            $messages[] = (string)$err['message'];
+                        }
+                    }
+                    $return['errorMessage'] = __('GraphQL errors: %1', implode(' | ', array_unique($messages)));
+                } else {
+                    $return['errorMessage'] = __('Order cancellation sync failed.');
+                }
+            }
+        } catch (\Exception $e) {
+            $return['success'] = false;
+            $return['errorMessage'] = __($e->getMessage());
+        }
+
+        return $return;
+    }
+
+    private function formatIso8601(?string $dateTime): string
+    {
+        if (!$dateTime) {
+            return (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('c');
+        }
+        return (new \DateTimeImmutable($dateTime, new \DateTimeZone('UTC')))->format('c');
+    }
+
+    private function persistOrderSyncStatus(int $orderId, int $syncStatus): void
+    {
+        if ($orderId <= 0) {
+            return;
+        }
+
+        $connection = $this->resourceConnection->getConnection();
+        $salesOrderTable = $this->resourceConnection->getTableName('sales_order');
+        $salesOrderGridTable = $this->resourceConnection->getTableName('sales_order_grid');
+
+        $bind = ['ac_order_sync_status' => $syncStatus];
+        $where = ['entity_id = ?' => $orderId];
+
+        $connection->update($salesOrderTable, $bind, $where);
+        $connection->update($salesOrderGridTable, $bind, $where);
+    }
+
     public function imageUrl($item, $product, $storeId)
     {
+        if (!$product) {
+            return '';
+        }
 
         $imageUrl = $this->imageHelperFactory->create()
             ->init($product, 'product_page_image_medium')->getUrl();
@@ -339,15 +448,93 @@ class OrderDataSend
             $store = $this->storeManager->getStore($storeId);
             $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
 
-            if (count($product->getMediaGalleryImages()->getItems()) > 0) {
+            if ($product->getMediaGalleryImages() && count($product->getMediaGalleryImages()->getItems()) > 0) {
                 $imageUrl = $baseUrl . $product->getImage();
             } elseif (($item->getProductType() !== 'simple') && $item->getProductOptionByCode('super_product_config') && (isset($item->getProductOptionByCode('super_product_config')['product_id']))) {
-                $product = $this->_productRepositoryFactory->create()
-                    ->getById($item->getProductOptionByCode('super_product_config')['product_id'], false, $storeId);
-                $imageUrl = $baseUrl . $product->getImage();
+                try {
+                    $product = $this->_productRepositoryFactory->create()
+                        ->getById($item->getProductOptionByCode('super_product_config')['product_id'], false, $storeId);
+                    $imageUrl = $baseUrl . $product->getImage();
+                } catch (\Exception $e) {
+                    return '';
+                }
             }
         }
         return $imageUrl;
+    }
+
+    private function resolveProduct($item, int $storeId)
+    {
+        $product = $item->getProduct();
+        if ($product) {
+            return $product;
+        }
+
+        if (!$item->getProductId()) {
+            return null;
+        }
+
+        try {
+            return $this->_productRepositoryFactory->create()->getById((int)$item->getProductId(), false, $storeId);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    private function getProductCategoriesName($product): string
+    {
+        if (!$product) {
+            return '';
+        }
+
+        $categories = $product->getCategoryCollection()->addAttributeToSelect('name');
+        $categoriesName = [];
+        foreach ($categories as $category) {
+            $categoriesName[] = $category->getName();
+        }
+
+        return implode(', ', $categoriesName);
+    }
+
+    private function fetchExistingOrderId($order, $quote)
+    {
+        $externalId = rawurlencode((string)$order->getId());
+        $connectionId = rawurlencode((string)$this->activeCampaignHelper->getConnectionId($order->getStoreId()));
+
+        $response = $this->curl->orderDataSend(
+            self::GET_METHOD,
+            self::URL_ENDPOINT . '?filters[externalid]=' . $externalId . '&filters[connectionid]=' . $connectionId
+        );
+
+        return $this->findExistingOrderId($response, $order, $quote);
+    }
+
+    private function findExistingOrderId(array $response, $order, $quote)
+    {
+        $ecomOrders = $response['data']['ecomOrders'] ?? [];
+        if (!is_array($ecomOrders)) {
+            return null;
+        }
+
+        $billingAddress = method_exists($quote, 'getBillingAddress') ? $quote->getBillingAddress() : null;
+        $lookupEmail = $billingAddress ? (string)$billingAddress->getEmail() : (string)$order->getCustomerEmail();
+        $lookupExternalId = (string)$order->getId();
+
+        foreach ($ecomOrders as $ecomOrder) {
+            if (!is_array($ecomOrder) || empty($ecomOrder['id'])) {
+                continue;
+            }
+
+            if (isset($ecomOrder['externalid']) && (string)$ecomOrder['externalid'] === $lookupExternalId) {
+                return $ecomOrder['id'];
+            }
+
+            if ($lookupEmail !== '' && isset($ecomOrder['email']) && (string)$ecomOrder['email'] === $lookupEmail) {
+                return $ecomOrder['id'];
+            }
+        }
+
+        return null;
     }
     /**
      * @param  $customerId

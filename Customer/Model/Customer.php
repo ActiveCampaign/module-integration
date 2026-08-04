@@ -259,14 +259,59 @@ class Customer
 
     public function contactBody($customer)
     {
-        $contact['email'] = $customer->getEmail();
-        $contact['firstName'] = $customer->getFirstname();
-        $contact['lastName'] = $customer->getLastname();
-        $contact['phone'] = $this->getTelephone($customer->getDefaultBilling());
+        $contact['email'] = $this->normalizeEmail((string)$customer->getEmail());
+        $contact['firstName'] = $this->normalizeName((string)$customer->getFirstname());
+        $contact['lastName'] = $this->normalizeName((string)$customer->getLastname());
+        $contact['phone'] = $this->sanitizePhone((string)$this->getTelephone($customer->getDefaultBilling()));
         $contact['fieldValues'] = $this->getFieldValues($customer);
         $contactData['contact'] = $contact;
 
         return $contactData;
+    }
+
+    private function getCustomerValidationError(?string $email = null, ?string $firstName = null, ?string $lastName = null): ?string
+    {
+        $email = $this->normalizeEmail((string)$email);
+        $firstName = $this->normalizeName((string)$firstName);
+        $lastName = $this->normalizeName((string)$lastName);
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return 'Customer email is empty or invalid.';
+        }
+
+        if ($firstName === '' || $lastName === '') {
+            return 'Customer first name or last name is empty.';
+        }
+
+        return null;
+    }
+
+    private function normalizeEmail(string $email): string
+    {
+        $email = html_entity_decode($email, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $email = strip_tags($email);
+        $email = preg_replace('/[\x{00A0}\x{200B}\x{FEFF}]/u', ' ', $email);
+        $email = preg_replace('/\s+/u', '', $email);
+        return trim($email);
+    }
+
+    private function normalizeName(string $name): string
+    {
+        $name = html_entity_decode($name, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $name = strip_tags($name);
+        $name = preg_replace('/[\x{00A0}\x{200B}\x{FEFF}]/u', ' ', $name);
+        $name = preg_replace('/\s+/u', ' ', $name);
+        return trim($name);
+    }
+
+    private function sanitizePhone(string $phone): ?string
+    {
+        $phone = html_entity_decode($phone, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $phone = strip_tags($phone);
+        $phone = preg_replace('/[^0-9+\-\(\)\.\/ ]+/', '', $phone);
+        $phone = preg_replace('/\s+/u', ' ', $phone);
+        $phone = trim($phone);
+        return $phone === '' ? null : $phone;
     }
 
 
@@ -295,7 +340,22 @@ class Customer
     public function createGuestContact($data)
     {
         $acContact = null;
-        if ($data['email']) {
+        $email = $this->normalizeEmail((string)($data['email'] ?? ''));
+        $firstName = $this->normalizeName((string)($data['firstName'] ?? ''));
+        $lastName = $this->normalizeName((string)($data['lastName'] ?? ''));
+        $data['email'] = $email;
+        $data['firstName'] = $firstName;
+        $data['lastName'] = $lastName;
+        if (isset($data['phone'])) {
+            $data['phone'] = $this->sanitizePhone((string)$data['phone']);
+        }
+        $validationError = $this->getCustomerValidationError($email, $firstName, $lastName);
+        if ($validationError !== null) {
+            $this->logger->warning('MODULE: Customer guest contact sync skipped. ' . $validationError);
+            return $acContact;
+        }
+
+        if ($email !== '') {
             $acContact = $this->searchContact($data['email']);
             if (!$acContact) {
                 $contactData['contact'] = $data;
@@ -303,7 +363,7 @@ class Customer
                 if (!$result['success'] && $result['status'] == "404") {
                     $acContact = null;
                 }
-                if (count($result['data']['contact'])>0) {
+                if (!empty($result['data']['contact']['id'])) {
                     $acContact = $result['data']['contact']['id'];
                 }
             }
@@ -316,7 +376,22 @@ class Customer
         $acCustomer = null;
         $acContact = null;
 
-        if ($data['email']) {
+        $email = $this->normalizeEmail((string)($data['email'] ?? ''));
+        $firstName = $this->normalizeName((string)($data['firstName'] ?? ''));
+        $lastName = $this->normalizeName((string)($data['lastName'] ?? ''));
+        $data['email'] = $email;
+        $data['firstName'] = $firstName;
+        $data['lastName'] = $lastName;
+        if (isset($data['phone'])) {
+            $data['phone'] = $this->sanitizePhone((string)$data['phone']);
+        }
+        $validationError = $this->getCustomerValidationError($email, $firstName, $lastName);
+        if ($validationError !== null) {
+            $this->logger->warning('MODULE: Customer guest ecommerce sync skipped. ' . $validationError);
+            return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
+        }
+
+        if ($email !== '') {
             $acContact = $this->createGuestContact($data);
 
             $acCustomer = $this->searchCustomer($data['email'], $this->coreHelper->getConnectionId($storeId));
@@ -344,10 +419,21 @@ class Customer
     public function updateCustomer($customer)
     {
         $contactData = $this->contactBody($customer);
-        $acContact = null;
-        $acCustomer = null;
+        $acContact = $customer->getAcContactId();
+        $acCustomer = $customer->getAcCustomerId();
+        $validationError = $this->getCustomerValidationError(
+            (string)$contactData['contact']['email'],
+            (string)$contactData['contact']['firstName'],
+            (string)$contactData['contact']['lastName']
+        );
+        if ($validationError !== null) {
+            $this->saveResult($customer->getId(), CronConfig::NOT_SYNCED, $acContact, $acCustomer);
+            $this->logger->warning(
+                'MODULE: Customer sync skipped for customer ID ' . $customer->getId() . '. ' . $validationError
+            );
+            return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
+        }
         try {
-            $acContact =$customer->getAcContactId();
             if ($acContact) {
                 $result = $this->curl->createContacts(self::METHOD_PUT, self::CONTACT_ENDPOINT . '/' . $acContact, $contactData);
                 if (!$result['success'] && $result['status'] == "404") {
@@ -357,12 +443,11 @@ class Customer
                 $acContact = $this->searchContact($customer->getEmail());
                 if (!$acContact) {
                     $result = $this->curl->createContacts(self::METHOD, self::CONTACT_ENDPOINT, $contactData);
-                    $acContact = $result['data']['contact']['id'];
+                    $acContact = $result['data']['contact']['id'] ?? null;
                 }
             }
             if ($acContact) {
                 $customerData = $this->getEcomCustomerData($customer);
-                $acCustomer = $customer->getAcCustomerId();
                 if ($acCustomer) {
                     $result = $this->curl->createContacts(self::METHOD_PUT, self::ECOM_CUSTOMER_ENDPOINT . '/' . $customer->getAcCustomerId(), $customerData);
                     if (!$result['success'] && $result['status'] == "404") {
@@ -387,8 +472,11 @@ class Customer
                 } else {
                     $this->saveResult($customer->getId(), CronConfig::NOT_SYNCED, $acContact, $acCustomer);
                 }
+            } else {
+                $this->saveResult($customer->getId(), CronConfig::NOT_SYNCED, $acContact, $acCustomer);
             }
         } catch (\Exception $e) {
+            $this->saveResult($customer->getId(), CronConfig::NOT_SYNCED, $acContact, $acCustomer);
             $this->logger->critical("MODULE: Customer  contact/sync" . $e->getMessage());
         }
         return ['ac_contact_id' => $acContact, 'ac_customer_id' => $acCustomer];
@@ -402,8 +490,9 @@ class Customer
             self::ECOM_CUSTOMER_ENDPOINT,
             $email
         );
-        foreach ($AcCustomer['data']['ecomCustomers'] as $Ac) {
-            if ($Ac['connectionid'] === $connectionId) {
+        $ecomCustomers = $AcCustomer['data']['ecomCustomers'] ?? [];
+        foreach ($ecomCustomers as $Ac) {
+            if (($Ac['connectionid'] ?? null) === $connectionId && !empty($Ac['id'])) {
                 $result= $Ac['id'];
             }
         }
@@ -418,8 +507,9 @@ class Customer
             self::CONTACT_ENDPOINT,
             $email
         );
-        if ($AcCustomer['status'] == 200 && count($AcCustomer['data']['contacts']) > 0) {
-            $result = $AcCustomer['data']['contacts'][0]['id'];
+        $contacts = $AcCustomer['data']['contacts'] ?? [];
+        if (($AcCustomer['status'] ?? null) == 200 && !empty($contacts[0]['id'])) {
+            $result = $contacts[0]['id'];
         }
         return $result;
     }
