@@ -347,8 +347,88 @@ class OrderDataSend
                 throw new LocalizedException(__('Invalid ActiveCampaign connection ID.'));
             }
 
-            $createdAt = $this->formatIso8601($order->getCreatedAt());
-            $updatedAt = $this->formatIso8601($order->getUpdatedAt());
+            $storeId = (int)$order->getStoreId();
+            $timezone = $this->dateTime->getConfigTimezone(
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+                $storeId
+            );
+            $createdAt = $this->dateTime
+                ->date(strtotime($order->getCreatedAt()), null, $timezone)
+                ->format('Y-m-d\TH:i:sP');
+            $updatedAt = $this->dateTime
+                ->date(strtotime($order->getUpdatedAt()), null, $timezone)
+                ->format('Y-m-d\TH:i:sP');
+
+            $customerId = $order->getCustomerId();
+            try {
+                $quoteModel = $this->quoteRepository->get($order->getQuoteId());
+                $quote = $quoteModel;
+            } catch (\Exception $e) {
+                $quote = $order;
+            }
+
+            $billingAddress = method_exists($quote, 'getBillingAddress')
+                ? $quote->getBillingAddress()
+                : (method_exists($order, 'getBillingAddress') ? $order->getBillingAddress() : null);
+            $shippingAddress = method_exists($quote, 'getShippingAddress')
+                ? $quote->getShippingAddress()
+                : (method_exists($order, 'getShippingAddress') ? $order->getShippingAddress() : null);
+
+            if ($customerId) {
+                try {
+                    $AcCustomer = $this->customer->updateCustomer($this->getCustomer($customerId));
+                } catch (\Exception $e) {
+                    $AcCustomer = ['ac_customer_id' => 0];
+                }
+            } else {
+                $contact = [
+                    'email' => $billingAddress ? (string)$billingAddress->getEmail() : (string)$order->getCustomerEmail(),
+                    'firstName' => $billingAddress ? (string)$billingAddress->getFirstname() : '',
+                    'lastName' => $billingAddress ? (string)$billingAddress->getLastname() : '',
+                    'phone' => $billingAddress ? (string)$billingAddress->getTelephone() : '',
+                    'fieldValues' => []
+                ];
+                try {
+                    $AcCustomer = $this->customer->createGuestCustomer($contact, $storeId);
+                } catch (\Exception $e) {
+                    $AcCustomer = ['ac_customer_id' => 0];
+                }
+            }
+
+            $email = (string)($billingAddress ? $billingAddress->getEmail() : $order->getCustomerEmail());
+            $firstName = (string)($billingAddress ? $billingAddress->getFirstname() : '');
+            $lastName = (string)($billingAddress ? $billingAddress->getLastname() : '');
+            $phone = (string)($billingAddress ? $billingAddress->getTelephone() : '');
+            $company = (string)($billingAddress && method_exists($billingAddress, 'getCompany') ? $billingAddress->getCompany() : '');
+
+            $lineItems = [];
+            foreach ($order->getAllVisibleItems() as $item) {
+                $product = $this->resolveProduct($item, $storeId);
+                $productId = $product ? (int)$product->getId() : (int)$item->getProductId();
+                $baseProductId = $productId;
+                if ($product && method_exists($product, 'getData')) {
+                    $baseId = $product->getData('row_id');
+                    if ($baseId === null) {
+                        $baseId = $product->getData('entity_id');
+                    }
+                    if ($baseId !== null) {
+                        $baseProductId = (int)$baseId;
+                    }
+                }
+                $priceCents = $this->activeCampaignHelper->priceToCents((float)$item->getPrice());
+                $row = [
+                    'name' => (string)$item->getName(),
+                    'quantity' => (int)$item->getQtyOrdered(),
+                    'priceAmount' => round($priceCents / 100, 4),
+                    'productStorePrimaryId' => (string)$productId,
+                    'storeBaseProductId' => (string)$baseProductId
+                ];
+                $lineItems[] = $row;
+            }
+
+            $grandTotalCents = $this->activeCampaignHelper->priceToCents((float)$order->getGrandTotal());
+            $shippingCents = $this->activeCampaignHelper->priceToCents((float)$order->getShippingAmount());
+            $discountCents = $this->activeCampaignHelper->priceToCents((float)abs($order->getDiscountAmount()));
 
             $query = <<<'GQL'
 mutation upsertOrder($order: OrderInput!) {
@@ -360,22 +440,91 @@ mutation upsertOrder($order: OrderInput!) {
 }
 GQL;
 
-            $variables = [
-                'order' => [
-                    'email' => (string)$order->getCustomerEmail(),
-                    'legacyConnectionId' => $connectionId,
-                    'storeOrderId' => (string)$order->getId(),
-                    'orderNumber' => (string)$order->getIncrementId(),
-                    'creationSource' => 'REAL_TIME',
-                    'storeCreatedDate' => $createdAt,
-                    'storeModifiedDate' => $updatedAt,
-                    'storeStatus' => (string)$order->getStatus(),
-                    'normalizedStatus' => 'CANCELLED',
-                    'currency' => (string)$order->getOrderCurrencyCode(),
-                    'finalAmount' => (float)$order->getGrandTotal()
-                ]
+            $orderInput = [
+                'email' => $email,
+                'legacyConnectionId' => $connectionId,
+                'storeOrderId' => (string)$order->getId(),
+                'storeCustomerId' => $customerId ? (string)$customerId : null,
+                'orderNumber' => (string)$order->getIncrementId(),
+                'cartId' => $order->getQuoteId() ? (string)$order->getQuoteId() : null,
+                'storeExternalOrderId' => (string)$order->getId(),
+                'creationSource' => $this->buildCreationSource($storeId),
+                'storeCreatedDate' => $createdAt,
+                'storeModifiedDate' => $updatedAt,
+                'storeStatus' => (string)$order->getStatus(),
+                'normalizedStatus' => 'CANCELLED',
+                'shippingMethod' => $order->getShippingMethod() ? (string)$order->getShippingMethod() : null,
+                'orderUrl' => $this->buildOrderUrl($order, $storeId),
+                'isTestOrder' => false,
+                'createdByRecurringPayment' => false,
+                'acceptsMarketing' => false,
+                'customerLocale' => $this->resolveStoreLocale($storeId),
+                'salesChannel' => 'magento',
+                'currency' => (string)$order->getOrderCurrencyCode(),
+                'finalAmount' => round($grandTotalCents / 100, 4),
+                'shippingAmount' => round($shippingCents / 100, 4),
+                'discountsAmount' => round($discountCents / 100, 4),
+                'paymentMethod' => $order->getPayment() && method_exists($order->getPayment(), 'getMethod')
+                    ? (string)$order->getPayment()->getMethod()
+                    : null
             ];
+            $orderInput = array_filter($orderInput, static function ($v) {
+                return $v !== null && $v !== '';
+            });
 
+            if (!empty($lineItems)) {
+                $orderInput['lineItems'] = $lineItems;
+            }
+
+            $billingAddressInput = $this->buildGraphQlAddress($billingAddress, $email);
+            if ($billingAddressInput !== null) {
+                $orderInput['billingAddress'] = $billingAddressInput;
+            }
+            $shippingEmail = $shippingAddress && method_exists($shippingAddress, 'getEmail')
+                ? (string)$shippingAddress->getEmail()
+                : $email;
+            $shippingAddressInput = $this->buildGraphQlAddress($shippingAddress, $shippingEmail);
+            if ($shippingAddressInput !== null) {
+                $orderInput['shippingAddress'] = $shippingAddressInput;
+            }
+
+            $customerData = array_filter([
+                'firstName' => $firstName,
+                'lastName' => $lastName,
+                'phone' => $phone,
+                'company' => $company
+            ], static function ($v) {
+                return $v !== null && $v !== '';
+            });
+            if (!empty($customerData)) {
+                $orderInput['customerData'] = $customerData;
+            }
+
+            $discountAmountRaw = (float)$order->getDiscountAmount();
+            if ($discountAmountRaw < 0) {
+                $discounts = [[
+                    'name' => (string)($order->getDiscountDescription() ?: __('Discount')),
+                    'type' => 'CART',
+                    'discountAmount' => round($discountCents / 100, 4)
+                ]];
+                $orderInput['discounts'] = $discounts;
+            }
+
+            $notes = [];
+            $statusHistory = $order->getStatusHistoryCollection();
+            if ($statusHistory) {
+                foreach ($statusHistory as $history) {
+                    $comment = $history->getComment();
+                    if ($comment !== null && $comment !== '') {
+                        $notes[] = (string)$comment;
+                    }
+                }
+            }
+            if (!empty($notes)) {
+                $orderInput['notes'] = array_slice($notes, 0, 20);
+            }
+
+            $variables = ['order' => $orderInput];
             $result = $this->curl->graphql($query, $variables, 'upsertOrder');
 
             $hasGraphQlErrors = !empty($result['data']['errors']);
@@ -397,7 +546,14 @@ GQL;
                             $messages[] = (string)$err['message'];
                         }
                     }
-                    $return['errorMessage'] = __('GraphQL errors: %1', implode(' | ', array_unique($messages)));
+                    if (empty($messages) && isset($result['errorMessage'])) {
+                        $messages[] = (string)$result['errorMessage'];
+                    }
+                    $return['errorMessage'] = empty($messages)
+                        ? __('Order cancellation sync failed.')
+                        : __('GraphQL errors: %1', implode(' | ', array_unique($messages)));
+                } elseif (isset($result['errorMessage'])) {
+                    $return['errorMessage'] = __($result['errorMessage']);
                 } else {
                     $return['errorMessage'] = __('Order cancellation sync failed.');
                 }
@@ -408,6 +564,106 @@ GQL;
         }
 
         return $return;
+    }
+
+    /**
+     * @param mixed $address
+     * @param string $defaultEmail
+     * @return array|null
+     */
+    private function buildGraphQlAddress($address, string $defaultEmail = ''): ?array
+    {
+        if ($address === null || !is_object($address)) {
+            return null;
+        }
+
+        $firstName = method_exists($address, 'getFirstname') ? (string)$address->getFirstname() : '';
+        $lastName = method_exists($address, 'getLastname') ? (string)$address->getLastname() : '';
+        if ($firstName === '' && $lastName === '') {
+            return null;
+        }
+
+        $company = method_exists($address, 'getCompany') ? (string)$address->getCompany() : '';
+        $street = method_exists($address, 'getStreet') ? $address->getStreet() : [];
+        $streetArr = is_array($street) ? array_values($street) : [$street];
+        $address1 = isset($streetArr[0]) ? (string)$streetArr[0] : '';
+        $address2 = isset($streetArr[1]) ? (string)$streetArr[1] : '';
+        $address3 = isset($streetArr[2]) ? (string)$streetArr[2] : '';
+        $city = method_exists($address, 'getCity') ? (string)$address->getCity() : '';
+        $province = method_exists($address, 'getRegionCode')
+            ? (string)$address->getRegionCode()
+            : (method_exists($address, 'getRegion') ? (string)$address->getRegion() : '');
+        $postal = method_exists($address, 'getPostcode') ? (string)$address->getPostcode() : '';
+        $country = method_exists($address, 'getCountryId') ? (string)$address->getCountryId() : '';
+        $phone = method_exists($address, 'getTelephone') ? (string)$address->getTelephone() : '';
+        $email = method_exists($address, 'getEmail') ? (string)$address->getEmail() : $defaultEmail;
+
+        return array_filter([
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'company' => $company,
+            'address1' => $address1,
+            'address2' => $address2,
+            'address3' => $address3,
+            'city' => $city,
+            'province' => $province,
+            'postal' => $postal,
+            'country' => $country,
+            'phone' => $phone,
+            'email' => $email
+        ], static function ($v) {
+            return $v !== null && $v !== '';
+        });
+    }
+
+    /**
+     * @param mixed $order
+     * @param int $storeId
+     * @return string|null
+     */
+    private function buildOrderUrl($order, int $storeId): ?string
+    {
+        try {
+            $store = $this->storeManager->getStore($storeId);
+            $baseUrl = rtrim((string)$store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB), '/');
+            $orderId = $order ? (string)$order->getId() : '';
+            if ($baseUrl === '' || $orderId === '') {
+                return null;
+            }
+            return $baseUrl . '/sales/order/view/order_id/' . $orderId . '/';
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     * @return string|null
+     */
+    private function resolveStoreLocale(int $storeId): ?string
+    {
+        try {
+            $store = $this->storeManager->getStore($storeId);
+            $locale = (string)$store->getConfig('general/locale/code');
+            return $locale !== '' ? $locale : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     * @return string
+     */
+    private function buildCreationSource(int $storeId): string
+    {
+        try {
+            $store = $this->storeManager->getStore($storeId);
+            $storeName = trim((string)$store->getName());
+            return 'Magento' . ($storeName !== '' ? ' ' . $storeName : '');
+        } catch (\Exception $e) {
+            return 'Magento';
+        }
     }
 
     private function formatIso8601(?string $dateTime): string
