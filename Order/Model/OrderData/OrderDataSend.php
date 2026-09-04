@@ -1,7 +1,7 @@
 <?php
 namespace ActiveCampaign\Order\Model\OrderData;
 
-use ActiveCampaign\AbandonedCart\Model\Config\CronConfig;
+use ActiveCampaign\Order\Model\Config\CronConfig;
 use ActiveCampaign\Core\Helper\Curl;
 use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
 use ActiveCampaign\Core\Helper\Data as CoreHelper;
