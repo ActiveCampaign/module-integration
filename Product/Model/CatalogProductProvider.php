@@ -4,14 +4,11 @@ declare(strict_types=1);
 namespace ActiveCampaign\Product\Model;
 
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
-use Magento\Catalog\Helper\Product as ProductHelper;
 use Magento\Catalog\Model\Product\Media\Config as MediaConfig;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
-use Magento\InventorySalesApi\Api\GetProductSalableQtyInterface;
-use Magento\InventorySalesApi\Api\StockResolverInterface;
-use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
+use Magento\Framework\UrlInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableType;
 use Magento\GroupedProduct\Model\Product\Type\Grouped as GroupedType;
@@ -21,11 +18,8 @@ class CatalogProductProvider
 {
     private $productCollectionFactory;
     private $storeManager;
-    private $productHelper;
     private $mediaConfig;
     private $scopeConfig;
-    private $getProductSalableQty;
-    private $stockResolver;
     private $stockRegistry;
     private $configurableType;
     private $groupedType;
@@ -34,11 +28,8 @@ class CatalogProductProvider
     public function __construct(
         CollectionFactory $productCollectionFactory,
         StoreManagerInterface $storeManager,
-        ProductHelper $productHelper,
         MediaConfig $mediaConfig,
         ScopeConfigInterface $scopeConfig,
-        GetProductSalableQtyInterface $getProductSalableQty,
-        StockResolverInterface $stockResolver,
         StockRegistryInterface $stockRegistry,
         ConfigurableType $configurableType,
         GroupedType $groupedType,
@@ -46,11 +37,8 @@ class CatalogProductProvider
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
         $this->storeManager = $storeManager;
-        $this->productHelper = $productHelper;
         $this->mediaConfig = $mediaConfig;
         $this->scopeConfig = $scopeConfig;
-        $this->getProductSalableQty = $getProductSalableQty;
-        $this->stockResolver = $stockResolver;
         $this->stockRegistry = $stockRegistry;
         $this->configurableType = $configurableType;
         $this->groupedType = $groupedType;
@@ -69,6 +57,8 @@ class CatalogProductProvider
             $collection->addFieldToFilter('entity_id', ['in' => $entityIds]);
         }
         $currency = (string)$this->scopeConfig->getValue('currency/options/base', ScopeInterface::SCOPE_STORES, $storeId);
+        $store = $this->storeManager->getStore($storeId);
+        $storeBaseUrl = rtrim((string)$store->getBaseUrl(UrlInterface::URL_TYPE_LINK), '/');
         $products = [];
 
         foreach ($collection as $product) {
@@ -80,8 +70,9 @@ class CatalogProductProvider
             $weight = $product->getWeight();
             $weightVal = is_null($weight) ? null : (float)$weight;
             $description = (string)$product->getData('short_description');
-            $url = (string)$this->productHelper->getProductUrl($product);
-            $urlKey = null;
+            $urlKeyAttr = $product->getCustomAttribute('url_key');
+            $urlKey = $urlKeyAttr ? (string)$urlKeyAttr->getValue() : null;
+            $url = $this->buildFrontendProductUrl($product, $storeId, $storeBaseUrl, $urlKey);
             $image = (string)$product->getImage();
             $imageUrl = '';
             if ($image && $image !== 'no_selection') {
@@ -124,9 +115,9 @@ class CatalogProductProvider
                 if (!empty($parentIds)) {
                     try {
                         $parent = $this->productRepository->getById((int)$parentIds[0], false, $storeId);
-                        $parentUrl = (string)$this->productHelper->getProductUrl($parent);
                         $parentUrlKeyAttr = $parent->getCustomAttribute('url_key');
                         $parentUrlKey = $parentUrlKeyAttr ? (string)$parentUrlKeyAttr->getValue() : '';
+                        $parentUrl = $this->buildFrontendProductUrl($parent, $storeId, $storeBaseUrl, $parentUrlKey);
                         $url = $parentUrl ?: $url;
                         $urlKey = $parentUrlKey ?: $urlKey;
                     } catch (\Throwable $e) {
@@ -134,23 +125,17 @@ class CatalogProductProvider
                 }
             }
             $websiteId = (int)$this->storeManager->getStore($storeId)->getWebsiteId();
-            $websiteCode = $this->storeManager->getWebsite($websiteId)->getCode();
-            $stock = $this->stockResolver->execute(SalesChannelInterface::TYPE_WEBSITE, $websiteCode);
-            $stockId = (int)$stock->getStockId();
-            $salableQty = null;
+            $salableQty = 0.0;
             $inStock = false;
             try {
-                $salableQty = (float)$this->getProductSalableQty->execute($sku, $stockId);
-                $inStock = $salableQty > 0;
-            } catch (\Throwable $e) {
-                $stockItem = $this->stockRegistry->getStockItemBySku($sku);
+                $stockItem = $this->stockRegistry->getStockItemBySku($sku, $websiteId);
                 if ($stockItem) {
                     $salableQty = (float)$stockItem->getQty();
                     $inStock = (bool)$stockItem->getIsInStock();
-                } else {
-                    $salableQty = 0.0;
-                    $inStock = false;
                 }
+            } catch (\Throwable $e) {
+                $salableQty = 0.0;
+                $inStock = false;
             }
             if ($typeId === 'simple') {
                 $payload = [
@@ -197,5 +182,38 @@ class CatalogProductProvider
             );
         }
         return $products;
+    }
+
+    private function buildFrontendProductUrl(
+        \Magento\Catalog\Api\Data\ProductInterface $product,
+        int $storeId,
+        string $storeBaseUrl,
+        ?string $fallbackUrlKey
+    ): string {
+        $requestPath = null;
+        try {
+            $store = $this->storeManager->getStore($storeId);
+            $rewrite = $product->getUrlModel()->getUrlRewrite();
+            if ($rewrite && method_exists($rewrite, 'getRequestPath')) {
+                $requestPath = (string)$rewrite->getRequestPath();
+            }
+        } catch (\Throwable $e) {
+        }
+        if (!$requestPath) {
+            $urlSuffix = (string)$this->scopeConfig->getValue(
+                'catalog/seo/product_url_suffix',
+                ScopeInterface::SCOPE_STORES,
+                $storeId
+            ) ?: '';
+            $requestPath = trim((string)$fallbackUrlKey ?? '', '/');
+            if ($requestPath !== '' && $urlSuffix !== '' && strpos($requestPath, $urlSuffix) === false) {
+                $requestPath .= $urlSuffix;
+            }
+        }
+        $requestPath = ltrim($requestPath, '/');
+        if ($requestPath === '') {
+            return '';
+        }
+        return $storeBaseUrl . '/' . $requestPath;
     }
 }
