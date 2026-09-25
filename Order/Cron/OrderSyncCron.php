@@ -88,6 +88,9 @@ class OrderSyncCron
         try {
             $isEnabled = $this->activeCampaignHelper->isOrderSyncEnabled();
             if ($isEnabled) {
+                $this->orderdataSend->setCreationSource(
+                    \ActiveCampaign\Order\Model\OrderData\OrderDataSend::CREATION_SOURCE_HISTORICAL
+                );
                 $OrderSyncNum = $this->activeCampaignHelper->getOrderSyncNum();
                 $orderCollection = $this->_orderCollectionFactory->create()
                     ->addAttributeToSelect('*')
@@ -104,6 +107,9 @@ class OrderSyncCron
                         $this->logger->error('MODULE Order: ' . $e->getMessage());
                     }
                 }
+                $this->orderdataSend->setCreationSource(
+                    \ActiveCampaign\Order\Model\OrderData\OrderDataSend::CREATION_SOURCE_REAL_TIME
+                );
             }
         } catch (\Exception $e) {
             $this->logger->error('MODULE Order: ' . $e->getMessage());

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace ActiveCampaign\SyncLog\Cron;
 
 use Magento\Framework\App\ResourceConnection;

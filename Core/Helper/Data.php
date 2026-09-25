@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 namespace ActiveCampaign\Core\Helper;
 
@@ -159,7 +158,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return int
      */
-    public function priceToCents(?float $price = 0.0): int
+    public function priceToCents($price = 0.0): int
     {
         $price = $price ?? 0.0;
         return (int) (round($price, 2) * 100);

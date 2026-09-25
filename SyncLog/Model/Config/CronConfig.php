@@ -34,9 +34,9 @@ class CronConfig extends \Magento\Framework\App\Config\Value
      * @param \Magento\Framework\App\Config\ScopeConfigInterface      $config
      * @param \Magento\Framework\App\Cache\TypeListInterface          $cacheTypeList
      * @param \Magento\Framework\App\Config\ValueFactory              $configValueFactory
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb           $resourceCollection
-     * @param string                                                  $runModelPath
+     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
+     * @param \Magento\Framework\Data\Collection\AbstractDb|null      $resourceCollection
+     * @param string|mixed                                            $runModelPath
      * @param array                                                   $data
      */
     public function __construct(
@@ -45,8 +45,8 @@ class CronConfig extends \Magento\Framework\App\Config\Value
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
         \Magento\Framework\App\Config\ValueFactory $configValueFactory,
-        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        $resource = null,
+        $resourceCollection = null,
         $runModelPath = '',
         array $data = []
     ) {

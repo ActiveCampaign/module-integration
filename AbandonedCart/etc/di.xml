@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
-
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <type name="Magento\Checkout\Model\PaymentInformationManagement">
         <plugin name="after_guest_payment_information" type="ActiveCampaign\AbandonedCart\Plugin\Checkout\Model\PaymentInformationManagementPlugin"/>
     </type>
@@ -23,5 +22,12 @@
     </virtualType>
     <type name="Magento\Checkout\Controller\Cart\Index">
         <plugin name="ac_checkout_cart_controller" type="ActiveCampaign\AbandonedCart\Plugin\Checkout\Controller\Cart\Index"/>
+    </type>
+    <type name="ActiveCampaign\AbandonedCart\Model\Config\CronConfig">
+        <arguments>
+            <argument name="resource" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data</argument>
+            <argument name="resourceCollection" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data\Collection\Proxy</argument>
+            <argument name="runModelPath" xsi:type="string">ActiveCampaign\AbandonedCart\Cron\AbandonedCartSync::execute</argument>
+        </arguments>
     </type>
 </config>

@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 namespace ActiveCampaign\Product\Model;
 
@@ -19,7 +18,12 @@ class ProductSync
         $this->coreData = $coreData;
     }
 
-    public function bulkUpsertProducts(array $products, ?int $legacyConnectionId = null): array
+    /**
+     * @param array $products
+     * @param int|null $legacyConnectionId
+     * @return array
+     */
+    public function bulkUpsertProducts(array $products, $legacyConnectionId = null): array
     {
         $connectionId = $legacyConnectionId ?: (int)($this->coreData->getConnectionId() ?? 0);
         $payloadProducts = [];

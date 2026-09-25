@@ -28,18 +28,16 @@ class CronConfig extends \Magento\Framework\App\Config\Value
     const CRON_MODEL_PATH = 'crontab/default/jobs/ac_abandoned_cart_sync_cron_job/run/model';
 
     /**
-     * Config resource writer.
-     *
-     * @var \Magento\Framework\App\Config\ConfigResource\ConfigInterface
+     * @var \Magento\Framework\App\Config\ValueFactory
      */
-    protected $configWriter;
+    protected $_configValueFactory;
 
     /**
      * Run model path.
      *
      * @var string
      */
-    protected $runModelPath = '';
+    protected $_runModelPath = '';
 
     /**
      * Constructor.
@@ -47,26 +45,26 @@ class CronConfig extends \Magento\Framework\App\Config\Value
      * @param \Magento\Framework\Model\Context                        $context
      * @param \Magento\Framework\Registry                             $registry
      * @param \Magento\Framework\App\Config\ScopeConfigInterface      $config
-     * @param \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configWriter
      * @param \Magento\Framework\App\Cache\TypeListInterface          $cacheTypeList
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb           $resourceCollection
-     * @param string                                                  $runModelPath
+     * @param \Magento\Framework\App\Config\ValueFactory              $configValueFactory
+     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
+     * @param \Magento\Framework\Data\Collection\AbstractDb|null      $resourceCollection
+     * @param string|mixed                                            $runModelPath
      * @param array                                                   $data
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
-        \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configWriter,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
-        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
-        ?string $runModelPath = '',
-        ?array $data = []
+        \Magento\Framework\App\Config\ValueFactory $configValueFactory,
+        $resource = null,
+        $resourceCollection = null,
+        $runModelPath = '',
+        array $data = []
     ) {
-        $this->runModelPath = $runModelPath;
-        $this->configWriter = $configWriter;
+        $this->_runModelPath = $runModelPath;
+        $this->_configValueFactory = $configValueFactory;
         parent::__construct($context, $registry, $config, $cacheTypeList, $resource, $resourceCollection, $data);
     }
 
@@ -100,8 +98,22 @@ class CronConfig extends \Magento\Framework\App\Config\Value
         $cronExprString = join(' ', $cronExprArray);
 
         try {
-            $this->configWriter->saveConfig(self::CRON_STRING_PATH, $cronExprString);
-            $this->configWriter->saveConfig(self::CRON_MODEL_PATH, $this->runModelPath);
+            $this->_configValueFactory->create()->load(
+                self::CRON_STRING_PATH,
+                'path'
+            )->setValue(
+                $cronExprString
+            )->setPath(
+                self::CRON_STRING_PATH
+            )->save();
+            $this->_configValueFactory->create()->load(
+                self::CRON_MODEL_PATH,
+                'path'
+            )->setValue(
+                $this->_runModelPath
+            )->setPath(
+                self::CRON_MODEL_PATH
+            )->save();
         } catch (\Exception $e) {
             throw new \Magento\Framework\Exception\LocalizedException(__('We can\'t save the cron expression.'));
         }

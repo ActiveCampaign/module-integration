@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="ActiveCampaign\Order\Model\Config\CronConfig">
+        <arguments>
+            <argument name="resource" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data</argument>
+            <argument name="resourceCollection" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data\Collection\Proxy</argument>
+            <argument name="runModelPath" xsi:type="string">ActiveCampaign\Order\Cron\OrderSyncCron::execute</argument>
+        </arguments>
+    </type>
+</config>

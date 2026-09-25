@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 namespace ActiveCampaign\Product\Model;
 
@@ -55,7 +54,13 @@ class ProductSyncFlagRepository
         $this->seedFlagsForStore($storeId, array_map('intval', $ids));
     }
 
-    public function markSynced(int $storeId, array $productIds, ?array $acIds = null): void
+    /**
+     * @param int $storeId
+     * @param array $productIds
+     * @param array|null $acIds
+     * @return void
+     */
+    public function markSynced(int $storeId, array $productIds, $acIds = null): void
     {
         if (empty($productIds)) {
             return;

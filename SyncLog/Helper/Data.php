@@ -29,7 +29,11 @@ class Data extends AbstractHelper
         $this->state = $state;
     }
 
-    public function removeAfterDays(?string $scopeCode = null)
+    /**
+     * @param int|string|null $scopeCode
+     * @return mixed
+     */
+    public function removeAfterDays($scopeCode = null)
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_REMOVE_AFTER_DAYS,
@@ -37,11 +41,12 @@ class Data extends AbstractHelper
             $scopeCode
         );
     }
+
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return bool
      */
-    public function isLogError(?string $scopeCode = null)
+    public function isLogError($scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_SYNCLOG_MODE,
@@ -51,10 +56,10 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return bool
      */
-    public function isDeletingEnabled($scopeCode = null): bool
+    public function isDeletingEnabled($scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_ACTIVE_CAMPAIGN_SYNCLOG_ENABLE,

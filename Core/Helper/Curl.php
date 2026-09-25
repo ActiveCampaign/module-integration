@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 namespace ActiveCampaign\Core\Helper;
 
@@ -66,7 +65,7 @@ class Curl extends AbstractHelper
         ActiveCampaignHelper $activeCampaignHelper,
         SyncLog              $syncLog,
         SyncLogHelper           $syncLogHelper,
-        ?Client               $client = null
+        $client = null
     ) {
         $this->client = $client ?: new Client();
         $this->jsonHelper = $jsonHelper;
@@ -288,7 +287,7 @@ class Curl extends AbstractHelper
     public function graphql(
         string $query,
         array $variables = [],
-        ?string $operationName = null
+        $operationName = null
     ): array {
         $apiUrl = $this->activeCampaignHelper->getApiUrl();
         $apiKey = $this->activeCampaignHelper->getApiKey();
@@ -369,12 +368,26 @@ class Curl extends AbstractHelper
         $synclog = $this->syncLog;
         
         try {
+            if ($bodyData !== '' && is_string($bodyData)) {
+                try {
+                    $bodyDecoded = $this->jsonHelper->unserialize($bodyData);
+                    if (is_array($bodyDecoded) || is_scalar($bodyDecoded)) {
+                        $requestBodyForLog = $bodyDecoded;
+                    } else {
+                        $requestBodyForLog = $bodyData;
+                    }
+                } catch (\Exception $e) {
+                    $requestBodyForLog = $bodyData;
+                }
+            } else {
+                $requestBodyForLog = $bodyData;
+            }
             $request = [
                 'METHOD'        => $method,
                 'URL'           => $url,
                 'HTTP VERSION'  => self::HTTP_VERSION,
                 'HEADERS'       => $headers,
-                'BODY DATA'     => $bodyData
+                'BODY DATA'     => $requestBodyForLog
             ];
 
             /**
@@ -481,7 +494,7 @@ class Curl extends AbstractHelper
      *
      * @return \Magento\Framework\Phrase|string
      */
-    private function getMessage(mixed $response)
+    private function getMessage($response)
     {
         if (is_array($response)) {
             if (isset($response['message'])) {

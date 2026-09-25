@@ -49,7 +49,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return bool
      */
     public function isNewslettersSyncEnabled($scopeCode = null)
@@ -62,7 +62,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return bool
      */
     public function getLastSync($scopeCode = null)
@@ -82,7 +82,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return mixed
      */
     public function getNewsletterSyncNum($scopeCode = null)

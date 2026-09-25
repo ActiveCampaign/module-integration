@@ -16,7 +16,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->state = $state;
     }
 
-    public function isProductSyncEnabled(?string $scopeCode = null)
+    /**
+     * @param int|string|null $scopeCode
+     * @return bool
+     */
+    public function isProductSyncEnabled($scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_PRODUCT_STATUS,
@@ -25,7 +29,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
-    public function getProductSyncNum(?string $scopeCode = null)
+    /**
+     * @param int|string|null $scopeCode
+     * @return mixed
+     */
+    public function getProductSyncNum($scopeCode = null)
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_PRODUCT_SYNC_NUM,

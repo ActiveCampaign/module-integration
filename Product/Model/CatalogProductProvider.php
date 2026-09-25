@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 namespace ActiveCampaign\Product\Model;
 
@@ -45,7 +44,13 @@ class CatalogProductProvider
         $this->productRepository = $productRepository;
     }
 
-    public function buildProducts(int $storeId, ?int $limit = null, ?array $entityIds = null): array
+    /**
+     * @param int $storeId
+     * @param int|null $limit
+     * @param array|null $entityIds
+     * @return array
+     */
+    public function buildProducts(int $storeId, $limit = null, $entityIds = null): array
     {
         $collection = $this->productCollectionFactory->create();
         $collection->addAttributeToSelect(['name', 'sku', 'price', 'description', 'url_key', 'image', 'weight']);

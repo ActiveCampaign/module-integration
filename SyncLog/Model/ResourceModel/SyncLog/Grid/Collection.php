@@ -41,7 +41,7 @@ class Collection extends SyncLogCollection implements SearchResultInterface
         $resourceModel,
         $model = \Magento\Framework\View\Element\UiComponent\DataProvider\Document::class,
         $connection = null,
-        ?\Magento\Framework\Model\ResourceModel\Db\AbstractDb $resource = null
+        $resource = null
     ) {
         parent::__construct(
             $entityFactory,
@@ -88,11 +88,11 @@ class Collection extends SyncLogCollection implements SearchResultInterface
     /**
      * Set search criteria.
      *
-     * @param                                         \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
-     * @return                                        $this
+     * @param \Magento\Framework\Api\SearchCriteriaInterface|null $searchCriteria
+     * @return $this
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function setSearchCriteria(?\Magento\Framework\Api\SearchCriteriaInterface $searchCriteria = null)
+    public function setSearchCriteria($searchCriteria = null)
     {
         return $this;
     }
@@ -122,11 +122,11 @@ class Collection extends SyncLogCollection implements SearchResultInterface
     /**
      * Set items list.
      *
-     * @param                                         \Magento\Framework\Api\ExtensibleDataInterface[] $items
-     * @return                                        $this
+     * @param \Magento\Framework\Api\ExtensibleDataInterface[]|null $items
+     * @return $this
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function setItems(?array $items = null)
+    public function setItems($items = null)
     {
         return $this;
     }

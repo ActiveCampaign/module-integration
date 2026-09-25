@@ -32,7 +32,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return bool
      */
     public function isCustomerSyncingEnabled($scopeCode = null)
@@ -45,7 +45,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return mixed
      */
     public function getCronTime($scopeCode = null)
@@ -58,7 +58,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return mixed
      */
     public function getNumberOfCustomers($scopeCode = null)
@@ -70,6 +70,10 @@ class Data extends AbstractHelper
         );
     }
 
+    /**
+     * @param int|string|null $scopeCode
+     * @return mixed
+     */
     public function getLastCustomerUpdateSync($scopeCode = null)
     {
         return $this->scopeConfig->getValue(
@@ -79,6 +83,10 @@ class Data extends AbstractHelper
         );
     }
 
+    /**
+     * @param int|string|null $scopeCode
+     * @return mixed
+     */
     public function getMapCustomFields($scopeCode = null)
     {
         return $this->scopeConfig->getValue(
@@ -88,6 +96,11 @@ class Data extends AbstractHelper
         );
     }
 
+    /**
+     * @param mixed           $date
+     * @param int|string|null $scopeCode
+     * @return void
+     */
     public function setLastCustomerUpdateSync($date, $scopeCode = null)
     {
         $scope = \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT;

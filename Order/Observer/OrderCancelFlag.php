@@ -6,15 +6,26 @@ use ActiveCampaign\Order\Helper\Data as ActiveCampaignOrderHelper;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order;
+use Psr\Log\LoggerInterface;
 
 class OrderCancelFlag implements ObserverInterface
 {
+    /**
+     * @var ActiveCampaignOrderHelper
+     */
     private $activeCampaignHelper;
 
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
     public function __construct(
-        ActiveCampaignOrderHelper $activeCampaignHelper
+        ActiveCampaignOrderHelper $activeCampaignHelper,
+        LoggerInterface $logger
     ) {
         $this->activeCampaignHelper = $activeCampaignHelper;
+        $this->logger = $logger;
     }
 
     public function execute(Observer $observer)
@@ -34,14 +45,24 @@ class OrderCancelFlag implements ObserverInterface
             return;
         }
 
-        $currentSyncStatus = (int)$order->getData('ac_order_sync_status');
         $previousStatus = $order->getOrigData('status');
-        $isNewCancel = $previousStatus === null
-            || $previousStatus !== 'canceled';
-        $needsSync = $currentSyncStatus !== CronConfig::SYNCED;
+        $previousState = method_exists($order, 'getOrigData') ? $order->getOrigData('state') : null;
+        $wasAlreadyCanceled = (
+            ($previousStatus !== null && $previousStatus === 'canceled')
+            || ($previousState !== null && $previousState === Order::STATE_CANCELED)
+        );
+        $isNewCancel = !$wasAlreadyCanceled;
 
-        if ($isNewCancel && $needsSync) {
+        if ($isNewCancel) {
             $order->setData('ac_order_sync_status', CronConfig::NOT_SYNCED);
+            $this->logger->info('OrderCancelFlag: marked for re-sync (NOT_SYNCED) on new cancel', [
+                'order_id' => $order->getId(),
+                'increment_id' => $order->getIncrementId(),
+                'previous_status' => $previousStatus,
+                'previous_state'  => $previousState,
+                'new_status' => $order->getStatus(),
+                'new_state'  => method_exists($order, 'getState') ? $order->getState() : null
+            ]);
         }
     }
 }

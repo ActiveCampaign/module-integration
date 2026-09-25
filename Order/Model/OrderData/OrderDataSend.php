@@ -20,10 +20,12 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface as StoreManagerInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use ActiveCampaign\Customer\Model\Customer;
+use Psr\Log\LoggerInterface;
 
 class OrderDataSend
 {
@@ -132,6 +134,21 @@ class OrderDataSend
     private $resourceConnection;
 
     /**
+     * @var SubscriberFactory
+     */
+    private $subscriberFactory;
+
+    /**
+     * @var string
+     */
+    private $creationSource = 'REAL_TIME';
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * OrderDataSend constructor.
      *
      * @param ProductRepositoryInterfaceFactory $productRepositoryFactory
@@ -153,6 +170,8 @@ class OrderDataSend
      * @param Customer                          $customer
      * @param TimezoneInterface                 $dateTime
      * @param ResourceConnection                $resourceConnection
+     * @param SubscriberFactory                 $subscriberFactory
+     * @param LoggerInterface                   $logger
      */
     public function __construct(
         ProductRepositoryInterfaceFactory $productRepositoryFactory,
@@ -173,7 +192,9 @@ class OrderDataSend
         CartRepositoryInterface $quoteRepository,
         Customer $customer,
         TimezoneInterface $dateTime,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        SubscriberFactory $subscriberFactory,
+        LoggerInterface $logger
     ) {
         $this->_productRepositoryFactory = $productRepositoryFactory;
         $this->imageHelperFactory = $imageHelperFactory;
@@ -194,6 +215,8 @@ class OrderDataSend
         $this->customer =  $customer;
         $this->dateTime = $dateTime;
         $this->resourceConnection = $resourceConnection;
+        $this->subscriberFactory = $subscriberFactory;
+        $this->logger = $logger;
     }
 
     /**
@@ -260,6 +283,10 @@ class OrderDataSend
                                 "externalid" => $order->getId(),
                                 "source" => 1,
                                 "email" => $order->getCustomerEmail(),
+                                "acceptsMarketing" => $this->resolveAcceptsMarketing(
+                                    (string)$order->getCustomerEmail(),
+                                    (int)$order->getStoreId()
+                                ),
                                 "orderProducts" => $items,
                                 "orderDiscounts" => [
                                     "discountAmount" => $this->activeCampaignHelper->priceToCents($order->getDiscountAmount())
@@ -457,7 +484,7 @@ GQL;
                 'orderUrl' => $this->buildOrderUrl($order, $storeId),
                 'isTestOrder' => false,
                 'createdByRecurringPayment' => false,
-                'acceptsMarketing' => false,
+                'acceptsMarketing' => $this->resolveAcceptsMarketing($email, $storeId),
                 'customerLocale' => $this->resolveStoreLocale($storeId),
                 'salesChannel' => 'magento',
                 'currency' => (string)$order->getOrderCurrencyCode(),
@@ -525,7 +552,24 @@ GQL;
             }
 
             $variables = ['order' => $orderInput];
+            if ($this->activeCampaignHelper->isDebugEnabled($storeId)) {
+                $this->logger->info('GQL REQUEST upsertOrder', [
+                    'order_id' => $order->getId(),
+                    'increment_id' => $order->getIncrementId(),
+                    'operationName' => 'upsertOrder',
+                    'variables' => $variables
+                ]);
+            }
+
             $result = $this->curl->graphql($query, $variables, 'upsertOrder');
+
+            if ($this->activeCampaignHelper->isDebugEnabled($storeId)) {
+                $this->logger->info('GQL RESPONSE upsertOrder', [
+                    'order_id' => $order->getId(),
+                    'increment_id' => $order->getIncrementId(),
+                    'result' => $result
+                ]);
+            }
 
             $hasGraphQlErrors = !empty($result['data']['errors']);
             $isSuccess = !empty($result['success']) && !$hasGraphQlErrors;
@@ -557,10 +601,23 @@ GQL;
                 } else {
                     $return['errorMessage'] = __('Order cancellation sync failed.');
                 }
+
+                $this->logger->error('GQL FAILED upsertOrder', [
+                    'order_id' => $order->getId(),
+                    'increment_id' => $order->getIncrementId(),
+                    'errorMessage' => (string)$return['errorMessage'],
+                    'result' => $result
+                ]);
             }
         } catch (\Exception $e) {
             $return['success'] = false;
             $return['errorMessage'] = __($e->getMessage());
+            $this->logger->error('GQL EXCEPTION upsertOrder', [
+                'order_id' => isset($order) ? $order->getId() : null,
+                'increment_id' => isset($order) ? $order->getIncrementId() : null,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return $return;
@@ -652,17 +709,57 @@ GQL;
     }
 
     /**
-     * @param int $storeId
+     * Allowed values per ActiveCampaign API enum CreationSource.
+     */
+    public const CREATION_SOURCE_REAL_TIME = 'REAL_TIME';
+    public const CREATION_SOURCE_HISTORICAL = 'HISTORICAL';
+
+    /**
+     * Switch the creationSource for subsequent order payloads.
+     *
+     * @param string $source  One of self::CREATION_SOURCE_*
+     * @return $this
+     */
+    public function setCreationSource(string $source): self
+    {
+        if ($source === self::CREATION_SOURCE_HISTORICAL) {
+            $this->creationSource = self::CREATION_SOURCE_HISTORICAL;
+        } else {
+            $this->creationSource = self::CREATION_SOURCE_REAL_TIME;
+        }
+        return $this;
+    }
+
+    /**
+     * Returns a valid CreationSource enum value for the current execution context.
+     *
+     * @param int $storeId  Unused (kept for backward compatibility).
      * @return string
      */
     private function buildCreationSource(int $storeId): string
     {
+        return $this->creationSource;
+    }
+
+    /**
+     * Resolve newsletter / marketing opt-in status for the given email on the given store's website.
+     * Mirrors the logic in Customer::createGuestCustomer() / Customer::updateCustomer().
+     *
+     * @param string $email
+     * @param int    $storeId
+     * @return bool
+     */
+    private function resolveAcceptsMarketing(string $email, int $storeId): bool
+    {
+        if ($email === '') {
+            return false;
+        }
         try {
-            $store = $this->storeManager->getStore($storeId);
-            $storeName = trim((string)$store->getName());
-            return 'Magento' . ($storeName !== '' ? ' ' . $storeName : '');
+            $websiteId = (int)$this->storeManager->getStore($storeId)->getWebsiteId();
+            $subscriber = $this->subscriberFactory->create()->loadBySubscriberEmail($email, $websiteId);
+            return (bool)$subscriber->isSubscribed();
         } catch (\Exception $e) {
-            return 'Magento';
+            return false;
         }
     }
 

@@ -13,18 +13,4 @@
             </product_sync>
         </active_campaign>
     </default>
-    <crontab>
-        <default>
-            <jobs>
-                <ac_product_sync_cron_job>
-                    <schedule>
-                        <cron_expr>*/10 * * * *</cron_expr>
-                    </schedule>
-                    <run>
-                        <model>ActiveCampaign\Product\Cron\ProductSyncCron::execute</model>
-                    </run>
-                </ac_product_sync_cron_job>
-            </jobs>
-        </default>
-    </crontab>
 </config>

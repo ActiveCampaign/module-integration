@@ -244,12 +244,12 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param  int|null $quoteId
+     * @param int|null $quoteId
      * @return array
      * @throws AlreadyExistsException
      * @throws NoSuchEntityException
      */
-    public function sendAbandonedCartData(?int $quoteId = null): array
+    public function sendAbandonedCartData($quoteId = null): array
     {
         $result = [];
         $numberOfAbandonedCart = (int)$this->abandonedCartHelper->getNumberOfAbandonedCart();
@@ -498,11 +498,11 @@ class AbandonedCartSendData extends AbstractModel
     }
 
     /**
-     * @param  null $billingId
+     * @param string|null $billingId
      * @return string|null
      * @throws LocalizedException
      */
-    private function getTelephone(?string $billingId = null): ?string
+    private function getTelephone($billingId = null)
     {
         if ($billingId) {
             return $this->addressRepository->getById($billingId)->getTelephone();

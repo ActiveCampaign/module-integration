@@ -15,4 +15,11 @@
             </argument>
         </arguments>
     </type>
+    <type name="ActiveCampaign\SyncLog\Model\Config\CronConfig">
+        <arguments>
+            <argument name="resource" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data</argument>
+            <argument name="resourceCollection" xsi:type="object">Magento\Config\Model\ResourceModel\Config\Data\Collection\Proxy</argument>
+            <argument name="runModelPath" xsi:type="string">ActiveCampaign\SyncLog\Cron\DeleteSyncLog::execute</argument>
+        </arguments>
+    </type>
 </config>

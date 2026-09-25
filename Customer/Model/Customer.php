@@ -269,7 +269,13 @@ class Customer
         return $contactData;
     }
 
-    private function getCustomerValidationError(?string $email = null, ?string $firstName = null, ?string $lastName = null): ?string
+    /**
+     * @param string|null $email
+     * @param string|null $firstName
+     * @param string|null $lastName
+     * @return string|null
+     */
+    private function getCustomerValidationError($email = null, $firstName = null, $lastName = null)
     {
         $email = $this->normalizeEmail((string)$email);
         $firstName = $this->normalizeName((string)$firstName);

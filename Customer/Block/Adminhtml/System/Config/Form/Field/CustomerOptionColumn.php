@@ -1,6 +1,5 @@
 <?php
 
-declare(strict_types=1);
 namespace ActiveCampaign\Customer\Block\Adminhtml\System\Config\Form\Field;
 
 use Magento\Framework\View\Element\Html\Select;

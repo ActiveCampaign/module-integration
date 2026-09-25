@@ -30,10 +30,10 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return bool
      */
-    public function isOrderSyncEnabled(?string $scopeCode = null)
+    public function isOrderSyncEnabled($scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_ORDER_STATUS,
@@ -43,10 +43,10 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return bool
      */
-    public function isOrderSyncInRealTime(?string $scopeCode = null)
+    public function isOrderSyncInRealTime($scopeCode = null)
     {
         return $this->scopeConfig->isSetFlag(
             self::ACTIVE_CAMPAIGN_ORDER_SYNC_REAL_TIME,
@@ -56,10 +56,10 @@ class Data extends AbstractHelper
     }
 
     /**
-     * @param  null $scopeCode
+     * @param int|string|null $scopeCode
      * @return mixed
      */
-    public function getOrderSyncNum(?string $scopeCode = null)
+    public function getOrderSyncNum($scopeCode = null)
     {
         return $this->scopeConfig->getValue(
             self::ACTIVE_CAMPAIGN_ORDER_SYNC_NUM,
