@@ -4,13 +4,13 @@
         <observer instance="ActiveCampaign\Order\Observer\OrderSync" name="ac_order_sync_sales_order_save_after"/>
     </event>
     <event name="sales_order_save_before">
-        <observer instance="ActiveCampaign\Order\Observer\OrderCancelFlag" name="ac_order_cancel_flag"/>
+        <observer instance="ActiveCampaign\Order\Observer\OrderStatusFlag" name="ac_order_status_flag"/>
     </event>
     <event name="sales_order_save_after">
-        <observer instance="ActiveCampaign\Order\Observer\OrderCancelSync" name="ac_order_cancel_sync"/>
+        <observer instance="ActiveCampaign\Order\Observer\OrderStatusSync" name="ac_order_status_sync"/>
     </event>
     <event name="sales_order_cancel_after">
-        <observer instance="ActiveCampaign\Order\Observer\OrderCancelFlag" name="ac_order_cancel_flag_external"/>
-        <observer instance="ActiveCampaign\Order\Observer\OrderCancelSync" name="ac_order_cancel_sync_external"/>
+        <observer instance="ActiveCampaign\Order\Observer\OrderStatusFlag" name="ac_order_status_flag_external"/>
+        <observer instance="ActiveCampaign\Order\Observer\OrderStatusSync" name="ac_order_status_sync_external"/>
     </event>
 </config>
