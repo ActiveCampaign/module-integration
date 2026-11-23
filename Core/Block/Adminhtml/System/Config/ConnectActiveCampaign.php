@@ -5,16 +5,9 @@ namespace ActiveCampaign\Core\Block\Adminhtml\System\Config;
 class ConnectActiveCampaign extends \Magento\Config\Block\System\Config\Form\Field
 {
     /**
-     * Set template to itself
-     *
-     * @return ConnectActiveCampaign
+     * @var string
      */
-    protected function _prepareLayout()
-    {
-        parent::_prepareLayout();
-        $this->setTemplate('ActiveCampaign_Core::system/config/connection.phtml');
-        return $this;
-    }
+    protected $_template = 'ActiveCampaign_Core::system/config/connection.phtml';
 
     /**
      * Unset some non-related element parameters
