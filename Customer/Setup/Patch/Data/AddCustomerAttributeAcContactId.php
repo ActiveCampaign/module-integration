@@ -2,6 +2,7 @@
 
 namespace ActiveCampaign\Customer\Setup\Patch\Data;
 
+use Magento\Customer\Model\ResourceModel\Attribute as AttributeResource;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Setup\CustomerSetup;
 use Magento\Customer\Setup\CustomerSetupFactory;
@@ -28,20 +29,28 @@ class AddCustomerAttributeAcContactId implements DataPatchInterface, PatchRevert
     protected $attributeSetFactory;
 
     /**
+     * @var AttributeResource
+     */
+    private $attributeResource;
+
+    /**
      * Constructor
      *
      * @param ModuleDataSetupInterface $moduleDataSetup
      * @param CustomerSetupFactory     $customerSetupFactory
      * @param SetFactory               $attributeSetFactory
+     * @param AttributeResource $attributeResource
      */
     public function __construct(
         ModuleDataSetupInterface $moduleDataSetup,
         CustomerSetupFactory $customerSetupFactory,
-        SetFactory $attributeSetFactory
+        SetFactory $attributeSetFactory,
+        AttributeResource $attributeResource
     ) {
         $this->moduleDataSetup = $moduleDataSetup;
         $this->customerSetupFactory = $customerSetupFactory;
         $this->attributeSetFactory = $attributeSetFactory;
+        $this->attributeResource = $attributeResource;
     }
 
     /**
@@ -90,7 +99,7 @@ class AddCustomerAttributeAcContactId implements DataPatchInterface, PatchRevert
                 'attribute_group_id' => $attributeGroupId
                 ]
             );
-            $attribute->save();
+            $this->attributeResource->save($attribute);
         }
 
         $this->moduleDataSetup->getConnection()->endSetup();

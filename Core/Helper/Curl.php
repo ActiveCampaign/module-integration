@@ -5,6 +5,7 @@ namespace ActiveCampaign\Core\Helper;
 use ActiveCampaign\Core\Helper\Data as ActiveCampaignHelper;
 use ActiveCampaign\Core\Logger\Logger;
 use ActiveCampaign\SyncLog\Model\SyncLog;
+use ActiveCampaign\SyncLog\Model\ResourceModel\SyncLog as SyncLogResource;
 use ActiveCampaign\SyncLog\Helper\Data as SyncLogHelper;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -48,6 +49,11 @@ class Curl extends AbstractHelper
     private $syncLogHelper;
 
     /**
+     * @var SyncLogResource
+     */
+    private $syncLogResource;
+
+    /**
      * Curl constructor.
      *
      * @param Context       $context
@@ -57,6 +63,7 @@ class Curl extends AbstractHelper
      * @param SyncLog       $syncLog
      * @param SyncLogHelper $syncLogHelper
      * @param Client|null   $client
+     * @param SyncLogResource $syncLogResource
      */
     public function __construct(
         Context              $context,
@@ -65,6 +72,7 @@ class Curl extends AbstractHelper
         ActiveCampaignHelper $activeCampaignHelper,
         SyncLog              $syncLog,
         SyncLogHelper           $syncLogHelper,
+        SyncLogResource $syncLogResource,
         $client = null
     ) {
         $this->client = $client ?: new Client();
@@ -73,6 +81,7 @@ class Curl extends AbstractHelper
         $this->activeCampaignHelper = $activeCampaignHelper;
         $this->syncLog = $syncLog;
         $this->syncLogHelper = $syncLogHelper;
+        $this->syncLogResource = $syncLogResource;
         parent::__construct($context);
     }
 
@@ -453,7 +462,7 @@ class Curl extends AbstractHelper
          * @todo Replace with repository service contract
          */
         if (!$this->syncLogHelper->isLogError() || $synclog->getStatus()==0) {
-            $synclog->save();
+            $this->syncLogResource->save($synclog);
         }
         $synclog->unsetData();
 
