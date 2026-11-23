@@ -2,6 +2,7 @@
 
 namespace ActiveCampaign\AbandonedCart\Plugin\Checkout\Model;
 
+use Magento\Quote\Model\ResourceModel\Quote\QuoteIdMask as QuoteIdMaskResource;
 use ActiveCampaign\AbandonedCart\Helper\Data as AbandonedCartHelper;
 use ActiveCampaign\AbandonedCart\Model\AbandonedCartSendData;
 
@@ -23,18 +24,26 @@ class GuestPaymentInformationManagementPlugin
     protected $quoteIdMaskFactory;
 
     /**
+     * @var QuoteIdMaskResource
+     */
+    private $quoteIdMaskResource;
+
+    /**
      * @param AbandonedCartHelper                     $abandonedCartHelper
      * @param AbandonedCartSendData                   $abandonedCartSendData
      * @param \Magento\Quote\Model\QuoteIdMaskFactory $quoteIdMaskFactory
+     * @param QuoteIdMaskResource $quoteIdMaskResource
      */
     public function __construct(
         AbandonedCartHelper $abandonedCartHelper,
         AbandonedCartSendData $abandonedCartSendData,
-        \Magento\Quote\Model\QuoteIdMaskFactory $quoteIdMaskFactory
+        \Magento\Quote\Model\QuoteIdMaskFactory $quoteIdMaskFactory,
+        QuoteIdMaskResource $quoteIdMaskResource
     ) {
         $this->abandonedCartHelper = $abandonedCartHelper;
         $this->abandonedCartSendData = $abandonedCartSendData;
         $this->quoteIdMaskFactory = $quoteIdMaskFactory;
+        $this->quoteIdMaskResource = $quoteIdMaskResource;
     }
 
     /**
@@ -53,7 +62,8 @@ class GuestPaymentInformationManagementPlugin
         \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
         $billingAddress = null
     ) {
-        $quoteIdMask = $this->quoteIdMaskFactory->create()->load($cartId, 'masked_id');
+        $quoteIdMask = $this->quoteIdMaskFactory->create();
+        $this->quoteIdMaskResource->load($quoteIdMask, $cartId, 'masked_id');
         if ($this->abandonedCartHelper->isAbandonedCartSyncingEnabled()) {
             try {
                 $response = $this->abandonedCartSendData->sendAbandonedCartData($quoteIdMask->getQuoteId());

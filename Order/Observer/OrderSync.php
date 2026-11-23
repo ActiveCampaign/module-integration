@@ -1,6 +1,7 @@
 <?php
 namespace ActiveCampaign\Order\Observer;
 
+use Magento\Sales\Model\ResourceModel\Order as OrderResource;
 use ActiveCampaign\Core\Helper\Curl;
 use ActiveCampaign\Order\Helper\Data as ActiveCampaignOrderHelper;
 use ActiveCampaign\Order\Model\OrderData\OrderDataSend;
@@ -45,6 +46,11 @@ class OrderSync implements ObserverInterface
     private $orderModel;
 
     /**
+     * @var OrderResource
+     */
+    private $orderResource;
+
+    /**
      * OrderSync constructor.
      *
      * @param OrderDataSend             $orderdataSend
@@ -53,6 +59,7 @@ class OrderSync implements ObserverInterface
      * @param OrderModel                $orderModel
      * @param CartRepositoryInterface   $quoteRepository
      * @param LoggerInterface           $logger
+     * @param OrderResource $orderResource
      */
     public function __construct(
         OrderDataSend $orderdataSend,
@@ -60,7 +67,8 @@ class OrderSync implements ObserverInterface
         ActiveCampaignOrderHelper $activeCampaignHelper,
         OrderModel $orderModel,
         CartRepositoryInterface $quoteRepository,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        OrderResource $orderResource
     ) {
         $this->orderdataSend = $orderdataSend;
         $this->curl = $curl;
@@ -68,6 +76,7 @@ class OrderSync implements ObserverInterface
         $this->orderModel = $orderModel;
         $this->quoteRepository = $quoteRepository;
         $this->logger = $logger;
+        $this->orderResource = $orderResource;
     }
 
     /**
@@ -83,7 +92,8 @@ class OrderSync implements ObserverInterface
 
         if ($isEnabled && $synInRealTime) {
             foreach ($orderIds as $orderId) {
-                $orderData = $this->orderModel->load($orderId);
+                $orderData = $this->orderModel;
+                $this->orderResource->load($orderData, $orderId);
                 $acOrderStatus = $orderData->getAcOrderSyncStatus();
                 if ($acOrderStatus == 0) {
                     $this->orderdataSend->orderDataSend($orderData);

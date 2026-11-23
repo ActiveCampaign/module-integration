@@ -6,6 +6,7 @@
 
 namespace ActiveCampaign\AbandonedCart\Controller\Adminhtml\Index;
 
+use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 use Magento\Backend\App\Action;
 use ActiveCampaign\AbandonedCart\Model\AbandonedCartSendData;
 
@@ -22,17 +23,25 @@ class Sync extends \Magento\Backend\App\Action
     protected $abandonedCartSendData;
 
     /**
+     * @var QuoteResource
+     */
+    private $quoteResource;
+
+    /**
      * @param \Magento\Backend\App\Action $context
      * @param \Magento\Quote\Model\Quote  $quoteModel
      * @param AbandonedCartSendData       $abandonedCartSendData
+     * @param QuoteResource $quoteResource
      */
     public function __construct(
         Action\Context $context,
         \Magento\Quote\Model\Quote $quoteModel,
-        AbandonedCartSendData $abandonedCartSendData
+        AbandonedCartSendData $abandonedCartSendData,
+        QuoteResource $quoteResource
     ) {
         $this->quoteModel = $quoteModel;
         $this->abandonedCartSendData = $abandonedCartSendData;
+        $this->quoteResource = $quoteResource;
         parent::__construct($context);
     }
 
@@ -54,7 +63,7 @@ class Sync extends \Magento\Backend\App\Action
             try {
                 // init model and sync
                 $model = $this->quoteModel;
-                $model->load($id);
+                $this->quoteResource->load($model, $id);
 
                 $result = $this->abandonedCartSendData->sendAbandonedCartData($model->getEntityId());
                 if (isset($result['error'])) {
